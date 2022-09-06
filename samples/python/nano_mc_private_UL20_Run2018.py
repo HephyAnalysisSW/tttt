@@ -30,7 +30,7 @@ redirector = redirector_global
 
 # DB
 from Samples.Tools.config import dbDir
-dbFile = os.path.join( dbDir, (__file__.replace('.py','.sql')) )
+dbFile = dbDir+'/nano_mc_private_UL20_Run2018.sql'
 
 logger.info("Using db file: %s", dbFile)
 
