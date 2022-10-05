@@ -19,6 +19,6 @@ scram b -j40
 cd Analysis/Tools/python
 cp -r /groups/hephy/cms/dennis.schwarz/correctionlib .
 cd $CMSSW_BASE
+scram b -j40
 
 ```
-scram b 
