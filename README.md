@@ -4,6 +4,7 @@ cmsrel CMSSW_10_6_28
 cd CMSSW_10_6_28/src
 cmsenv
 git cms-init
+git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 git clone https://github.com/HephyAnalysisSW/tttt
 git clone https://github.com/HephyAnalysisSW/TMB
 git clone https://github.com/HephyAnalysisSW/tWZ
