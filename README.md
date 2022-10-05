@@ -21,3 +21,4 @@ cp -r /groups/hephy/cms/dennis.schwarz/correctionlib .
 cd $CMSSW_BASE
 
 ```
+scram b 
