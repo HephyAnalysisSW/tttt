@@ -4,6 +4,7 @@ cmsrel CMSSW_10_6_28
 cd CMSSW_10_6_28/src
 cmsenv
 git cms-init
+git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 git clone https://github.com/HephyAnalysisSW/tttt
 git clone https://github.com/HephyAnalysisSW/TMB
 git clone https://github.com/HephyAnalysisSW/tWZ
@@ -19,6 +20,6 @@ scram b -j40
 cd Analysis/Tools/python
 cp -r /groups/hephy/cms/dennis.schwarz/correctionlib .
 cd $CMSSW_BASE
+scram b -j40
 
 ```
-scram b 
