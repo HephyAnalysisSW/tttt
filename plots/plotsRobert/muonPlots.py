@@ -14,7 +14,7 @@ import numpy as np
 from tttt.tools.user            import plot_directory
 from tttt.tools.objectSelection import getGoodMuons
 
-import Analysis.Tools.syncer as syncer
+#import Analysis.Tools.syncer as syncer
 
 #
 # Arguments
