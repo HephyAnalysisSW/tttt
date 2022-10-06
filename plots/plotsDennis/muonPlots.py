@@ -11,8 +11,8 @@ from math import sqrt, cos, sin, pi, cosh, sinh
 from RootTools.core.standard import *
 import numpy as np
 # StopsDilepton
-from tWZ.Tools.user            import plot_directory
-from tWZ.Tools.objectSelection import getGoodMuons
+from tttt.Tools.user            import plot_directory
+from tttt.Tools.objectSelection import getGoodMuons
 
 #import Analysis.Tools.syncer as syncer
 
