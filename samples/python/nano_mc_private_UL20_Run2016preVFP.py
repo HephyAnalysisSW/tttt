@@ -30,11 +30,11 @@ redirector = redirector_global
 
 # DB
 from Samples.Tools.config import dbDir
-dbFile = dbDir+'/nano_mc_private_UL20_Run2018.sql'
+dbFile = dbDir+'/nano_mc_private_UL20.sql'
 
 logger.info("Using db file: %s", dbFile)
 
-TTLep_pow_CP5 = Sample.nanoAODfromDAS("TTLep_pow_CP5", "/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1_nano_mc_UL20_private_v1-be97bb1179c64af1e45e5c6521726198/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=831.762*((3*0.108)**2))
+TTLep_pow_CP5 = Sample.nanoAODfromDAS("TTLep_pow_CP5", "/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1_nano_mc_UL20_private_v1-fd4e4df3438b324a75085b43299d63cd/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=831.762*((3*0.108)**2))
 
 allSamples = [ TTLep_pow_CP5 ]
 

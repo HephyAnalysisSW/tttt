@@ -22,7 +22,6 @@ def getSample(pd, runName, lumi):
     sample.lumi = lumi
     return sample
 
-
 allSamples = []
 
 EGamma_Run2018                   = getSample('EGamma',           'Run2018',        ((59.97)*1000))

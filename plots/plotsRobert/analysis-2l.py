@@ -15,9 +15,9 @@ from   math                              import sqrt, cos, sin, pi, atan2, cosh
 from RootTools.core.standard             import *
 
 # tttt
-from tttt.tools.user                     import plot_directory
-from tttt.tools.cutInterpreter           import cutInterpreter
-from tttt.tools.objectSelection          import lepString 
+from tttt.Tools.user                     import plot_directory
+from tttt.Tools.cutInterpreter           import cutInterpreter
+from tttt.Tools.objectSelection          import lepString 
 
 # Analysis
 from Analysis.Tools.helpers              import deltaPhi, deltaR
