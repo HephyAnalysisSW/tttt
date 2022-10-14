@@ -19,8 +19,10 @@ from RootTools.core.standard import *
 # User specific
 import tttt.Tools.user as user
 
+# tttt 
+from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
+
 # Tools for systematics
-from tWZ.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
 from tWZ.Tools.objectSelection_UL     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP
 from tWZ.Tools.objectSelection_UL     import getGenZs
 from tWZ.Tools.mvaTOPreader  import mvaTOPreader
