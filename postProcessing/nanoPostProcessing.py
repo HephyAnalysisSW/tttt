@@ -17,7 +17,7 @@ from math import sqrt, atan2, sin, cos
 from RootTools.core.standard import *
 
 # User specific
-import tWZ.Tools.user as user
+import tttt.Tools.user as user
 
 # Tools for systematics
 from tWZ.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
@@ -25,7 +25,6 @@ from tWZ.Tools.objectSelection_UL     import getMuons, getElectrons, muonSelecto
 from tWZ.Tools.objectSelection_UL     import getGenZs
 from tWZ.Tools.mvaTOPreader  import mvaTOPreader
 
-from tWZ.Tools.overlapRemovalTTG   import hasMesonMother, getParentIds
 from tWZ.Tools.triggerEfficiency   import triggerEfficiency
 from tWZ.Tools.leptonSF            import leptonSF as leptonSF_
 from tWZ.Tools.mcTools import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
@@ -56,11 +55,12 @@ def get_parser():
     argParser.add_argument('--processingEra', action='store',       nargs='?',  type=str, default='postProcessed_80X_v22',              help="Name of the processing era" )
     argParser.add_argument('--skim',        action='store',         nargs='?',  type=str, default='trilep',                             help="Skim conditions to be applied for post-processing" )
     argParser.add_argument('--LHEHTCut',    action='store',         nargs='?',  type=int, default=-1,                                   help="LHE cut." )
-    argParser.add_argument('--year',        action='store',                     type=str,                                               help="Which year?" )
+    argParser.add_argument('--era',        action='store',                      type=str,                                               help="Which era?" )
     argParser.add_argument('--overwriteJEC',action='store',                               default=None,                                 help="Overwrite JEC?" )
     argParser.add_argument('--overwrite',   action='store_true',                                                                        help="Overwrite existing output files, bool flag set to True  if used" )
     argParser.add_argument('--small',       action='store_true',                                                                        help="Run the file on a small sample (for test purpose), bool flag set to True if used" )
     argParser.add_argument('--flagTTBar',   action='store_true',                                                                        help="Is ttbar?" )
+    argParser.add_argument('--addDoubleB',  action='store_true',                                                                        help="Add fine grained b-tagging information." )
     argParser.add_argument('--doCRReweighting',             action='store_true',                                                        help="color reconnection reweighting?")
     argParser.add_argument('--triggerSelection',            action='store_true',                                                        help="Trigger selection?" )
     #argParser.add_argument('--skipGenLepMatching',          action='store_true',                                                        help="skip matched genleps??" )
@@ -79,17 +79,16 @@ def get_parser():
 
 options = get_parser().parse_args()
 
-if options.year not in [ 'UL2016', 'UL2016_preVFP', 'UL2017', 'UL2018' ]:
-    raise Exception("Year %s not known"%year)
-yearint = 2018 
-if "UL2016" == options.year: 
-    yearint = 2016 
-if "UL2016_preVFP" == options.year: 
-    yearint = 2016
-elif "UL2017" == options.year:
-    yearint = 2017 
-elif "UL2018" == options.year:
-    yearint = 2018
+if options.era not in [ 'UL2016', 'UL2016_preVFP', 'UL2017', 'UL2018' ]:
+    raise Exception("Era %s not known"%options.era)
+if "UL2016" == options.era: 
+    year = 2016 
+elif "UL2016_preVFP" == options.era: 
+    year = 2016
+elif "UL2017" == options.era:
+    year = 2017 
+elif "UL2018" == options.era:
+    year = 2018
 
 # Logging
 import tWZ.Tools.logger as _logger
@@ -146,13 +145,16 @@ if options.small:
     options.job = 0
     options.nJobs = 10000 # set high to just run over 1 input file
 
-if options.year == "UL2016":
-    allSamples = []
-elif options.year == "UL2016_preVFP": #AODAPV samples
-    allSamples = []
-elif options.year == "UL2017":
-    allSamples = []
-elif options.year == "UL2018":
+if options.era == "UL2016":
+    from tttt.samples.nano_mc_private_UL20_Run2016 import allSamples as mcSamples
+    allSamples = mcSamples #+ dataSamples
+elif options.era == "UL2016_preVFP": #AODAPV samples
+    from tttt.samples.nano_mc_private_UL20_Run2016preVFP import allSamples as mcSamples
+    allSamples = mcSamples #+ dataSamples
+elif options.era == "UL2017":
+    from tttt.samples.nano_mc_private_UL20_Run2017  import allSamples as mcSamples
+    allSamples = mcSamples #+ dataSamples
+elif options.era == "UL2018":
     from tttt.samples.nano_mc_private_UL20_Run2018  import allSamples as mcSamples
     allSamples = mcSamples #+ dataSamples
 
@@ -176,9 +178,9 @@ assert isMC or len(samples)==1, "Don't concatenate data samples"
 xSection = samples[0].xSection if isMC else None
 
 # apply MET filter
-skimConds.append( getFilterCut(options.year, isData=isData, ignoreJSON=True, skipWeight=True, skipECalFilter=True) )
+skimConds.append( getFilterCut(options.era, isData=isData, ignoreJSON=True, skipWeight=True, skipECalFilter=True) )
 
-triggerEff          = triggerEfficiency(yearint)
+triggerEff          = triggerEfficiency(year)
 
 ################################################################################
 #Samples: combine if more than one
@@ -219,7 +221,7 @@ if options.LHEHTCut>0:
 
 ################################################################################
 # final output directory
-storage_directory = os.path.join( options.targetDir, options.processingEra, options.year, options.skim, sample.name )
+storage_directory = os.path.join( options.targetDir, options.processingEra, options.era, options.skim, sample.name )
 try:    #Avoid trouble with race conditions in multithreading
     os.makedirs(storage_directory)
     logger.info( "Created output directory %s.", storage_directory )
@@ -277,11 +279,11 @@ addSystematicVariations = (not isData) and (not options.skipSystematicVariations
 # CHECK FOR UL FILES
 b_tagger = "DeepJet"
 from Analysis.Tools.BTagEfficiencyUL import BTagEfficiency
-btagEff = BTagEfficiency( fastSim = False, year=options.year, tagger=b_tagger )
+btagEff = BTagEfficiency( fastSim = False, year=options.era, tagger=b_tagger )
 
 ################################################################################
 # tmp_output_directory
-tmp_output_directory  = os.path.join( user.postprocessing_tmp_directory, "%s_%s_%s_%s_%s"%(options.processingEra, options.year, options.skim, sample.name, str(uuid.uuid3(uuid.NAMESPACE_OID, sample.name))))
+tmp_output_directory  = os.path.join( user.postprocessing_tmp_directory, "%s_%s_%s_%s_%s"%(options.processingEra, options.era, options.skim, sample.name, str(uuid.uuid3(uuid.NAMESPACE_OID, sample.name))))
 if os.path.exists(tmp_output_directory) and options.overwrite:
     if options.nJobs > 1:
         logger.warning( "NOT removing directory %s because nJobs = %i", tmp_output_directory, options.nJobs )
@@ -322,7 +324,7 @@ treeFormulas = {}
 if options.triggerSelection and isTriLep:
     # Trigger selection
     from tWZ.Tools.triggerSelector import triggerSelector
-    ts           = triggerSelector(yearint)
+    ts           = triggerSelector(year)
     triggerCond  = ts.getSelection(options.samples[0] if isData else "MC", triggerList = ts.getTriggerList(sample) )
     treeFormulas["triggerDecision"] =  {'string':triggerCond}
     if isData:
@@ -401,7 +403,7 @@ branchKeepStrings_DATAMC = [\
 branchKeepStrings_DATAMC += ["HLT_*", "PV_*"]
 
 # NOT FOR UL?
-if options.year == "2017":
+if options.era == "2017":
     branchKeepStrings_DATAMC += [ "METFixEE2017_*" ]
 
 #branches to be kept for MC samples only
@@ -430,6 +432,9 @@ jetVars         = ['pt/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'rawFac
 if isMC:
     jetVars     += jetMCInfo
     jetVars     += ['pt_jesTotalUp/F', 'pt_jesTotalDown/F', 'pt_jerUp/F', 'pt_jerDown/F', 'corr_JER/F', 'corr_JEC/F']
+if options.addDoubleB:
+    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
+
 jetVarNames     = [x.split('/')[0] for x in jetVars]
 genLepVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'genPartIdxMother/I', 'status/I', 'statusFlags/I'] # some might have different types
 genLepVarNames  = [x.split('/')[0] for x in genLepVars]
@@ -438,7 +443,7 @@ lepVars         = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_a
 lepVarNames     = [x.split('/')[0] for x in lepVars]
 
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
-if options.year == "2017":
+if options.era == "2017":
     read_variables += map(TreeVariable.fromString, [ 'METFixEE2017_pt/F', 'METFixEE2017_phi/F', 'METFixEE2017_pt_nom/F', 'METFixEE2017_phi_nom/F'])
     if isMC:
         read_variables += map(TreeVariable.fromString, [ 'METFixEE2017_pt_jesTotalUp/F', 'METFixEE2017_pt_jesTotalDown/F', 'METFixEE2017_pt_jerUp/F', 'METFixEE2017_pt_jerDown/F', 'METFixEE2017_pt_unclustEnDown/F', 'METFixEE2017_pt_unclustEnUp/F', 'METFixEE2017_phi_jesTotalUp/F', 'METFixEE2017_phi_jesTotalDown/F', 'METFixEE2017_phi_jerUp/F', 'METFixEE2017_phi_jerDown/F', 'METFixEE2017_phi_unclustEnDown/F', 'METFixEE2017_phi_unclustEnUp/F', 'METFixEE2017_pt_jer/F', 'METFixEE2017_phi_jer/F'])
@@ -563,7 +568,7 @@ if not options.skipNanoTools:
     logger.info("Using JERs for MET significance")
 
     from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
-    METBranchName = 'MET' if not options.year == "2017" else 'METFixEE2017'
+    METBranchName = 'MET' if not options.era == "2017" else 'METFixEE2017'
 
     # check if files are available (e.g. if dpm is broken this should result in an error)
     for f in sample.files:
@@ -581,14 +586,14 @@ if not options.skipNanoTools:
         runString = runString.replace("ver1", "")
         runString = runString.replace("ver2", "")
         runString = runString.split('_')[1]
-        assert str(yearint) in runString, "Could not obtain run period from sample name %s" % sample.name
+        assert str(year) in runString, "Could not obtain run period from sample name %s" % sample.name
         runPeriod = runString[-1]
 
     logger.info("Starting nanoAOD postprocessing")
     for f in sample.files:
         JMECorrector = createJMECorrector(
             isMC        = (not sample.isData),
-            dataYear    = options.year,
+            dataYear    = options.era,
             runPeriod   = runPeriod,
             jesUncert   = "Total",
             jetType     = "AK4PFchs",
@@ -610,7 +615,7 @@ if not options.skipNanoTools:
     sample.clear()
 
 # Define mvaTOP reader 
-mvaTOPreader_ = mvaTOPreader(year = options.year)
+mvaTOPreader_ = mvaTOPreader(year = options.era)
 
 # Define a reader
 
@@ -621,10 +626,10 @@ reader = sample.treeReader( \
     )
 
 # using miniRelIso 0.2 as baseline
-# eleSelector_ = eleSelector( "mvaTOPVL", year = options.year )
-# muSelector_  = muonSelector("mvaTOPVL", year = options.year )
-eleSelector_ = eleSelector( "presel", year = yearint )
-muSelector_  = muonSelector("presel", year = yearint )
+# eleSelector_ = eleSelector( "mvaTOPVL", year = options.era )
+# muSelector_  = muonSelector("mvaTOPVL", year = options.era )
+eleSelector_ = eleSelector( "presel", year = year )
+muSelector_  = muonSelector("presel", year = year )
 
 ################################################################################
 # FILL EVENT INFO HERE
@@ -634,9 +639,9 @@ def filler( event ):
     r = reader.event
     #workaround  = (r.run, r.luminosityBlock, r.event) # some fastsim files seem to have issues, apparently solved by this.
     event.isData = s.isData
-    event.year   = yearint
+    event.year   = year
     event.preVFP = False
-    if options.year == "UL2016_preVFP":
+    if options.era == "UL2016_preVFP":
         event.preVFP = True
     event.overlapRemoval = 1
 
@@ -675,9 +680,9 @@ def filler( event ):
     # PU reweighting
     if isMC and hasattr(r, "Pileup_nTrueInt"):
         from Analysis.Tools.puWeightsUL			import getPUReweight
-        event.reweightPU     = getPUReweight( r.Pileup_nTrueInt, year=options.year, weight="nominal") 
-        event.reweightPUDown = getPUReweight( r.Pileup_nTrueInt, year=options.year, weight="down" )
-        event.reweightPUUp   = getPUReweight( r.Pileup_nTrueInt, year=options.year, weight="up" )
+        event.reweightPU     = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="nominal") 
+        event.reweightPUDown = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="down" )
+        event.reweightPUUp   = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="up" )
 
     ################################################################################
     # top pt reweighting
@@ -796,8 +801,8 @@ def filler( event ):
     clean_jets,_ = cleanJetsAndLeptons( all_jets, leptons )
     clean_jets_acc = filter(lambda j:abs(j['eta'])<2.4, clean_jets)
     jets         = filter(lambda j:j['pt']>30, clean_jets_acc)
-    bJets        = filter(lambda j:isBJet(j, tagger=b_tagger, year=options.year) and abs(j['eta'])<=2.4    , jets)
-    nonBJets     = filter(lambda j:not ( isBJet(j, tagger=b_tagger, year=options.year) and abs(j['eta'])<=2.4 ), jets)
+    bJets        = filter(lambda j:isBJet(j, tagger=b_tagger, year=options.era) and abs(j['eta'])<=2.4    , jets)
+    nonBJets     = filter(lambda j:not ( isBJet(j, tagger=b_tagger, year=options.era) and abs(j['eta'])<=2.4 ), jets)
 
 
                 
@@ -809,7 +814,7 @@ def filler( event ):
     
     # store the correct MET (EE Fix for 2017)
 
-    if options.year == 2017:# and not options.fastSim:
+    if options.era == 2017:# and not options.fastSim:
         # v2 recipe. Could also use our own recipe
         event.met_pt    = r.METFixEE2017_pt_nom
         event.met_phi   = r.METFixEE2017_phi_nom
@@ -853,8 +858,8 @@ def filler( event ):
     if addSystematicVariations:
         for var in ['jesTotalUp', 'jesTotalDown', 'jerUp', 'jerDown', 'unclustEnUp', 'unclustEnDown']: # don't use 'jer' as of now
             # MET variations are calculated with JMECorrector, not here
-            # setattr(event, 'met_pt_'+var,  getattr(r, 'METFixEE2017_pt_'+var)  if options.year == 2017 else getattr(r, 'MET_pt_'+var) )
-            # setattr(event, 'met_phi_'+var, getattr(r, 'METFixEE2017_phi_'+var) if options.year == 2017 else getattr(r, 'MET_phi_'+var) )
+            # setattr(event, 'met_pt_'+var,  getattr(r, 'METFixEE2017_pt_'+var)  if options.era == 2017 else getattr(r, 'MET_pt_'+var) )
+            # setattr(event, 'met_phi_'+var, getattr(r, 'METFixEE2017_phi_'+var) if options.era == 2017 else getattr(r, 'MET_phi_'+var) )
             if not var.startswith('unclust'):
                 corrFactor = 'corr_JER' if var == 'jer' else None
                 jets_sys[var]       = filter(lambda j:j['pt_'+var]>30, clean_jets_acc)
