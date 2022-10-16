@@ -43,7 +43,8 @@ SingleMuon_Run2018 = [SingleMuon_Run2018A, SingleMuon_Run2018B, SingleMuon_Run20
 EGamma_Run2018A = Sample.nanoAODfromDAS("EGamma_Run2018A", "/EGamma/schoef-crab_Run2018A-UL2018_MiniAODv2-v1_nano_data_UL20_private_v1-0bf6294e252c33eca4e4a21d6858e8c4/USER", instance="phys03", dbFile=dbFile, overwrite=ov, redirector=redirector)
 EGamma_Run2018B = Sample.nanoAODfromDAS("EGamma_Run2018B", "/EGamma/schoef-crab_Run2018B-UL2018_MiniAODv2-v1_nano_data_UL20_private_v1-0bf6294e252c33eca4e4a21d6858e8c4/USER", instance="phys03", dbFile=dbFile, overwrite=ov, redirector=redirector)
 EGamma_Run2018C = Sample.nanoAODfromDAS("EGamma_Run2018C", "/EGamma/schoef-crab_Run2018C-UL2018_MiniAODv2-v1_nano_data_UL20_private_v1-0bf6294e252c33eca4e4a21d6858e8c4/USER", instance="phys03", dbFile=dbFile, overwrite=ov, redirector=redirector)
-EGamma_Run2018 = [EGamma_Run2018A, EGamma_Run2018B, EGamma_Run2018C]#, EGamma_Run2018D]
+EGamma_Run2018D = Sample.nanoAODfromDAS("EGamma_Run2018D", "/EGamma/schoef-crab_Run2018D-UL2018_MiniAODv2-v2_nano_data_UL20_private_v1-0bf6294e252c33eca4e4a21d6858e8c4/USER", instance="phys03", dbFile=dbFile, overwrite=ov, redirector=redirector)
+EGamma_Run2018 = [EGamma_Run2018A, EGamma_Run2018B, EGamma_Run2018C, EGamma_Run2018D]
 
 DoubleMuon_Run2018A = Sample.nanoAODfromDAS("DoubleMuon_Run2018A", "/DoubleMuon/schoef-crab_Run2018A-UL2018_MiniAODv2-v1_nano_data_UL20_private_v1-0bf6294e252c33eca4e4a21d6858e8c4/USER", instance="phys03", dbFile=dbFile, overwrite=ov, redirector=redirector)
 DoubleMuon_Run2018B = Sample.nanoAODfromDAS("DoubleMuon_Run2018B", "/DoubleMuon/schoef-crab_Run2018B-UL2018_MiniAODv2-v1_nano_data_UL20_private_v1-0bf6294e252c33eca4e4a21d6858e8c4/USER", instance="phys03", dbFile=dbFile, overwrite=ov, redirector=redirector)

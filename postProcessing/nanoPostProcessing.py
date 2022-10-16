@@ -19,8 +19,10 @@ from RootTools.core.standard import *
 # User specific
 import tttt.Tools.user as user
 
+# tttt 
+from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
+
 # Tools for systematics
-from tWZ.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
 from tWZ.Tools.objectSelection_UL     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP
 from tWZ.Tools.objectSelection_UL     import getGenZs
 from tWZ.Tools.mvaTOPreader  import mvaTOPreader
@@ -146,17 +148,21 @@ if options.small:
     options.nJobs = 10000 # set high to just run over 1 input file
 
 if options.era == "UL2016":
-    from tttt.samples.nano_mc_private_UL20_Run2016 import allSamples as mcSamples
-    allSamples = mcSamples #+ dataSamples
-elif options.era == "UL2016_preVFP": #AODAPV samples
-    from tttt.samples.nano_mc_private_UL20_Run2016preVFP import allSamples as mcSamples
-    allSamples = mcSamples #+ dataSamples
+    from tttt.samples.nano_mc_private_UL20_Summer16  import allSamples as mcSamples
+    from tttt.samples.nano_data_private_UL20_Run2016 import allSamples as dataSamples
+    allSamples = mcSamples + dataSamples
+elif options.era == "UL2016_preVFP": 
+    from tttt.samples.nano_mc_private_UL20_Summer16_preVFP  import allSamples as mcSamples
+    from tttt.samples.nano_data_private_UL20_Run2016_preVFP import allSamples as dataSamples
+    allSamples = mcSamples + dataSamples
 elif options.era == "UL2017":
-    from tttt.samples.nano_mc_private_UL20_Run2017  import allSamples as mcSamples
-    allSamples = mcSamples #+ dataSamples
+    from tttt.samples.nano_mc_private_UL20_Fall17    import allSamples as mcSamples
+    from tttt.samples.nano_data_private_UL20_Run2017 import allSamples as dataSamples
+    allSamples = mcSamples + dataSamples
 elif options.era == "UL2018":
-    from tttt.samples.nano_mc_private_UL20_Run2018  import allSamples as mcSamples
-    allSamples = mcSamples #+ dataSamples
+    from tttt.samples.nano_mc_private_UL20_Autumn18  import allSamples as mcSamples
+    from tttt.samples.nano_data_private_UL20_Run2018 import allSamples as dataSamples
+    allSamples = mcSamples + dataSamples
 
 samples = []
 for selected in options.samples:
