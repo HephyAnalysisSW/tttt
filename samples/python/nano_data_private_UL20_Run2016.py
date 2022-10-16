@@ -62,7 +62,8 @@ MuonEG_Run2016 = [MuonEG_Run2016F, MuonEG_Run2016G, MuonEG_Run2016H]
 allSamples = SingleMuon_Run2016 + SingleElectron_Run2016 + DoubleMuon_Run2016 + DoubleEG_Run2016 + MuonEG_Run2016
 
 for s in allSamples:
-    s.isData = False
+    s.isData = True
+    s.json      = os.path.expandvars("$CMSSW_BASE/src/Samples/Tools/data/json/Cert_271036-284044_13TeV_Legacy2016_Collisions16_JSON.txt")
 
 from Samples.Tools.AutoClass import AutoClass
 samples = AutoClass( allSamples )

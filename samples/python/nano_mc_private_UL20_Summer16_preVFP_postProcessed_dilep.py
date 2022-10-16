@@ -42,3 +42,4 @@ dirs = {}
 
 dirs['TTLep']  = ["TTLep_pow_CP5"]
 TTLep = Sample.fromDirectory(name="TTLep", treeName="Events", isData=False, color=color.TT, texName="t#bar{t}", directory=make_dirs( dirs['TTLep'] ))
+TTTT  = Sample.fromDirectory(name="TTTT",  treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}", directory=make_dirs( ['TTTT'] ))
