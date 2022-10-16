@@ -35,8 +35,9 @@ dbFile = dbDir+'/nano_mc_private_UL20.sql'
 logger.info("Using db file: %s", dbFile)
 
 TTLep_pow_CP5 = Sample.nanoAODfromDAS("TTLep_pow_CP5", "/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL16MiniAODv2-106X_mcRun2_asymptotic_v17-v1_nano_mc_UL20_private_v1-987345b702a321dad0facc826a267125/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=831.762*((3*0.108)**2))
+TTTT          = Sample.nanoAODfromDAS("TTTT", "/TTTT_TuneCP5_13TeV-amcatnlo-pythia8/schoef-crab_RunIISummer20UL16MiniAODv2-106X_mcRun2_asymptotic_v17-v2_nano_mc_UL20_private_v1-987345b702a321dad0facc826a267125/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=0.009103)
 
-allSamples = [ TTLep_pow_CP5 ]
+allSamples = [ TTLep_pow_CP5, TTTT]
 
 for s in allSamples:
     s.isData = False
