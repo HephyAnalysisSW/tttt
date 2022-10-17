@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-''' simple analysis script 
+''' simple analysis script
 '''
 #
 # Standard imports and batch mode
@@ -18,7 +18,7 @@ from tttt.Tools.objectSelection import getGoodMuons
 
 #
 # Arguments
-# 
+#
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO',      nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
@@ -50,6 +50,8 @@ if args.small:
     #data_sample.reduceFiles( factor = 100 )
     data_sample.reduceFiles( to = 1 )
 
+if args.small:args.plot_directory += "_small"
+
 ## 4 muon selection
 #preSelection = "Sum$(Muon_pt>20&&Muon_mediumPromptId)>=4"
 preSelection = "Sum$(Muon_pt>5&&Muon_mediumPromptId)>=4"
@@ -57,9 +59,9 @@ preSelection = "Sum$(Muon_pt>5&&Muon_mediumPromptId)>=4"
 #
 # Read variables and sequences
 #
-read_variables = [#"weight/F" , 
-                  #"met_phi/F", 
-                  "nMuon/I", "Muon[pt/F,eta/F,phi/F,mediumPromptId/O,pdgId/I,pfRelIso03_all/F]", 
+read_variables = [#"weight/F" ,
+                  #"met_phi/F",
+                  "nMuon/I", "Muon[pt/F,eta/F,phi/F,mediumPromptId/O,pdgId/I,pfRelIso03_all/F]",
 #                  "l1_pt/F",  "l2_pt/F",  "l3_pt/F",  "l4_pt/F",
 #                  "l1_eta/F", "l2_eta/F", "l3_eta/F", "l4_eta/F",
 #                  "l1_phi/F", "l2_phi/F", "l3_phi/F", "l4_phi/F",
@@ -80,7 +82,7 @@ def makeM4l(event, sample):
         # these lines should be commented when running w/o --small
         #for i_m, m in enumerate(muons):
         #    print i_m, "pt {pt} eta {eta} phi {phi} pdgId {pdgId}".format(**m)
-        
+
         # select 2 positive and 2 negative charges
         pdgIds = [ p['pdgId'] for p in muons ]
         if pdgIds.count(+13) == 2 and pdgIds.count(-13)==2:
@@ -88,7 +90,7 @@ def makeM4l(event, sample):
                 for j in range( i ):
                     #print "indices i=%i,j=%i: adding %d to m4l2 => yiels %d" % (i,j,m4l2summand,m4l2)
                     m4l2 += 2.*muons[i]['pt']*muons[j]['pt']*( cosh(muons[i]['eta']-muons[j]['eta']) - cos( muons[i]['phi'] - muons[j]['phi'] ))
-                    
+
     event.m4l = sqrt( m4l2 )
     if event.m4l!=0:
         print "%f = invariant mass of 4 muons (2 pos, 2 neg)" % event.m4l
@@ -104,9 +106,9 @@ def drawObjects( ):
     tex.SetTextSize(0.04)
     tex.SetTextAlign(11) # align right
     lines = [
-      (0.15, 0.95, 'CMS Preliminary'), 
+      (0.15, 0.95, 'CMS Preliminary'),
     ]
-    return [tex.DrawLatex(*l) for l in lines] 
+    return [tex.DrawLatex(*l) for l in lines]
 
 data_sample.setSelectionString(preSelection)
 data_sample.style = styles.errorStyle( ROOT.kBlack )
@@ -122,16 +124,16 @@ plots.append(Plot(name = "m4l",
   texX = 'm(4l)', texY = 'Number of Events / 3 GeV',
   attribute = lambda event, sample: event.m4l,
   #binning=[100,105,135],
-  binning=[30,20,320],
+  binning=[50,20,320],
 ))
 
 plotting.fill(plots, read_variables = read_variables, sequence=sequence)
 
 for plot in plots:
-  plotting.draw(plot, 
+  plotting.draw(plot,
       plot_directory = os.path.join(plot_directory, args.plot_directory),
-      ratio = None, 
-      logX = False, logY = False, sorting = True, 
+      ratio = None,
+      logX = False, logY = False, sorting = True,
       yRange = (0.003, "auto"),
       drawObjects = drawObjects( )
   )
