@@ -91,7 +91,7 @@ def makeM4l(event, sample):
                     
     event.m4l = sqrt( m4l2 )
     if event.m4l!=0:
-        print "%f = invariant mass of 4 muons (2 pos, 2 neg)" % event.m4l
+        print(("%f = invariant mass of 4 muons (2 pos, 2 neg)" % event.m4l))
 
 sequence = [makeM4l]
 

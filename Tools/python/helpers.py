@@ -59,7 +59,7 @@ def getFileList(dir, histname='histo', maxN=-1):
     return filelist
 
 def getSortedZCandidates(leptons):
-    inds = range(len(leptons))
+    inds = list(range(len(leptons)))
     vecs = [ ROOT.TLorentzVector() for i in inds ]
     for i, v in enumerate(vecs):
         v.SetPtEtaPhiM(leptons[i]['pt'], leptons[i]['eta'], leptons[i]['phi'], 0.)
@@ -75,7 +75,7 @@ def getSortedZCandidates(leptons):
     return bestCandidates
 
 def getMinDLMass(leptons):
-    inds = range(len(leptons))
+    inds = list(range(len(leptons)))
     vecs = [ ROOT.TLorentzVector() for i in inds ]
     for i, v in enumerate(vecs):
         v.SetPtEtaPhiM(leptons[i]['pt'], leptons[i]['eta'], leptons[i]['phi'], 0.)
@@ -135,7 +135,7 @@ def checkRootFile(f, checkForObjects=[]):
         return False
     for o in checkForObjects:
         if not rf.GetListOfKeys().Contains(o):
-            print "[checkRootFile] Failed to find object %s in file %s"%(o, f)
+            print("[checkRootFile] Failed to find object %s in file %s"%(o, f))
             rf.Close()
             return False
 #    print "Keys recoveredd %i zombie %i tb %i"%(rf.Recover(), rf.IsZombie(), rf.TestBit(ROOT.TFile.kRecovered))
