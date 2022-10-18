@@ -65,7 +65,7 @@ def getSortedZCandidates(leptons):
         v.SetPtEtaPhiM(leptons[i]['pt'], leptons[i]['eta'], leptons[i]['phi'], 0.)
     dlMasses = [((vecs[comb[0]] + vecs[comb[1]]).M(), comb[0], comb[1])  for comb in itertools.combinations(inds, 2) if leptons[comb[0]]['pdgId']*leptons[comb[1]]['pdgId'] < 0 and abs(leptons[comb[0]]['pdgId']) == abs(leptons[comb[1]]['pdgId']) ]
     # sort the candidates, only keep the best ones
-    dlMasses = sorted(dlMasses, key=lambda (m,i1,i2):abs(m-mZ))
+    dlMasses = sorted(dlMasses, key=lambda m,i1,i2:abs(m-mZ))
     usedIndices = []
     bestCandidates = []
     for m in dlMasses:
@@ -89,7 +89,7 @@ def closestOSDLMassToMZ(leptons):
     for i, v in enumerate(vecs):
         v.SetPtEtaPhiM(leptons[i]['pt'], leptons[i]['eta'], leptons[i]['phi'], 0.)
     dlMasses = [((vecs[comb[0]] + vecs[comb[1]]).M(), comb[0], comb[1])  for comb in itertools.combinations(inds, 2) if leptons[comb[0]]['pdgId']*leptons[comb[1]]['pdgId'] < 0 and abs(leptons[comb[0]]['pdgId']) == abs(leptons[comb[1]]['pdgId']) ]
-    return min(dlMasses, key=lambda (m,i1,i2):abs(m-mZ)) if len(dlMasses)>0 else (float('nan'), -1, -1)
+    return min(dlMasses, key=lambda m,i1,i2:abs(m-mZ)) if len(dlMasses)>0 else (float('nan'), -1, -1)
 
 def m3( jets ):
     if not len(jets)>=3: return float('nan'), -1, -1, -1
