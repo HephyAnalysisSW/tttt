@@ -124,7 +124,7 @@ jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F']
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
-    event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+    event.bJets    = [j for j in event.jets if isBJet(j, year=event.year) and abs(j['eta'])<=2.4]
 sequence.append( make_jets )
 
 #MVA
@@ -178,8 +178,8 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
         if abs_pdg == 13:
             def func_( event, sample ):
                 if debug:
-                    print "Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result",
-                    print functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+                    print("Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result", end=' ')
+                    print(functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan'))
                 return functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
         else:
             def func_( event, sample ):
@@ -188,8 +188,8 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
         if abs_pdg == 13:
             def func_( event, sample ):
                 if debug:
-                    print "Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result",
-                    print getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+                    print("Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result", end=' ')
+                    print(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan'))
                 return getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
         else:
             def func_( event, sample ):
