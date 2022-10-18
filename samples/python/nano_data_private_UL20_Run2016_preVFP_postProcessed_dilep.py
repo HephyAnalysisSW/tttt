@@ -10,8 +10,8 @@ logger = logging.getLogger(__name__)
 try:
     directory_ = sys.modules['__main__'].directory_
 except:
-    import tWZ.samples.UL_nanoAODv9_locations as locations
-    directory_ = locations.data_UL2016_preVFP
+    import tttt.samples.UL_nanoAODv9_locations as locations
+    directory_ = locations.UL2016_preVFP
 
 logger.info("Loading data samples from directory %s", directory_)
 
