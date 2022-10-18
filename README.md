@@ -18,7 +18,7 @@ cd $CMSSW_BASE
 scram b -j40
 
 ```
-# Recipe for CMSSW_12 (python 2) 
+# Recipe for CMSSW_12 (python 3) 
 ```
 cmsrel CMSSW_12_0_0
 cd CMSSW_12_0_0/src
