@@ -1,4 +1,4 @@
-# tttt 
+# Recipe for <= CMSSW_12 (python 2) 
 ```
 cmsrel CMSSW_10_6_28
 cd CMSSW_10_6_28/src
@@ -14,6 +14,22 @@ git clone https://github.com/HephyAnalysisSW/tWZ --branch UL
 git clone https://github.com/HephyAnalysisSW/Analysis
 git clone https://github.com/HephyAnalysisSW/Samples
 git clone https://github.com/HephyAnalysisSW/RootTools
+cd $CMSSW_BASE
+scram b -j40
+
+```
+# Recipe for CMSSW_12 (python 3) 
+```
+cmsrel CMSSW_12_0_0
+cd CMSSW_12_0_0/src
+cmsenv
+git cms-init
+cmsenv
+git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
+git clone https://github.com/HephyAnalysisSW/tttt --branch python3
+git clone https://github.com/HephyAnalysisSW/Analysis  --branch python3
+git clone https://github.com/HephyAnalysisSW/Samples  --branch python3
+git clone https://github.com/HephyAnalysisSW/RootTools  --branch python3
 cd $CMSSW_BASE
 scram b -j40
 
