@@ -38,14 +38,14 @@ argParser.add_argument('--selection',      action='store', default='dilepL-offZ1
 args = argParser.parse_args()
 
 # Logger
-import TMB.Tools.logger as logger
+import tttt.Tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 if args.small:args.plot_directory += "_small"
 
-from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
+from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 
 sample_TTLep = TTLep
 # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
@@ -64,7 +64,7 @@ TTLep_other.name = "TTLep_other"
 TTLep_other.texName = "t#bar{t} + light j." 
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
-mc = [ TTLep_bb,TTLep_cc,TTLep_other, TTW, TTH, TTZ] 
+mc = [ TTLep_bb,TTLep_cc,TTLep_other] #, TTW, TTH, TTZ] 
 
 all_mc = mc + [TTTT]
 lumi_scale = 350#sum(lumi_year.values())/1000.
@@ -86,7 +86,7 @@ tex.SetTextSize(0.04)
 tex.SetTextAlign(11) # align right
 
 def charge(pdgId):
-    return -pdgId/abs(pdgId)
+    return -pdgId//abs(pdgId)
 
 def drawObjects( dataMCScale, lumi_scale ):
     lines = [
@@ -118,8 +118,8 @@ def drawPlots(plots, mode, dataMCScale):
 # Read variables and sequences
 sequence       = []
 
-from TMB.Tools.objectSelection import isBJet
-from TMB.Tools.helpers import getObjDict
+from tttt.Tools.objectSelection import isBJet
+from tttt.Tools.helpers import getObjDict
 jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F']
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 def make_jets( event, sample ):
@@ -127,16 +127,18 @@ def make_jets( event, sample ):
     event.bJets    = [j for j in event.jets if isBJet(j, year=event.year) and abs(j['eta'])<=2.4]
 sequence.append( make_jets )
 
-#MVA
-import TMB.MVA.configs as configs
-config = configs.tttt_2l
-read_variables = config.read_variables
+read_variables = []
 
-# Add sequence that computes the MVA inputs
-def make_mva_inputs( event, sample ):
-    for mva_variable, func in config.mva_variables:
-        setattr( event, mva_variable, func(event, sample) )
-sequence.append( make_mva_inputs )
+##MVA
+#import TMB.MVA.configs as configs
+#config = configs.tttt_2l
+#read_variables += config.read_variables
+#
+## Add sequence that computes the MVA inputs
+#def make_mva_inputs( event, sample ):
+#    for mva_variable, func in config.mva_variables:
+#        setattr( event, mva_variable, func(event, sample) )
+#sequence.append( make_mva_inputs )
 
 def getM3l( event, sample ):
     # get the invariant mass of the 3l system
@@ -156,9 +158,9 @@ read_variables += [
     "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I]",
     "Z1_l1_index/I", "Z1_l2_index/I", #"nonZ1_l1_index/I", "nonZ1_l2_index/I", 
     "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
-    "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
-    "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTOP/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
-    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i,nBHadFromT/I,nBHadFromTbar/I,nBHadFromW/I,nBHadOther/I,nCHadFromW/I,nCHadOther/I]"
+    "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
+    "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
+    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]" #,nBHadFromT/I,nBHadFromTbar/I,nBHadFromW/I,nBHadOther/I,nCHadFromW/I,nCHadOther/I]"
 ]
 
 read_variables_MC = ['reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F']
@@ -232,13 +234,14 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 
 genJetSelection = "GenJet_pt>30&&abs(GenJet_eta)<2.4"
 
-ttreeFormulas = {   "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection), 
+ttreeFormulas = {   
+                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection), 
                     "nGenJet_absPF5":"Sum$(abs(GenJet_partonFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection),
-                    "nGenJet_min1BHadFromTorTbar":"Sum$(GenJet_nBHadFromT+GenJet_nBHadFromTbar>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
-                    "nGenJet_min1BHadFromW":"Sum$(GenJet_nBHadFromW>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
-                    "nGenJet_min1BHadOther":"Sum$(GenJet_nBHadOther>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
-                    "nGenJet_min1CHadFromW":"Sum$(GenJet_nCHadFromW>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
-                    "nGenJet_min1CHadOther":"Sum$(GenJet_nCHadOther>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+#                    "nGenJet_min1BHadFromTorTbar":"Sum$(GenJet_nBHadFromT+GenJet_nBHadFromTbar>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+#                    "nGenJet_min1BHadFromW":"Sum$(GenJet_nBHadFromW>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+#                    "nGenJet_min1BHadOther":"Sum$(GenJet_nBHadOther>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+#                    "nGenJet_min1CHadFromW":"Sum$(GenJet_nCHadFromW>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+#                    "nGenJet_min1CHadOther":"Sum$(GenJet_nCHadOther>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
     }
 
 yields     = {}
@@ -292,40 +295,40 @@ for i_mode, mode in enumerate(allModes):
       addOverFlowBin='upper',
     ))
 
-    plots.append(Plot(
-      name = 'nGenJet_min1BHadFromTorTbar', texY = 'Number of Events',
-      attribute = lambda event, sample: event.nGenJet_min1BHadFromTorTbar,
-      binning=[7,-0.5,6.5],
-      addOverFlowBin='upper',
-    ))
-
-    plots.append(Plot(
-      name = 'nGenJet_min1BHadFromW', texY = 'Number of Events',
-      attribute = lambda event, sample: event.nGenJet_min1BHadFromW,
-      binning=[7,-0.5,6.5],
-      addOverFlowBin='upper',
-    ))
-
-    plots.append(Plot(
-      name = 'nGenJet_min1BHadOther', texY = 'Number of Events',
-      attribute = lambda event, sample: event.nGenJet_min1BHadOther,
-      binning=[7,-0.5,6.5],
-      addOverFlowBin='upper',
-    ))
-
-    plots.append(Plot(
-      name = 'nGenJet_min1CHadFromW', texY = 'Number of Events',
-      attribute = lambda event, sample: event.nGenJet_min1CHadFromW,
-      binning=[7,-0.5,6.5],
-      addOverFlowBin='upper',
-    ))
-
-    plots.append(Plot(
-      name = 'nGenJet_min1CHadOther', texY = 'Number of Events',
-      attribute = lambda event, sample: event.nGenJet_min1CHadOther,
-      binning=[7,-0.5,6.5],
-      addOverFlowBin='upper',
-    ))
+#    plots.append(Plot(
+#      name = 'nGenJet_min1BHadFromTorTbar', texY = 'Number of Events',
+#      attribute = lambda event, sample: event.nGenJet_min1BHadFromTorTbar,
+#      binning=[7,-0.5,6.5],
+#      addOverFlowBin='upper',
+#    ))
+#
+#    plots.append(Plot(
+#      name = 'nGenJet_min1BHadFromW', texY = 'Number of Events',
+#      attribute = lambda event, sample: event.nGenJet_min1BHadFromW,
+#      binning=[7,-0.5,6.5],
+#      addOverFlowBin='upper',
+#    ))
+#
+#    plots.append(Plot(
+#      name = 'nGenJet_min1BHadOther', texY = 'Number of Events',
+#      attribute = lambda event, sample: event.nGenJet_min1BHadOther,
+#      binning=[7,-0.5,6.5],
+#      addOverFlowBin='upper',
+#    ))
+#
+#    plots.append(Plot(
+#      name = 'nGenJet_min1CHadFromW', texY = 'Number of Events',
+#      attribute = lambda event, sample: event.nGenJet_min1CHadFromW,
+#      binning=[7,-0.5,6.5],
+#      addOverFlowBin='upper',
+#    ))
+#
+#    plots.append(Plot(
+#      name = 'nGenJet_min1CHadOther', texY = 'Number of Events',
+#      attribute = lambda event, sample: event.nGenJet_min1CHadOther,
+#      binning=[7,-0.5,6.5],
+#      addOverFlowBin='upper',
+#    ))
 
     plots.append(Plot(
         name = 'l1_pt',
@@ -388,7 +391,7 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
         texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
         attribute = TreeVariable.fromString( "met_pt/F" ),
-        binning=[400/20,0,400],
+        binning=[400//20,0,400],
         addOverFlowBin='upper',
     ))
 
@@ -480,19 +483,19 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
       texX = 'p_{T}(leading l) (GeV)', texY = 'Number of Events / 20 GeV',
       name = 'lep1_pt', attribute = lambda event, sample: event.lep_pt[0],
-      binning=[400/20,0,400],
+      binning=[400//20,0,400],
     ))
 
     plots.append(Plot(
       texX = 'p_{T}(subleading l) (GeV)', texY = 'Number of Events / 10 GeV',
       name = 'lep2_pt', attribute = lambda event, sample: event.lep_pt[1],
-      binning=[200/10,0,200],
+      binning=[200//10,0,200],
     ))
 
     plots.append(Plot(
       texX = 'p_{T}(trailing l) (GeV)', texY = 'Number of Events / 10 GeV',
       name = 'lep3_pt', attribute = lambda event, sample: event.lep_pt[2],
-      binning=[150/10,0,150],
+      binning=[150//10,0,150],
     ))
 
     #plots.append(Plot(
@@ -605,19 +608,19 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
       texX = 'H_{T} (GeV)', texY = 'Number of Events / 30 GeV',
       name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
-      binning=[1500/50,0,1500],
+      binning=[1500//50,0,1500],
     ))
 
     plots.append(Plot(
       texX = 'p_{T}(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',
       name = 'jet0_pt', attribute = lambda event, sample: event.JetGood_pt[0],
-      binning=[600/30,0,600],
+      binning=[600//30,0,600],
     ))
 
     plots.append(Plot(
       texX = 'p_{T}(subleading jet) (GeV)', texY = 'Number of Events / 30 GeV',
       name = 'jet1_pt', attribute = lambda event, sample: event.JetGood_pt[1],
-      binning=[600/30,0,600],
+      binning=[600//30,0,600],
     ))
 
 #    plots.append(Plot(
@@ -672,7 +675,7 @@ for i_mode, mode in enumerate(allModes):
             plots.append(Plot(
               texX = 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
               name = '%s%i_pt'%(lep_name, index), attribute = lep_getter("pt", index, abs_pdg),
-              binning=[400/20,0,400],
+              binning=[400//20,0,400],
             ))
             plots.append(Plot(
               texX = '#eta(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
@@ -724,11 +727,11 @@ for i_mode, mode in enumerate(allModes):
               name = '%s%i_mvaTTH'%(lep_name, index), attribute = lep_getter("mvaTTH", index, abs_pdg),
               binning=[24,-1.2,1.2],
             ))
-            plots.append(Plot(
-              texX = 'mvaTOP(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_mvaTOP'%(lep_name, index), attribute = lep_getter("mvaTOP", index, abs_pdg),
-              binning=[24,-1.2,1.2],
-            ))
+            #plots.append(Plot(
+            #  texX = 'mvaTOP(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #  name = '%s%i_mvaTOP'%(lep_name, index), attribute = lep_getter("mvaTOP", index, abs_pdg),
+            #  binning=[24,-1.2,1.2],
+            #))
             plots.append(Plot(
               texX = 'charge(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
               name = '%s%i_charge'%(lep_name, index), attribute = lep_getter("pdgId", index, abs_pdg, functor = charge),
