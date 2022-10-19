@@ -1,4 +1,4 @@
-# tttt 
+# Recipe for <= CMSSW_12 (python 2) 
 ```
 cmsrel CMSSW_10_6_28
 cd CMSSW_10_6_28/src
@@ -8,12 +8,28 @@ curl -sLO https://gist.githubusercontent.com/dietrichliko/8aaeec87556d6dd2f60d8d
 . ./install_correctionlib.sh
 cmsenv
 git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
-git clone https://github.com/HephyAnalysisSW/tttt
-git clone https://github.com/HephyAnalysisSW/TMB
-git clone https://github.com/HephyAnalysisSW/tWZ --branch UL
-git clone https://github.com/HephyAnalysisSW/Analysis
-git clone https://github.com/HephyAnalysisSW/Samples
-git clone https://github.com/HephyAnalysisSW/RootTools
+git clone git@github.com:HephyAnalysisSW/tttt.git
+git clone git@github.com:HephyAnalysisSW/TMB
+git clone git@github.com:HephyAnalysisSW/tWZ --branch UL
+git clone git@github.com:HephyAnalysisSW/Analysis
+git clone git@github.com:HephyAnalysisSW/Samples
+git clone git@github.com:HephyAnalysisSW/RootTools
+cd $CMSSW_BASE
+scram b -j40
+
+```
+# Recipe for CMSSW_12 (python 3) 
+```
+cmsrel CMSSW_12_0_0
+cd CMSSW_12_0_0/src
+cmsenv
+git cms-init
+cmsenv
+git clone git@github.com:cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
+git clone git@github.com:HephyAnalysisSW/tttt --branch python3
+git clone git@github.com:HephyAnalysisSW/Analysis  --branch python3
+git clone git@github.com:HephyAnalysisSW/Samples  --branch python3
+git clone git@github.com:HephyAnalysisSW/RootTools  --branch python3
 cd $CMSSW_BASE
 scram b -j40
 
