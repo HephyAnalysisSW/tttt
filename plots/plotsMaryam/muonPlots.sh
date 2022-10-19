@@ -1,1 +1,1 @@
-python muonPlots.py
+python muonPlots.py --small
