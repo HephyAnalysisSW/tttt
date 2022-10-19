@@ -21,18 +21,16 @@ import tttt.Tools.user as user
 
 # tttt 
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
+from tttt.Tools.objectSelection_UL  import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs
 
-# Tools for systematics
-from tWZ.Tools.objectSelection_UL     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP
-from tWZ.Tools.objectSelection_UL     import getGenZs
-from tWZ.Tools.mvaTOPreader  import mvaTOPreader
+from tttt.Tools.triggerEfficiency   import triggerEfficiency
+from tttt.Tools.leptonSF            import leptonSF as leptonSF_
 
-from tWZ.Tools.triggerEfficiency   import triggerEfficiency
-from tWZ.Tools.leptonSF            import leptonSF as leptonSF_
-from tWZ.Tools.mcTools import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
+#Analysis
+from Analysis.Tools.mvaTOPreader  import mvaTOPreader
+from Analysis.Tools.metFiltersUL             import getFilterCut
+from Analysis.Tools.mcTools import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
 genSearch = GenSearch()
-
-from tWZ.Tools.metFiltersUL               import getFilterCut
 from Analysis.Tools.puProfileDirDB           import puProfile
 from Analysis.Tools.LeptonTrackingEfficiency import LeptonTrackingEfficiency
 from Analysis.Tools.helpers                  import checkRootFile, deepCheckRootFile, deepCheckWeight, dRCleaning
@@ -93,7 +91,7 @@ elif "UL2018" == options.era:
     year = 2018
 
 # Logging
-import tWZ.Tools.logger as _logger
+import tttt.Tools.logger as _logger
 logFile = '/tmp/%s_%s_%s_njob%s.txt'%(options.skim, '_'.join(options.samples), os.environ['USER'], str(0 if options.nJobs==1 else options.job))
 logger  = _logger.get_logger(options.logLevel, logFile = logFile)
 
@@ -329,7 +327,7 @@ sample.copy_files( os.path.join(tmp_output_directory, "input") )
 treeFormulas = {}
 if options.triggerSelection and isTriLep:
     # Trigger selection
-    from tWZ.Tools.triggerSelector import triggerSelector
+    from tttt.Tools.triggerSelector import triggerSelector
     ts           = triggerSelector(year)
     triggerCond  = ts.getSelection(options.samples[0] if isData else "MC", triggerList = ts.getTriggerList(sample) )
     treeFormulas["triggerDecision"] =  {'string':triggerCond}
@@ -352,7 +350,7 @@ selectionString = '&&'.join(skimConds)
 
 ################################################################################
 # top pt reweighting
-from tWZ.Tools.topPtReweighting import getUnscaledTopPairPtReweightungFunction, getTopPtDrawString, getTopPtsForReweighting
+from Analysis.Tools.topPtReweighting import getUnscaledTopPairPtReweightungFunction, getTopPtDrawString, getTopPtsForReweighting
 # Decision based on sample name -> whether TTJets or TTLep is in the sample name
 isTT = sample.name.startswith("TTJets") or sample.name.startswith("TTLep") or sample.name.startswith("TT_pow")
 doTopPtReweighting = isTT and not options.noTopPtReweighting
@@ -381,7 +379,7 @@ else:
 ################################################################################
 # CR reweighting 
 if options.doCRReweighting:
-    from tWZ.Tools.colorReconnectionReweighting import getCRWeight, getCRDrawString
+    from Analysis.Tools.colorReconnectionReweighting import getCRWeight, getCRDrawString
     logger.info( "Sample will have CR reweighting." )
     #norm = sample.getYieldFromDraw( selectionString = selectionString, weightString = "genWeight" )
     norm = float(sample.chain.GetEntries(selectionString))
@@ -434,7 +432,7 @@ else:
     lumiScaleFactor = xSection*targetLumi/float(sample.normalization) if xSection is not None else None
     branchKeepStrings = branchKeepStrings_DATAMC + branchKeepStrings_MC
 
-jetVars         = ['pt/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'rawFactor/F', 'eta/F', 'phi/F', 'jetId/I', 'btagDeepB/F', 'btagDeepFlavB/F', 'btagCSVV2/F', 'area/F', 'pt_nom/F', 'corr_JER/F'] + jetCorrInfo
+jetVars         = ['pt/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'rawFactor/F', 'eta/F', 'phi/F', 'jetId/I', 'btagDeepB/F', 'btagDeepCvB/F', 'btagDeepCvL/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F', 'btagDeepFlavQG/F', 'btagCSVV2/F', 'area/F', 'pt_nom/F', 'corr_JER/F'] + jetCorrInfo
 if isMC:
     jetVars     += jetMCInfo
     jetVars     += ['pt_jesTotalUp/F', 'pt_jesTotalDown/F', 'pt_jerUp/F', 'pt_jerDown/F', 'corr_JER/F', 'corr_JEC/F']
