@@ -15,7 +15,7 @@ def isAnalysisJet(j, ptCut=30, absEtaCut=2.4, ptVar='pt', idVar='jetId', corrFac
   j_pt = j[ptVar] if not corrFactor else j[ptVar]*j[corrFactor]
   return j_pt>ptCut and abs(j['eta'])<absEtaCut and ( j[idVar] > 0 if idVar is not None else True )
 
-def isBJet(j, tagger = 'DeepCSV', year = 2016):
+def isBJet(j, tagger = 'DeepFlavor', year = 2016):
     if tagger == 'CSVv2':
         if year in [2016, "UL2016", "UL2016_preVFP"]:
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
@@ -104,7 +104,7 @@ def get_index_str( index ):
     return index_str
 
 ## MVA TOP lepton thresholds ##
-mvaTOP = {'mu':{'VL':-0.45, 'L':0.05, 'M':0.65, 'T':0.90}, 'ele':{'VL':-0.55, 'L':0.0, 'M':0.60, 'T':0.90}}
+mvaTOP = {'mu':{'VL':0.59, 'L':0.81, 'M':0.90, 'T':0.94}, 'ele':{'VL':0.59, 'L':0.81, 'M':0.90, 'T':0.94}} #v2
 muon_deepjet_FO_threshold   = {2016:0.015, 2017:0.02, 2018:0.02}
 muon_jetRelIso_FO_threshold = {2016:0.5, 2017:0.6, 2018:0.5}
 

@@ -13,11 +13,11 @@ special_cuts = {
 
     "example":         "l1_pt>50",
     "singlelep":       "l1_pt>20",
-    "dilep":           "l2_pt>20",
+    "dilep":           "l2_pt>15",
     "dilepVL":         "(Sum$(lep_pt>15)<=2)&&l1_pt>40&&l2_pt>20",
     "dilepL" :         "(Sum$(lep_pt>15)<=2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
     "dilepM" :         "(Sum$(lep_pt>15)<=2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
-    "dilepT" :         "(Sum$(lep_pt>15)<=2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
+    "dilepT" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
     "trilepVL":        "l1_pt>40&&l2_pt>20&&l3_pt>10",
     "trilepL" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
     "trilepM" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
@@ -113,7 +113,7 @@ class cutInterpreter:
         cutString = "&&".join( map( cutInterpreter.translate_cut_to_string, cuts ) )
 
         return cutString
-    
+
     @staticmethod
     def cutList ( cut, select = [""], ignore = []):
         ''' Cutstring syntax: cut1-cut2-cut3
@@ -123,7 +123,7 @@ class cutInterpreter:
         cuts = filter( lambda c: any( sel in c for sel in select ), cuts )
         # ignore
         cuts = filter( lambda c: not any( ign in c for ign in ignore ), cuts )
-        return [ cutInterpreter.translate_cut_to_string(cut) for cut in cuts ] 
+        return [ cutInterpreter.translate_cut_to_string(cut) for cut in cuts ]
         #return  "&&".join( map( cutInterpreter.translate_cut_to_string, cuts ) )
 
 if __name__ == "__main__":
