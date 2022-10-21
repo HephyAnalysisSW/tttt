@@ -15,7 +15,7 @@ def isAnalysisJet(j, ptCut=30, absEtaCut=2.4, ptVar='pt', idVar='jetId', corrFac
   j_pt = j[ptVar] if not corrFactor else j[ptVar]*j[corrFactor]
   return j_pt>ptCut and abs(j['eta'])<absEtaCut and ( j[idVar] > 0 if idVar is not None else True )
 
-def isBJet(j, tagger = 'DeepCSV', year = 2016):
+def isBJet(j, tagger = 'DeepFlavor', year = 2016):
     if tagger == 'CSVv2':
         if year in [2016, "UL2016", "UL2016_preVFP"]:
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
@@ -26,25 +26,32 @@ def isBJet(j, tagger = 'DeepCSV', year = 2016):
         else:
             raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
     elif tagger == 'DeepCSV':
-        if year in [2016, "UL2016", "UL2016_preVFP"]:
-            # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
-            return j['btagDeepB'] > 0.6321
+        if year in [2016, "UL2016_preVFP"]:
+            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
+            return j['btagDeepB'] > 0.6001
+        elif year in [2016, "UL2016"]:
+            # https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
+            return j['btagDeepB'] > 0.5847
         elif year in [2017, "UL2017"]:
-            # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
-            return j['btagDeepB'] > 0.4941
+            # https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
+            return j['btagDeepB'] > 0.4506
         elif year in [2018, "UL2018"]:
-            # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
-            return j['btagDeepB'] > 0.4184
+            # https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
+            return j['btagDeepB'] > 0.4168
         else:
             raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
     elif tagger == 'DeepFlavor' or tagger == 'DeepJet':
-        if year == "UL2016_preVFP":
-            return j['btagDeepFlavB'] > 0.2489
-        elif year == "UL2016":
+        if year in [2016, "UL2016_preVFP"]:
+            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
             return j['btagDeepFlavB'] > 0.2598
-        elif year == "UL2017":
+        elif year in [2016, "UL2016"]:
+            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
+            return j['btagDeepFlavB'] > 0.2489
+        elif year in [2017, "UL2017"]:
+            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
             return j['btagDeepFlavB'] > 0.3040
-        elif year == "UL2018":
+        elif year in [2018, "UL2018"]:
+            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
             return j['btagDeepFlavB'] > 0.2783
         else:
             raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
@@ -112,9 +119,9 @@ muon_jetRelIso_FO_threshold = {2016:0.5, 2017:0.6, 2018:0.5}
 def lepString( eleMu = None, WP = 'VL', idx = None):
     idx_str = "[%s]"%idx if idx is not None else ""
     if eleMu=='ele':
-        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11&&lep_mvaTOPv2{idx_str}>{threshold}".format( threshold = mvaTOP['ele'][WP], idx_str=idx_str )
+        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11&&lep_mvaTOP{idx_str}>{threshold}".format( threshold = mvaTOP['ele'][WP], idx_str=idx_str )
     elif eleMu=='mu':
-        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13&&lep_mvaTOPv2{idx_str}>{threshold}".format( threshold = mvaTOP['mu'][WP], idx_str=idx_str )
+        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13&&lep_mvaTOP{idx_str}>{threshold}".format( threshold = mvaTOP['mu'][WP], idx_str=idx_str )
     else:
         return '('+lepString( 'ele', WP, idx=idx) + ')||(' + lepString( 'mu', WP, idx=idx) + ')'
 
@@ -298,7 +305,7 @@ def cbEleSelector( quality, removeCuts = [] ):
     for cut in removeCuts:
         if cut not in vidNestedWPBitMapNamingList:
             raise Exception( "Don't know about ele cut %r" % cut )
-    for cut in vidNestedWPBitMapNamingList: 
+    for cut in vidNestedWPBitMapNamingList:
         if cut not in removeCuts:
             thresholds.append( vidNestedWPBitMap[quality] )
         else:
@@ -474,7 +481,7 @@ def eleSelector( lepton_selection, year, ptCut = 10):
                 and abs(l["dz"])        < 0.1 \
                 and l["sip3d"]          < 8.0 \
                 and l['miniPFRelIso_all'] < 0.40 \
-                and ord(l["lostHits"])  < 2 
+                and ord(l["lostHits"])  < 2
     elif lepton_selection == 'mvaTOPVL':
         def func(l):
             return \
