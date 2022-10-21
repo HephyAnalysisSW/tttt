@@ -15,7 +15,7 @@ def isAnalysisJet(j, ptCut=30, absEtaCut=2.4, ptVar='pt', idVar='jetId', corrFac
   j_pt = j[ptVar] if not corrFactor else j[ptVar]*j[corrFactor]
   return j_pt>ptCut and abs(j['eta'])<absEtaCut and ( j[idVar] > 0 if idVar is not None else True )
 
-def isBJet(j, tagger = 'DeepFlavor', year = 2016):
+def isBJet(j, tagger = 'DeepCSV', year = 2016):
     if tagger == 'CSVv2':
         if year in [2016, "UL2016", "UL2016_preVFP"]:
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
@@ -38,15 +38,14 @@ def isBJet(j, tagger = 'DeepFlavor', year = 2016):
         else:
             raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
     elif tagger == 'DeepFlavor' or tagger == 'DeepJet':
-        if year in [2016, "UL2016", "UL2016_preVFP"]:
-            # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation2016Legacy
-            return j['btagDeepFlavB'] > 0.3093
-        elif year in [2017, "UL2017"]:
-            # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
-            return j['btagDeepFlavB'] > 0.3033
-        elif year in [2018, "UL2018"]:
-            # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
-            return j['btagDeepFlavB'] > 0.2770
+        if year == "UL2016_preVFP":
+            return j['btagDeepFlavB'] > 0.2489
+        elif year == "UL2016":
+            return j['btagDeepFlavB'] > 0.2598
+        elif year == "UL2017":
+            return j['btagDeepFlavB'] > 0.3040
+        elif year == "UL2018":
+            return j['btagDeepFlavB'] > 0.2783
         else:
             raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
 
@@ -104,16 +103,27 @@ def get_index_str( index ):
     return index_str
 
 ## MVA TOP lepton thresholds ##
-mvaTOP = {'mu':{'VL':0.59, 'L':0.81, 'M':0.90, 'T':0.94}, 'ele':{'VL':0.59, 'L':0.81, 'M':0.90, 'T':0.94}} #v2
+# mvaTOP = {'mu':{'VL':-0.45, 'L':0.05, 'M':0.65, 'T':0.90}, 'ele':{'VL':-0.55, 'L':0.00, 'M':0.60, 'T':0.90}} # EOY
+# mvaTOP = {'mu':{'VL': 0.20, 'L':0.41, 'M':0.64, 'T':0.81}, 'ele':{'VL': 0.20, 'L':0.41, 'M':0.64, 'T':0.81}} # UL
+mvaTOP = {'mu':{'VL': 0.59, 'L':0.81, 'M':0.90, 'T':0.94}, 'ele':{'VL': 0.59, 'L':0.81, 'M':0.90, 'T':0.94}} # ULv2
 muon_deepjet_FO_threshold   = {2016:0.015, 2017:0.02, 2018:0.02}
 muon_jetRelIso_FO_threshold = {2016:0.5, 2017:0.6, 2018:0.5}
 
 def lepString( eleMu = None, WP = 'VL', idx = None):
     idx_str = "[%s]"%idx if idx is not None else ""
     if eleMu=='ele':
-        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11&&lep_mvaTOP{idx_str}>{threshold}".format( threshold = mvaTOP['ele'][WP], idx_str=idx_str )
+        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11&&lep_mvaTOPv2{idx_str}>{threshold}".format( threshold = mvaTOP['ele'][WP], idx_str=idx_str )
     elif eleMu=='mu':
-        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13&&lep_mvaTOP{idx_str}>{threshold}".format( threshold = mvaTOP['mu'][WP], idx_str=idx_str )
+        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13&&lep_mvaTOPv2{idx_str}>{threshold}".format( threshold = mvaTOP['mu'][WP], idx_str=idx_str )
+    else:
+        return '('+lepString( 'ele', WP, idx=idx) + ')||(' + lepString( 'mu', WP, idx=idx) + ')'
+
+def lepStringNoMVA( eleMu = None, idx = None):
+    idx_str = "[%s]"%idx if idx is not None else ""
+    if eleMu=='ele':
+        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11".format( idx_str=idx_str )
+    elif eleMu=='mu':
+        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13".format( idx_str=idx_str )
     else:
         return '('+lepString( 'ele', WP, idx=idx) + ')||(' + lepString( 'mu', WP, idx=idx) + ')'
 
@@ -165,25 +175,33 @@ def muonSelector( lepton_selection, year, ptCut = 10):
                 and l['pfRelIso04_all'] < 0.40 \
                 and ( l['mvaId']          >= 2 or l['mvaTOP'] >0.9)\
                 and ( (l['jetIdx']<0) or (l['mvaTOP'] >0.9) or (l['mvaTOP'] <= 0.9 and (l["deepJet"] < muon_deepjet_FO_threshold[year] and l["jetRelIso"]>muon_jetRelIso_FO_threshold[year])) )
-
+    elif lepton_selection == 'presel':
+        def func(l):
+            return \
+                l["pt"]                 >= ptCut \
+                and abs(l["eta"])       < 2.4 \
+                and l["sip3d"]          < 8.0 \
+                and l['miniPFRelIso_all'] < 0.40 \
+                and l['mediumId'] \
+                and l['isGlobal'] or l['isTracker']
     elif lepton_selection == 'mvaTOPVL':
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
-                and l["mvaTOP"]         > mvaTOP['mu']['VL']
+                and l["mvaTOPv2"]         > mvaTOP['mu']['VL']
     elif lepton_selection == 'mvaTOPL':
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
-                and l["mvaTOP"]         > mvaTOP['mu']['L']
+                and l["mvaTOPv2"]         > mvaTOP['mu']['L']
     elif lepton_selection == 'mvaTOPM':
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
-                and l["mvaTOP"]         > mvaTOP['mu']['M']
+                and l["mvaTOPv2"]         > mvaTOP['mu']['M']
     elif lepton_selection == 'mvaTOPT':
         def func(l):
             return \
@@ -194,7 +212,7 @@ def muonSelector( lepton_selection, year, ptCut = 10):
                 and l["sip3d"]          < 8.0 \
                 and l['pfRelIso04_all'] < 0.40 \
                 and l['mediumId'] \
-                and (l['mvaTOP'] > 0.9) \
+                and (l['mvaTOPv2'] > mvaTOP['mu']['T']) \
                 and l['isGlobal'] or l['isTracker']
     elif lepton_selection == 'hybridIso':
         def func(l):
@@ -280,7 +298,7 @@ def cbEleSelector( quality, removeCuts = [] ):
     for cut in removeCuts:
         if cut not in vidNestedWPBitMapNamingList:
             raise Exception( "Don't know about ele cut %r" % cut )
-    for cut in vidNestedWPBitMapNamingList:
+    for cut in vidNestedWPBitMapNamingList: 
         if cut not in removeCuts:
             thresholds.append( vidNestedWPBitMap[quality] )
         else:
@@ -290,6 +308,7 @@ def cbEleSelector( quality, removeCuts = [] ):
     def _selector( integer ):
         return all(map( lambda x: operator.ge(*x), zip( cutBasedEleBitmap(integer), thresholds ) ))
     return _selector
+
 
 def cbEleIdFlagGetter( flag ):
 
@@ -446,30 +465,40 @@ def eleSelector( lepton_selection, year, ptCut = 10):
                 and l['mvaFall17V2noIso_WP80'] \
                 and ( (l["sieie"] <=  0.011 and abs(l["eta"]+l["deltaEtaSC"])<=1.4442) or (l["sieie"] <=  0.03 and abs(l["eta"]+l["deltaEtaSC"])>1.566)) \
                 and ( l['jetIdx']<0 or (l['mvaTOP'] > 0.9) or (l['mvaTOP'] <= 0.9 and (l["deepJet"] <  electron_deepjet_threshold and l["jetRelIso"]> 0.5 )) )
+    elif lepton_selection == 'presel':
+        def func(l):
+            return \
+                l["pt"]                 >= ptCut \
+                and abs(l["eta"])       < 2.5 \
+                and abs(l["dxy"])       < 0.05 \
+                and abs(l["dz"])        < 0.1 \
+                and l["sip3d"]          < 8.0 \
+                and l['miniPFRelIso_all'] < 0.40 \
+                and ord(l["lostHits"])  < 2 
     elif lepton_selection == 'mvaTOPVL':
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
-                and l["mvaTOP"]         > mvaTOP['ele']['VL']
+                and l["mvaTOPv2"]         > mvaTOP['ele']['VL']
     elif lepton_selection == 'mvaTOPL':
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
-                and l["mvaTOP"]         > mvaTOP['ele']['L']
+                and l["mvaTOPv2"]         > mvaTOP['ele']['L']
     elif lepton_selection == 'mvaTOPM':
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
-                and l["mvaTOP"]         > mvaTOP['ele']['M']
+                and l["mvaTOPv2"]         > mvaTOP['ele']['M']
     elif lepton_selection == 'mvaTOPT':
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
-                and l["mvaTOP"]         > mvaTOP['ele']['T'] \
+                and l["mvaTOPv2"]         > mvaTOP['ele']['T'] \
                 and abs(l["dxy"])       < 0.05 \
                 and abs(l["dz"])        < 0.1 \
                 and l["sip3d"]          < 8.0 \
@@ -539,10 +568,10 @@ def eleSelector( lepton_selection, year, ptCut = 10):
 #        return '&&'.join(string)
 
 
-electronVars_data = ['pt','eta','phi','pdgId','cutBased','miniPFRelIso_all','pfRelIso03_all','sip3d','lostHits','convVeto','dxy','dz','charge','deltaEtaSC', 'mvaFall17V2Iso_WP80', 'jetRelIso', 'mvaFall17V2Iso_WP90', 'vidNestedWPBitmap','mvaTOP', 'jetRelIso', 'jetIdx', 'sieie', 'hoe', 'eInvMinusPInv', 'pfRelIso04_all', 'mvaFall17V2noIso_WP80', 'lostHits']
+electronVars_data = ['pt','eta','phi','pdgId','cutBased','miniPFRelIso_all','miniPFRelIso_chg','pfRelIso03_all','sip3d','convVeto','dxy','dz','charge','deltaEtaSC', 'mvaFall17V2Iso_WP80', 'jetPtRelv2', 'jetRelIso', 'mvaFall17V2Iso_WP90', 'vidNestedWPBitmap','mvaTTH', 'jetRelIso', 'jetIdx', 'sieie', 'hoe', 'eInvMinusPInv', 'pfRelIso04_all', 'mvaFall17V2noIso', 'mvaFall17V2noIso_WP80', 'lostHits', 'jetNDauCharged', 'jetRelIso']
 electronVars = electronVars_data + []
 
-muonVars_data = ['pt','eta','phi','pdgId','mediumId','miniPFRelIso_all','pfRelIso04_all','sip3d','dxy','dz','charge','mvaTOP', 'looseId', 'jetRelIso', 'jetIdx', 'mvaId', 'pfRelIso03_all']
+muonVars_data = ['pt','eta','phi','pdgId','mediumId','miniPFRelIso_all','miniPFRelIso_chg','pfRelIso04_all','segmentComp','sip3d','dxy','dz','charge','mvaTTH', 'looseId', 'jetPtRelv2', 'jetRelIso', 'jetIdx', 'mvaId', 'pfRelIso03_all', 'jetNDauCharged', 'jetRelIso', 'isGlobal', 'isTracker']
 muonVars = muonVars_data + []
 
 def getMuons(c, collVars=muonVars):
