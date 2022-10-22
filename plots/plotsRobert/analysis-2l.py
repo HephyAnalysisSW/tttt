@@ -30,9 +30,10 @@ import numpy as np
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?', )
+argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?')
+argParser.add_argument('--noData',         action='store_true', help='Do not plot data.')
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
-argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?', )
+argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?')
 argParser.add_argument('--plot_directory', action='store', default='TMB_4t')
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 args = argParser.parse_args()
@@ -43,7 +44,8 @@ import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
-if args.small:args.plot_directory += "_small"
+if args.small: args.plot_directory += "_small"
+if args.noData:args.plot_directory += "_noData"
 
 # Simulated samples
 from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
@@ -73,21 +75,25 @@ mc = [ TTLep_bb,TTLep_cc,TTLep_other, TTW, TTH, TTZ]
 all_mc = mc + [TTTT]
 
 # Now we add the data
-from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
-data_sample = RunII
-
-data_sample.name = "data"
+if not args.noData:
+    from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
+    data_sample = RunII
+    data_sample.name = "data"
+    all_samples = all_mc +  [data_sample]
+else:
+    all_samples = all_mc 
 
 # Here we compute the scaling of the simulation to the data luminosity (event.weight corresponds to 1/fb for simulation, hence we divide the data lumi in pb^-1 by 1000) 
-lumi_scale       = data_sample.lumi/1000.
+lumi_scale = 137. if args.noData else data_sample.lumi/1000.
 
 # We're going to "scale" the simulation if "small" is true. So let's define a "scale" which will correct this
-for sample in all_mc + [data_sample]:
-    sample.scale           = 1 
+for sample in all_mc:
+    sample.scale  = 1 
 
 # For R&D we just use a fraction of the data
 if args.small:
-    data_sample.reduceFiles( factor = 100 )
+    if not args.noData:
+        data_sample.reduceFiles( factor = 100 )
     for sample in all_mc :
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
@@ -133,7 +139,9 @@ sequence       = []
 from tttt.Tools.objectSelection import isBJet
 from tttt.Tools.helpers import getObjDict
 
-jetVars         = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F']
+#    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
+
+jetVars         = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F']
 jetVarNames     = [x.split('/')[0] for x in jetVars]
 
 def make_jets( event, sample ):
@@ -190,7 +198,8 @@ for i_mode, mode in enumerate(allModes):
     # coloring
     for sample in mc: sample.style = styles.fillStyle(sample.color)
     TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
-    data_sample.style = styles.errorStyle( ROOT.kBlack ) 
+    if not args.noData:
+        data_sample.style = styles.errorStyle( ROOT.kBlack ) 
 
     # read the MC variables only in MC; apply reweighting to simulation for specific detector effects
     for sample in all_mc:
@@ -198,7 +207,7 @@ for i_mode, mode in enumerate(allModes):
       sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
 
     # Define what we want to see.
-    stack = Stack(mc, TTTT, [data_sample])
+    stack = Stack(*all_samples)
 
     # Define everything we want to have common to all plots
     Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
@@ -443,26 +452,30 @@ for i_mode, mode in enumerate(allModes):
     #yields[mode]["data"] = 0
 
     yields[mode]["MC"] = sum(yields[mode][s.name] for s in mc)
-    dataMCScale        = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
+    if args.noData:
+        dataMCScale = 1.
+    else:
+        dataMCScale        = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
 
     drawPlots(plots, mode, dataMCScale)
     allPlots[mode] = plots
 
 # Add the different channels into SF and all
 for mode in ["SF","all"]:
-  yields[mode] = {}
-  for y in yields[allModes[0]]:
-    try:    yields[mode][y] = sum(yields[c][y] for c in (['ee','mumu'] if mode=="SF" else ['ee','mumu','mue']))
-    except: yields[mode][y] = 0
-  dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
+    yields[mode] = {}
+    for y in yields[allModes[0]]:
+        try:    yields[mode][y] = sum(yields[c][y] for c in (['ee','mumu'] if mode=="SF" else ['ee','mumu','mue']))
+        except: yields[mode][y] = 0
+    if args.noData:
+        dataMCScale = 1.
+    else:
+        dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
+    for plot in allPlots['mumu']:
+        for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
+            for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
+                for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
+                    if i==k: j.Add(l)
 
-  for plot in allPlots['mumu']:
-    for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
-      for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
-        for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
-          if i==k:
-            j.Add(l)
-
-  drawPlots(allPlots['mumu'], mode, dataMCScale)
+    drawPlots(allPlots['mumu'], mode, dataMCScale)
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
