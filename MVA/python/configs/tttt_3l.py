@@ -9,7 +9,7 @@ import ROOT, os
 from RootTools.core.standard     import *
 
 # helpers
-from TMB.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict
+from tttt.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict
 #from tWZ.Tools.objectSelection  import isBJet, isAnalysisJet
 from Analysis.Tools.WeightInfo       import WeightInfo
 
@@ -60,7 +60,7 @@ sequence = []
 FIs = {
 }
 
-from TMB.Tools.objectSelection import isBJet
+from tttt.Tools.objectSelection import isBJet
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
@@ -163,5 +163,5 @@ assert len(training_samples)==len(set([s.name for s in training_samples])), "tra
 
 # training selection
 
-from TMB.Tools.cutInterpreter import cutInterpreter
+from tttt.Tools.cutInterpreter import cutInterpreter
 selectionString = cutInterpreter.cutString( 'trilepVL' )
