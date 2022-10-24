@@ -172,5 +172,6 @@ assert len(training_samples)==len(set([s.name for s in training_samples])), "tra
 
 # training selection
 
+selection = 'dilepL-offZ1-njet4p-btag3p-ht500'
 from tttt.Tools.cutInterpreter import cutInterpreter
-selectionString = cutInterpreter.cutString( 'dilepVL-ht400' )
+selectionString = cutInterpreter.cutString( selection )

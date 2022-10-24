@@ -53,13 +53,16 @@ mva_variables = [ mva_variable[0] for mva_variable in getattr(config, args.varia
 
 n_var_flat   = len(mva_variables)
 
+subDir = args.config
+if hasattr( config, "selection"):
+    subDir += "_"+config.selection
 
 df_file = {}
 for i_training_sample, training_sample in enumerate(config.training_samples):
-    upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
+    upfile_name = os.path.join(os.path.expandvars(args.input_directory), subDir, training_sample.name, training_sample.name+'.root')
     logger.info( "Loading upfile %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
     # with uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')) as upfile: # 
-    upfile = uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root'))
+    upfile = uproot.open(os.path.join(os.path.expandvars(args.input_directory), subDir, training_sample.name, training_sample.name+'.root'))
     df_file[training_sample.name]  = upfile["Events"].pandas.df(branches = mva_variables )
     # enumerate
     df_file[training_sample.name]['signal_type'] =  np.ones(len(df_file[training_sample.name])) * i_training_sample
@@ -97,7 +100,7 @@ if args.add_LSTM:
     vec_br_f  = {}
 
     for i_training_sample, training_sample in enumerate(config.training_samples):
-        upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
+        upfile_name = os.path.join(os.path.expandvars(args.input_directory), subDir, training_sample.name, training_sample.name+'.root')
         logger.info( "Loading vector branches %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
         with uproot.open(upfile_name) as upfile:
             vec_br_f[i_training_sample]   = {}

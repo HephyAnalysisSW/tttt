@@ -21,7 +21,7 @@ import tttt.Tools.user as user
 
 # tttt 
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
-from tttt.Tools.objectSelection_UL  import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs
+from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs
 
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
 from tttt.Tools.leptonSF            import leptonSF as leptonSF_
@@ -280,7 +280,6 @@ addSystematicVariations = (not isData) and (not options.skipSystematicVariations
 # TODO FIX BTAG REWEIGHTING!!!!
 
 # B tagging SF
-# CHECK FOR UL FILES
 b_tagger = "DeepJet"
 from Analysis.Tools.BTagEfficiencyUL import BTagEfficiency
 btagEff = BTagEfficiency( fastSim = False, year=options.era, tagger=b_tagger )
@@ -336,10 +335,11 @@ elif options.triggerSelection and isSinglelep:
     triggerCond = "("+electriggers+"||"+muontriggers+")"
     skimConds.append( triggerstring )
 
-treeFormulas["triggerDecision"] =  {'string':triggerCond}
-if isData:
-    logger.info("Sample will have the following trigger skim: %s"%triggerCond)
-    skimConds.append( triggerCond )
+if options.triggerSelection:
+    treeFormulas["triggerDecision"] =  {'string':triggerCond}
+    if isData:
+        logger.info("Sample will have the following trigger skim: %s"%triggerCond)
+        skimConds.append( triggerCond )
 
 # turn on all branches to be flexible for filter cut in skimCond etc.
 sample.chain.SetBranchStatus("*",1)
@@ -442,7 +442,7 @@ jetVarNames     = [x.split('/')[0] for x in jetVars]
 genLepVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'genPartIdxMother/I', 'status/I', 'statusFlags/I'] # some might have different types
 genLepVarNames  = [x.split('/')[0] for x in genLepVars]
 # those are for writing leptons
-lepVars         = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTTH/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I','mvaTOP/F','mvaTOPv2/F','mvaTOPWP/I','mvaTOPv2WP/I', 'ptCone/F']
+lepVars         = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTTH/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I','mvaTOP/F','mvaTOPWP/I', 'ptCone/F']
 lepVarNames     = [x.split('/')[0] for x in lepVars]
 
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
@@ -501,7 +501,7 @@ new_variables += [\
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['nBTag/I', 'm3/F', 'minDLmass/F'] )
 
-new_variables.append( 'lep[%s]'% ( ','.join(lepVars) + ',ptCone/F' + ',jetBTag/F' + ',mvaTOP/F' + ',mvaTOPv2/F' + ',jetPtRatio/F' +',jetNDauCharged/I'+',jetRelIso/F') ) 
+new_variables.append( 'lep[%s]'% ( ','.join(lepVars + ['ptCone/F', 'jetBTag/F', 'mvaTOP/F', 'mvaTOPWP/I', 'mvaTOPv2/F', 'mvaTOPv2WP/I', 'jetPtRatio/F', 'jetNDauCharged/I', 'jetRelIso/F' ])) ) 
 
 if isTrilep or isDilep or isSinglelep:
     new_variables.extend( ['nGoodMuons/I', 'nGoodElectrons/I', 'nGoodLeptons/I' ] )
@@ -618,7 +618,7 @@ if not options.skipNanoTools:
     sample.clear()
 
 # Define mvaTOP reader 
-mvaTOPreader_ = mvaTOPreader(year = options.era)
+mvaTOPreader_ = mvaTOPreader(year = options.era, versions = ["v1", "v2"])
 
 # Define a reader
 
@@ -694,10 +694,8 @@ def filler( event ):
 
     ################################################################################
     # Trigger Decision
-    if options.triggerSelection and isTrilep:
+    if options.triggerSelection:
         event.triggerDecision = int(treeFormulas['triggerDecision']['TTreeFormula'].EvalInstance())
-
-
 
     ################################################################################
     # Store Scale and PDF weights in a format that is readable with HEPHY framework
@@ -784,16 +782,16 @@ def filler( event ):
         lep['jetBTag'] = bscore_nextjet
         lep['ptCone'] = ptCone
         lep['jetPtRatio'] = 1/(lep['jetRelIso']+1)
-        mvaScore, WPv1, mvaScorev2, WPv2 = mvaTOPreader_.getmvaTOPScore(lep)
-        lep['mvaTOP'] = mvaScore
-        lep['mvaTOPWP'] = WPv1
-        lep['mvaTOPv2'] = mvaScorev2
-        lep['mvaTOPv2WP'] = WPv2
+        mvaScore_v1, WP_v1, mvaScore_v2, WP_v2 = mvaTOPreader_.getmvaTOPScore(lep)
+        lep['mvaTOP']   = mvaScore_v1
+        lep['mvaTOPWP'] = WP_v1
+        lep['mvaTOPv2']   = mvaScore_v2
+        lep['mvaTOPv2WP'] = WP_v2
     
     # Remove leptons that do not fulfil quality criteria
     all_leptons = list(leptons) # Copy list to not loop over the list from which we remove entries 
     for lep in all_leptons:
-        if lep['mvaTOPv2WP'] < 1:
+        if lep['mvaTOPWP'] < 1:
             leptons.remove(lep)
             
     # Now set index corresponding to cleaned list
@@ -812,7 +810,6 @@ def filler( event ):
     event.minDLmass = getMinDLMass(leptons)
     
     # store the correct MET (EE Fix for 2017)
-
     if options.era == 2017:# and not options.fastSim:
         # v2 recipe. Could also use our own recipe
         event.met_pt    = r.METFixEE2017_pt_nom

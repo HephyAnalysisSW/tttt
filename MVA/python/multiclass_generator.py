@@ -11,17 +11,16 @@ import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--config',             action='store', type=str,   default='tttt_3l', help="Name of the config file")
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
-argParser.add_argument('--split',              action='store', type=int,   default=1, help="In how many batches do you want tos split the training data?")
+argParser.add_argument('--split',              action='store', type=int,   default=10, help="In how many batches do you want tos split the training data?")
+argParser.add_argument('--epochs',             action='store', type=int,   default=100, help="Number of epochs")
 argParser.add_argument('--variable_set',       action='store', type=str,   default='mva_variables', help="List of variables for training")
-argParser.add_argument('--output_directory',   action='store', type=str,   default='/mnt/hephy/cms/robert.schoefbeck/tttt/models/')
+argParser.add_argument('--output_directory',   action='store', type=str,   default='/groups/hephy/cms/robert.schoefbeck/tttt/models/')
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/group/cms/robert.schoefbeck/tttt/training-ntuples-tttt-v3/MVA-training/") )
-argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--add_LSTM',           action='store_true', help="add LSTM?")
 
 args = argParser.parse_args()
 
 if args.add_LSTM:   args.name+="_LSTM"
-if args.small:      args.name+="_small"
 
 #Logger
 import tttt.Tools.logger as logger
@@ -54,7 +53,7 @@ np.random.seed(1)
 from tttt.MVA.DataGenerator import DataGenerator 
 training_data_generator = DataGenerator(
         config  = config,
-        n_split = 1000,
+        n_split = args.split,
         jet_LSTM = args.add_LSTM,
         input_directory = os.path.expandvars(args.input_directory),
         )
@@ -104,7 +103,7 @@ callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3) # patien
 # train the model
 history = model.fit_generator(
                     training_data_generator,
-                    epochs=100, 
+                    epochs=args.epochs, 
                     #verbose=0, # switch to 1 for more verbosity, 'silences' the output
                     #validation_split=0.1
                     validation_data = validation_data_generator,
