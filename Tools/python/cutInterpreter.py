@@ -113,7 +113,7 @@ class cutInterpreter:
         cutString = "&&".join( map( cutInterpreter.translate_cut_to_string, cuts ) )
 
         return cutString
-    
+
     @staticmethod
     def cutList ( cut, select = [""], ignore = []):
         ''' Cutstring syntax: cut1-cut2-cut3
@@ -123,7 +123,7 @@ class cutInterpreter:
         cuts = filter( lambda c: any( sel in c for sel in select ), cuts )
         # ignore
         cuts = filter( lambda c: not any( ign in c for ign in ignore ), cuts )
-        return [ cutInterpreter.translate_cut_to_string(cut) for cut in cuts ] 
+        return [ cutInterpreter.translate_cut_to_string(cut) for cut in cuts ]
         #return  "&&".join( map( cutInterpreter.translate_cut_to_string, cuts ) )
 
 if __name__ == "__main__":
