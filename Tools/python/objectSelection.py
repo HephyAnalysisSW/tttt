@@ -183,10 +183,13 @@ def muonSelector( lepton_selection, year, ptCut = 10):
                 and ( l['mvaId']          >= 2 or l['mvaTOP'] >0.9)\
                 and ( (l['jetIdx']<0) or (l['mvaTOP'] >0.9) or (l['mvaTOP'] <= 0.9 and (l["deepJet"] < muon_deepjet_FO_threshold[year] and l["jetRelIso"]>muon_jetRelIso_FO_threshold[year])) )
     elif lepton_selection == 'presel':
+        #L133 to L143 of http://cms.cern.ch/iCMS/jsp/openfile.jsp?tp=draft&files=AN2022_016_v3.pdf
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.4 \
+                and abs(l["dxy"])       < 0.05 \
+                and abs(l["dz"])        < 0.1 \
                 and l["sip3d"]          < 8.0 \
                 and l['miniPFRelIso_all'] < 0.40 \
                 and l['mediumId'] \
@@ -473,6 +476,7 @@ def eleSelector( lepton_selection, year, ptCut = 10):
                 and ( (l["sieie"] <=  0.011 and abs(l["eta"]+l["deltaEtaSC"])<=1.4442) or (l["sieie"] <=  0.03 and abs(l["eta"]+l["deltaEtaSC"])>1.566)) \
                 and ( l['jetIdx']<0 or (l['mvaTOP'] > 0.9) or (l['mvaTOP'] <= 0.9 and (l["deepJet"] <  electron_deepjet_threshold and l["jetRelIso"]> 0.5 )) )
     elif lepton_selection == 'presel':
+        # L133 - 143 of http://cms.cern.ch/iCMS/jsp/openfile.jsp?tp=draft&files=AN2022_016_v3.pdf
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
