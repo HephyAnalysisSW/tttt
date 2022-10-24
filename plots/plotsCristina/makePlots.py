@@ -21,7 +21,7 @@ from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, isBJet
 #   Attenzione che ho cambiato la dependency da TMB a tttt per isBJet,
-#   dovrebbe essere lo stesso ma è da controllare meglio
+#   dovrebbe essere lo stesso ma e da controllare meglio
 
 #----------------- TMB tools
 #ACHTUNG dependencies need to be changed
@@ -65,6 +65,26 @@ if args.small:args.plot_directory += "_small"
 #---------------- Import Samples
 #ACHTUNG dependencies to be changes
 from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp_Attempt import *
+
+# sample_TTLep = TTLep
+# # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
+# TTLep_bb    = copy.deepcopy( sample_TTLep )
+# TTLep_bb.name = "TTLep_bb"
+# TTLep_bb.texName = "t#bar{t}b#bar{b}"
+# TTLep_bb.color   = ROOT.kRed + 2
+# TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
+# TTLep_cc    = copy.deepcopy( sample_TTLep )
+# TTLep_cc.name = "TTLep_cc"
+# TTLep_cc.texName = "t#bar{t}c#bar{c}"
+# TTLep_cc.color   = ROOT.kRed - 3
+# TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
+# TTLep_other = copy.deepcopy( sample_TTLep )
+# TTLep_other.name = "TTLep_other"
+# TTLep_other.texName = "t#bar{t} + light j."
+# TTLep_other.setSelectionString( "genTtbarId%100<40" )
+
+
+
 
 mc = [ TTLep_bb,TTLep_cc,TTLep_other, TTW, TTH, TTZ]
 
@@ -245,37 +265,45 @@ for i_mode, mode in enumerate(allModes):
     plots = []
 
 
-    plots.append(Plot(
-        name = 'nVtxs', texX = 'Vertex Multiplicity', texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "PV_npvsGood/I" ),
-        binning=[50,0,50],
-        addOverFlowBin='upper',
-    ))
+    # plots.append(Plot(
+    #     name = 'nVtxs', texX = 'Vertex Multiplicity', texY = 'Number of Events',
+    #     attribute = TreeVariable.fromString( "PV_npvsGood/I" ),
+    #     binning=[50,0,50],
+    #     addOverFlowBin='upper',
+    # ))
     plots.append(Plot(
         name = 'yield', texX = '', texY = 'Number of Events',
         attribute = lambda event, sample: 0.5 + i_mode,
         binning=[3, 0, 3],
     ))
 
+    plots.append(Plot(
+        name = 'B_tag_discriminator', texX = '', texY = 'Number of Events',
+        attribute = lambda event, sample: event.JetGood_btagDeepB[0],
+        #attribute = TreeVariable.fromString( "JetGood_btagDeepB/F" ),
+        binning=[10, 0, 1],
+    ))
+
+
     #Plots for lepton eff
-    #for index in range(2):
-        #for abs_pdg in [11, 13]:
-            #lep_name = "mu" if abs_pdg==13 else "ele"
-            #plots.append(Plot(
-              #texX = 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              #name = '%s%i_pt'%(lep_name, index), attribute = lep_getter("pt", index, abs_pdg),
-              #binning=[400/20,0,400],
-            #))
-            #plots.append(Plot(
-            #  texX = '#eta(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-            #  name = '%s%i_eta'%(lep_name, index), attribute = lep_getter("eta", index, abs_pdg),
-            #  binning=[30,-3,3],
-            #))
-            #plots.append(Plot(
-            #  texX = '#phi(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-            #  name = '%s%i_phi'%(lep_name, index), attribute = lep_getter("phi", index, abs_pdg),
-            #  binning=[30,-pi,pi],
-            #))
+    for index in range(2):
+        for abs_pdg in [11, 13]:
+            lep_name = "mu" if abs_pdg==13 else "ele"
+            plots.append(Plot(
+              texX = 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_pt'%(lep_name, index), attribute = lep_getter("pt", index, abs_pdg),
+              binning=[400/20,0,400],
+            ))
+            plots.append(Plot(
+             texX = '#eta(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+             name = '%s%i_eta'%(lep_name, index), attribute = lep_getter("eta", index, abs_pdg),
+             binning=[30,-3,3],
+            ))
+            plots.append(Plot(
+             texX = '#phi(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+             name = '%s%i_phi'%(lep_name, index), attribute = lep_getter("phi", index, abs_pdg),
+             binning=[30,-pi,pi],
+            ))
 
 
 
