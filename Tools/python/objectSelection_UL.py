@@ -1,4 +1,4 @@
-from    tWZ.Tools.helpers import mZ, getVarValue, getObjDict, deltaR
+from    tttt.Tools.helpers import mZ, getVarValue, getObjDict, deltaR
 
 # standard imports
 from    math import *
@@ -24,7 +24,7 @@ def isBJet(j, tagger = 'DeepCSV', year = 2016):
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation94X
             return j['btagCSVV2'] > 0.8838
         else:
-            raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+            raise NotImplementedError
     elif tagger == 'DeepCSV':
         if year in [2016, "UL2016", "UL2016_preVFP"]:
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
@@ -36,7 +36,7 @@ def isBJet(j, tagger = 'DeepCSV', year = 2016):
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation102X
             return j['btagDeepB'] > 0.4184
         else:
-            raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+            raise NotImplementedError
     elif tagger == 'DeepFlavor' or tagger == 'DeepJet':
         if year == "UL2016_preVFP":
             return j['btagDeepFlavB'] > 0.2489
@@ -47,7 +47,7 @@ def isBJet(j, tagger = 'DeepCSV', year = 2016):
         elif year == "UL2018":
             return j['btagDeepFlavB'] > 0.2783
         else:
-            raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+            raise NotImplementedError
 
 def getGenLeps(c):
     return [getObjDict(c, 'genLep_', ['eta','pt','phi','charge', 'pdgId', 'sourceId'], i) for i in range(int(getVarValue(c, 'ngenLep')))]
@@ -60,16 +60,16 @@ def getGenPartsAll(c, genVars=genVars):
     return [getObjDict(c, 'GenPart_', genVars, i) for i in range(int(getVarValue(c, 'nGenPart')))]
 
 def filterGenPhotons( genParts, status=None ):
-    photons = list( filter( lambda l: abs(l['pdgId']) == 22 and l['status'] > 0, genParts ) )
+    photons = list( [l for l in genParts if abs(l['pdgId']) == 22 and l['status'] > 0] )
     return photons
 
 def genLepFromZ( genParts ):
     ''' get all gen leptons (e,m,tau) from Z
     '''
     try:
-        leptons = list( filter( lambda l: abs(l['pdgId']) in [11,13,15] and abs(genParts[l['genPartIdxMother']]['pdgId']) == 23, genParts ) )
+        leptons = list( [l for l in genParts if abs(l['pdgId']) in [11,13,15] and abs(genParts[l['genPartIdxMother']]['pdgId']) == 23] )
     except:
-        print "Found no generated leptons"
+        print("Found no generated leptons")
         leptons = []
     return leptons
 
@@ -129,7 +129,7 @@ def lepStringNoMVA( eleMu = None, idx = None):
 
 def mvaTopWP(mvaTopThr, pdgId):
     mvaTOPs = mvaTOP['mu'] if abs(pdgId)==13 else mvaTOP['ele']
-    return sum( [ int( mvaTopThr > th ) for th in mvaTOPs.values() ] )
+    return sum( [ int( mvaTopThr > th ) for th in list(mvaTOPs.values()) ] )
 
 ## MUONS ##
 def muonSelector( lepton_selection, year, ptCut = 10):
@@ -288,7 +288,7 @@ def cutBasedEleBitmap( integer ):
     return [int( x, 2 ) for x in textwrap.wrap("{0:030b}".format(integer),3) ]
 
 def cbEleSelector( quality, removeCuts = [] ):
-    if quality not in vidNestedWPBitMap.keys():
+    if quality not in list(vidNestedWPBitMap.keys()):
         raise Exception( "Don't know about quality %r" % quality )
     if type( removeCuts ) == str:
         removeCuts = [removeCuts]
@@ -306,7 +306,7 @@ def cbEleSelector( quality, removeCuts = [] ):
 
     # construct the selector
     def _selector( integer ):
-        return all(map( lambda x: operator.ge(*x), zip( cutBasedEleBitmap(integer), thresholds ) ))
+        return all([operator.ge(*x) for x in zip( cutBasedEleBitmap(integer), thresholds )])
     return _selector
 
 
@@ -344,7 +344,7 @@ def vidNestedWPBitMapToDict( val ):
     # convert 3 bits to int ( e.g. [4, 4, 3, 3, 1, 2, 2, 4, 4, 4])
     # create dictionary
     idList = [ int( x, 2 ) for x in textwrap.wrap( "{0:030b}".format( val ) , 3) ] #use 2 for nanoAOD version 80x
-    return dict( zip( vidNestedWPBitMapNamingList, idList ) )
+    return dict( list(zip( vidNestedWPBitMapNamingList, idList )) )
 
 def removekey(d, key):
     r = dict(d)
@@ -355,7 +355,7 @@ def electronVIDSelector( l, idVal, removedCuts=[] ):
 
     vidDict    = vidNestedWPBitMapToDict( l['vidNestedWPBitmap'] )
     if not removedCuts:
-        return all( [ cut >= idVal for cut in vidDict.values() ] )
+        return all( [ cut >= idVal for cut in list(vidDict.values()) ] )
 
     if ("pt"             in removedCuts):
         vidDict = removekey( vidDict, "MinPtCut" )
@@ -378,7 +378,7 @@ def electronVIDSelector( l, idVal, removedCuts=[] ):
     if ("lostHits" in removedCuts):
         vidDict = removekey( vidDict, "GsfEleMissingHitsCut" )
 
-    return all( [ cut >= idVal for cut in vidDict.values() ] )
+    return all( [ cut >= idVal for cut in list(vidDict.values()) ] )
 
 def eleSelector( lepton_selection, year, ptCut = 10):
     # tigher isolation applied on analysis level. cutBased corresponds to Fall17V2 ID for all 2016-2018.

@@ -120,7 +120,7 @@ sequence       = []
 
 from tttt.Tools.objectSelection import isBJet
 from tttt.Tools.helpers import getObjDict
-jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F']
+jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F']
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
@@ -128,7 +128,7 @@ def make_jets( event, sample ):
 sequence.append( make_jets )
 
 #MVA
-import TMB.MVA.configs as configs
+import tttt.MVA.configs as configs
 config = configs.tttt_2l
 read_variables = config.read_variables
 
@@ -172,7 +172,7 @@ read_variables += [
 # the following we read only in simulation
 read_variables_MC = [
     'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
-    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i,nBHadFromT/I,nBHadFromTbar/I,nBHadFromW/I,nBHadOther/I,nCHadFromW/I,nCHadOther/I]"
+    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
 
 mu_string  = lepString('mu','VL')

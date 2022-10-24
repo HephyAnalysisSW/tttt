@@ -71,7 +71,7 @@ def get_parser():
     argParser.add_argument('--keepNanoAOD',                 action='store_true',                                                        help="Keep nanoAOD output?")
     argParser.add_argument('--reuseNanoAOD',                action='store_true',                                                        help="Keep nanoAOD output?")
     argParser.add_argument('--reapplyJECS',                 action='store_true',                                                        help="Reapply JECs to data?")
-    argParser.add_argument('--reduceSizeBy',                action='store',     type=int,                                               help="Reduce the size of the sample by a factor of...")
+    argParser.add_argument('--reduceSizeBy',                action='store',     type=int, default= 1,                                   help="Reduce the size of the sample by a factor of...")
     argParser.add_argument('--event',                       action='store',     type=int, default=-1,                                   help="Just process event no")
 
     return argParser
@@ -90,7 +90,7 @@ elif "UL2018" == options.era:
     year = 2018
 
 # Logging
-import tWZ.Tools.logger as _logger
+import tttt.Tools.logger as _logger
 logFile = '/tmp/%s_%s_%s_njob%s.txt'%(options.skim, '_'.join(options.samples), os.environ['USER'], str(0 if options.nJobs==1 else options.job))
 logger  = _logger.get_logger(options.logLevel, logFile = logFile)
 
@@ -326,7 +326,7 @@ sample.copy_files( os.path.join(tmp_output_directory, "input") )
 treeFormulas = {}
 if options.triggerSelection and isTriLep:
     # Trigger selection
-    from tWZ.Tools.triggerSelector import triggerSelector
+    from tttt.Tools.triggerSelector import triggerSelector
     ts           = triggerSelector(year)
     triggerCond  = ts.getSelection(options.samples[0] if isData else "MC", triggerList = ts.getTriggerList(sample) )
     treeFormulas["triggerDecision"] =  {'string':triggerCond}
@@ -349,7 +349,7 @@ selectionString = '&&'.join(skimConds)
 
 ################################################################################
 # top pt reweighting
-from tWZ.Tools.topPtReweighting import getUnscaledTopPairPtReweightungFunction, getTopPtDrawString, getTopPtsForReweighting
+from Analysis.Tools.topPtReweighting import getUnscaledTopPairPtReweightungFunction, getTopPtDrawString, getTopPtsForReweighting
 # Decision based on sample name -> whether TTJets or TTLep is in the sample name
 isTT = sample.name.startswith("TTJets") or sample.name.startswith("TTLep") or sample.name.startswith("TT_pow")
 doTopPtReweighting = isTT and not options.noTopPtReweighting
@@ -378,7 +378,7 @@ else:
 ################################################################################
 # CR reweighting 
 if options.doCRReweighting:
-    from tWZ.Tools.colorReconnectionReweighting import getCRWeight, getCRDrawString
+    from Analysis.Tools.colorReconnectionReweighting import getCRWeight, getCRDrawString
     logger.info( "Sample will have CR reweighting." )
     #norm = sample.getYieldFromDraw( selectionString = selectionString, weightString = "genWeight" )
     norm = float(sample.chain.GetEntries(selectionString))
