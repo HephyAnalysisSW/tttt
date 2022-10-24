@@ -150,32 +150,9 @@ def make_jets( event, sample ):
 
 sequence.append( make_jets )
 
-#MVA
-import TMB.MVA.configs as configs
-config = configs.tttt_2l
-read_variables = config.read_variables
-
-# Add sequence that computes the MVA inputs
-
-# ONNX load
-# onnx_model = ... 
-def make_mva( event, sample ):
-    mva_inputs = []
-    for mva_variable, func in config.mva_variables:
-        val = func(event, sample)
-        setattr( event, mva_variable, val )
-        mva_inputs.append( val )
-
-    #print (mva_inputs)
-    #event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = onnx_model.predict( mva_inputs )
-    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = 0.25, 0.25, 0.25, 0.25 
-
-sequence.append( make_mva )
-
 read_variables = []
 
 # the following we read for both, data and simulation 
-lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
 read_variables += [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
     "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
@@ -186,9 +163,8 @@ read_variables += [
     "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
     "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
     "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
-    "nlep/I", "m3/F",
-    "lep[%s]"%(",".join(lepVars)),
 ]
+
 # the following we read only in simulation
 read_variables_MC = [
     'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
@@ -243,14 +219,6 @@ for i_mode, mode in enumerate(allModes):
       name = 'yield', texX = '', texY = 'Number of Events',
       attribute = lambda event, sample: 0.5 + i_mode,
       binning=[3, 0, 3],
-    ))
-
-    plots.append(Plot(
-        name = 'lenas_MVA_TTTT',
-        texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
-        attribute = lambda event, sample:event.lenas_MVA_TTTT,
-        binning=[50,0,1],
-        addOverFlowBin='upper',
     ))
 
     plots.append(Plot(
