@@ -10,34 +10,31 @@ import copy
 import array
 import operator
 from   math                              import sqrt, cos, sin, pi, atan2, cosh
+import numpy                             as np
 
 #----------------- RootTools import
 
 from RootTools.core.standard             import *
+#import RootTools.core.logger             as logger_rt
 
 #----------------- tttt tools import
 
 from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, isBJet
-#   Attenzione che ho cambiato la dependency da TMB a tttt per isBJet,
-#   dovrebbe essere lo stesso ma e da controllare meglio
+from tttt.Tools.helpers                  import getObjDict
+#import TMB.Tools.logger                 as logger
 
-#----------------- TMB tools
-#ACHTUNG dependencies need to be changed
-from TMB.Tools.helpers import getObjDict
+#ACHTUNG ->   Changed the dependencies for logger and helpers (from TMB to tttt)
 
-#---------------- Analysis
+#---------------- Analysis Tools imports
 
 from Analysis.Tools.helpers              import deltaPhi, deltaR
 from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
 import Analysis.Tools.syncer
-import numpy as np
 
-
-#---------------- Slimming attempt n.1
-#from var_config import fetch_variables_jets
+print("All imports OK")
 
 #---------------- Parser (customizable)
 
@@ -49,52 +46,70 @@ parser.add_argument('--sorting',                           action='store', defau
 parser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?', )
 parser.add_argument('--plot_directory', action='store', default='TMB_4t')
 parser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
-#parser.add_argument('--lepton',     action='store', default= 'None', type=str, choices=['2mu', '2e', '1mu1e', 'SF', 'all'], help='plot lepton categories')
+parser.add_argument('--era',        action='store',  default='Run2016', choices=['Run2016preVFP', 'Run2016', 'Run2017', 'Run2018'], type=str, help="Which era?" )
+parser.add_argument('--what',     action='store',         nargs='*',  type=str, default=None, choices=[None, 'mc', 'data', 'all'], type=str, help="What are we dealing with?" )
+
 args = parser.parse_args()
 
-
 #---------------- Logger
-#ACHTUNG add logger in tttt BUT before check for dependencies
+
 import tttt.Tools.logger as logger
 import RootTools.core.logger as logger_rt
+
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
+#--------------- Small option & Load Samples
+
 if args.small:args.plot_directory += "_small"
 
+if args.era == "Run2016preVFP":
+    from tttt.Samples.nano_mc_private_UL20_Summer16_preVFP import allSamples as mcSamples
+    from tttt.Samples.nano_data_private_UL20_Run2016_preVFP import allSamples as dataSamples
+elif args.era == "Run2016":
+    from tttt.Samples.nano_mc_private_UL20_Summer16 import allSamples as mcSamples
+    from tttt.Samples.nano_data_private_UL20_Run2016 import allSamples as dataSamples
+elif args.era == "Run2017":
+    from tttt.Samples.nano_mc_private_UL20_Fall17 import allSamples as mcSamples
+    from tttt.Samples.nano_data_private_UL20_Run2017 import allSamples as dataSamples
+elif args.era == "Run2016":
+    from tttt.Samples.nano_mc_private_UL20_Autumn18 import allSamples as mcSamples
+    from tttt.Samples.nano_data_private_UL20_Run2018 import allSamples as dataSamples
+
+
+mc = [ 'TTLep_bb','TTLep_cc','TTLep_other', 'TTW', 'TTH', 'TTZ']
+all = mc + ['TTTT']
+
+samples = []
+
+for sample in allSamples:
+    if selected == sample.name:
+        samples.append(sample)
+
+
+
+#NOTE ->    Add parser option for lepton seletction
+
+
+
+print("Loggers import OK")
+
+
 #---------------- Import Samples
-#ACHTUNG dependencies to be changes
-from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp_Attempt import *
 
-# sample_TTLep = TTLep
-# # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
-# TTLep_bb    = copy.deepcopy( sample_TTLep )
-# TTLep_bb.name = "TTLep_bb"
-# TTLep_bb.texName = "t#bar{t}b#bar{b}"
-# TTLep_bb.color   = ROOT.kRed + 2
-# TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
-# TTLep_cc    = copy.deepcopy( sample_TTLep )
-# TTLep_cc.name = "TTLep_cc"
-# TTLep_cc.texName = "t#bar{t}c#bar{c}"
-# TTLep_cc.color   = ROOT.kRed - 3
-# TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
-# TTLep_other = copy.deepcopy( sample_TTLep )
-# TTLep_other.name = "TTLep_other"
-# TTLep_other.texName = "t#bar{t} + light j."
-# TTLep_other.setSelectionString( "genTtbarId%100<40" )
-
+from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp_Attempt import TTLep_bb, TTLep_cc, TTLep_other, TTW, TTH, TTZ, TTTT
+from tttt.Samples import *
 
 
 
 mc = [ TTLep_bb,TTLep_cc,TTLep_other, TTW, TTH, TTZ]
-
 all = mc + [TTTT]
 
+#NOTE ->    Temporary files with temporary dependencies
 
-#---------------- Luminosity factor
+#---------------- Luminosity scale factor
 
-lumi_scale = 350#sum(lumi_year.values())/1000.
-
+lumi_scale = 350
 
 #---------------- Normalizations
 
@@ -109,19 +124,19 @@ if args.small:
 
 #--------------- Text on the plots
 
-#tex = ROOT.TLatex()
-#tex.SetNDC()
-#tex.SetTextSize(0.04)
-#tex.SetTextAlign(11) # align right
+tex = ROOT.TLatex()
+tex.SetNDC()
+tex.SetTextSize(0.04)
+tex.SetTextAlign(11) #Aligns text on the right
 
 def drawObjects( dataMCScale, lumi_scale ):
-    tex = ROOT.TLatex()
-    tex.SetNDC()
-    tex.SetTextSize(0.04)
-    tex.SetTextAlign(11)
+#     tex = ROOT.TLatex()
+#     tex.SetNDC()
+#     tex.SetTextSize(0.04)
+#     tex.SetTextAlign(11)
     lines = [
-      (0.15, 0.95, 'CMS Simulation'),
-      (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale),
+        (0.15, 0.95, 'CMS Simulation'),
+        (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale),
     ]
     return [tex.DrawLatex(*l) for l in lines]
 
@@ -152,15 +167,24 @@ sequence       = []
 jetVars          = ['pt/F',
                     'eta/F',
                     'phi/F',
-                    'btagDeepB/F'
+                    'btagDeepB/F',
+                    'btagDeepFlavB/F'
+                    #'btagDeepFlavbb/F'
                     ]
 jetVarNames      = [x.split('/')[0] for x in jetVars]
-print(jetVarNames)
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+    #bbvar = "(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))/Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb)))"
+    #bbcut = "(((genTtbarId%100)/10)>=52&&((genTtbarId%100)/10)!=53)"
+    #event.bbJets   = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4 and j[bbvar]==1 and j[cut]==True   , event.jets)
 sequence.append( make_jets )
 
+def make_bbjets( event, sample):
+    event.jets      = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
+    bbvar = "(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))/Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb)))"
+    bbcut = "(((genTtbarId%100)/10)"#">=52&&((genTtbarId%100)/10)!=53)"
+    event.bbJets    = filter(lambda j:isBJet(j, year=event.year) and j[bbvar]==1 and j[cut]>=52 and j[cut]!=53   , event.jets)
 #MVA
 import TMB.MVA.configs as configs
 config = configs.tttt_2l
@@ -283,6 +307,17 @@ for i_mode, mode in enumerate(allModes):
         #attribute = TreeVariable.fromString( "JetGood_btagDeepB/F" ),
         binning=[10, 0, 1],
     ))
+
+    plots.append(Plot(
+        name = 'DoubleBJets_pt',
+        texX = 'bbJets_(p_{})', texY = 'Number of Events',
+        attribute = lambda event, sample: event.JetGood_btagDeepFlavB[0],
+        binning=[20,-1,1],
+    ))
+
+
+
+
 
 
     #Plots for lepton eff
