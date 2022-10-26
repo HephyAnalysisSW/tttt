@@ -112,7 +112,7 @@ def drawPlots(plots, mode, dataMCScale):
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
-            copyIndexPHP = True, extensions = ["png", "pdf", "root"],
+            copyIndexPHP = True, extensions = ["png", "pdf"],
           )
             
 # Read variables and sequences
@@ -129,12 +129,14 @@ sequence.append( make_jets )
 
 #MVA
 import tttt.MVA.configs.tttt_2l as config
+import onnxruntime as ort 
 read_variables = config.read_variables
 
 # Add sequence that computes the MVA inputs
 
 # ONNX load
-# onnx_model = ... 
+ort_sess = ort.InferenceSession("model.onnx",providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+ 
 def make_mva( event, sample ):
     mva_inputs = []
     for mva_variable, func in config.mva_variables:
@@ -143,8 +145,8 @@ def make_mva( event, sample ):
         mva_inputs.append( val )
 
     #print (mva_inputs)
-    #event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = onnx_model.predict( mva_inputs )
-    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = 0.25, 0.25, 0.25, 0.25 
+    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = ort_sess.run(None, {'my_input': np.array([mva_inputs])})[0]
+    #event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = 0.25, 0.25, 0.25, 0.25 
 
 sequence.append( make_mva )
 
