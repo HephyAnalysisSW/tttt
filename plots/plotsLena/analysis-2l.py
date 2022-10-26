@@ -128,8 +128,7 @@ def make_jets( event, sample ):
 sequence.append( make_jets )
 
 #MVA
-import tttt.MVA.configs as configs
-config = configs.tttt_2l
+import tttt.MVA.configs.tttt_2l as config
 read_variables = config.read_variables
 
 # Add sequence that computes the MVA inputs
