@@ -17,3 +17,9 @@ elif os.environ["USER"] in ["robert.schoefbeck"]:
     postprocessing_tmp_directory    = "/scratch/hephy/cms/robert.schoefbeck/tttt/tmp/"
     plot_directory                  = "/groups/hephy/cms/robert.schoefbeck/www/tttt/plots"
     cache_dir                       = "/groups/hephy/cms/robert.schoefbeck/tttt/caches"
+elif os.environ["USER"] in ["lena.wild"]:
+    #postprocessing_output_directory = "/scratch-cbe/users/lena.wild/tttt/nanoTuples"
+    #postprocessing_tmp_directory    = "/scratch/hephy/cms/lena.wild/tttt/tmp/"
+    plot_directory                  = "/groups/hephy/cms/lena.wild/www/tttt/plots"
+    #cache_dir                       = "/groups/hephy/cms/lena.wild/tttt/caches"
+
