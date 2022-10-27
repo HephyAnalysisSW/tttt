@@ -168,8 +168,8 @@ read_variables += [
     "lep[%s]"%(",".join(lepVars)),
 ]
 
-# # define 3l selections
-# # the following we read only in simulation
+# define 3l selections
+# the following we read only in simulation
 read_variables_MC = [
     'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
@@ -183,29 +183,29 @@ def getLeptonSelection( mode ):
     elif mode=="ee":   return "Sum$({mu_string})==0&&Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
     elif mode=='all':    return "Sum$({mu_string})+Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
 
-# # Getter functor for lepton quantities
-# def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
-#     if functor is not None:
-#         if abs_pdg == 13:
-#             def func_( event, sample ):
-#                 if debug:
-#                     print("Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result", end=' ')
-#                     print(functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan'))
-#                 return functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-#         else:
-#             def func_( event, sample ):
-#                 return functor(getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-#     else:
-#         if abs_pdg == 13:
-#             def func_( event, sample ):
-#                 if debug:
-#                     print("Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result", end=' ')
-#                     print(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan'))
-#                 return getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-#         else:
-#             def func_( event, sample ):
-#                 return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
-#     return func_
+# Getter functor for lepton quantities
+def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
+    if functor is not None:
+        if abs_pdg == 13:
+            def func_( event, sample ):
+                if debug:
+                    print("Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result", end=' ')
+                    print(functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan'))
+                return functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+        else:
+            def func_( event, sample ):
+                return functor(getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+    else:
+        if abs_pdg == 13:
+            def func_( event, sample ):
+                if debug:
+                    print("Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result", end=' ')
+                    print(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan'))
+                return getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+        else:
+            def func_( event, sample ):
+                return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+    return func_
 
 #mu0_charge   = lep_getter("pdgId", 0, 13, functor = charge)
 #ele0_charge = lep_getter("pdgId", 0, 11, functor = charge)
@@ -277,11 +277,11 @@ for i_mode, mode in enumerate(allModes):
 
     plots = []
 
-    # plots.append(Plot(
-    #   name = 'yield', texX = '', texY = 'Number of Events',
-    #   attribute = lambda event, sample: 0.5 + i_mode,
-    #   binning=[3, 0, 3],
-    # ))
+    plots.append(Plot(
+        name = 'yield', texX = '', texY = 'Number of Events',
+        attribute = lambda event, sample: 0.5 + i_mode,
+        binning=[3, 0, 3],
+    ))
 
     plots.append(Plot(
         name = 'lenas_MVA_TTTT',
@@ -633,12 +633,12 @@ for i_mode, mode in enumerate(allModes):
 #       binning=[600//30,0,600],
 #     ))
 
-#    plots.append(Plot(
-#        name = "W_pt",
-#        texX = 'p_{T}(W) (GeV)', texY = 'Number of Events / 20 GeV',
-#        attribute = lambda event, sample:event.W_pt,
-#        binning=[20,0,400],
-#    ))
+# #    plots.append(Plot(
+# #        name = "W_pt",
+# #        texX = 'p_{T}(W) (GeV)', texY = 'Number of Events / 20 GeV',
+# #        attribute = lambda event, sample:event.W_pt,
+# #        binning=[20,0,400],
+# #    ))
 
     # 3l training variables
 
@@ -679,90 +679,91 @@ for i_mode, mode in enumerate(allModes):
     #  binning=[20,0,6],
     #))
     
-    # for index in range(2):
-    #     for abs_pdg in [11, 13]:
-    #         lep_name = "mu" if abs_pdg==13 else "ele"
-    #         plots.append(Plot(
-    #           texX = 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_pt'%(lep_name, index), attribute = lep_getter("pt", index, abs_pdg),
-    #           binning=[400//20,0,400],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = '#eta(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_eta'%(lep_name, index), attribute = lep_getter("eta", index, abs_pdg),
-    #           binning=[30,-3,3],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = '#phi(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_phi'%(lep_name, index), attribute = lep_getter("phi", index, abs_pdg),
-    #           binning=[30,-pi,pi],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = 'dxy(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_dxy'%(lep_name, index), attribute = lep_getter("dxy", index, abs_pdg, functor = lambda x: abs(x)),
-    #           binning=[50,0,0.05],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = 'dz(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_dz'%(lep_name, index), attribute = lep_getter("dz", index, abs_pdg, functor = lambda x: abs(x)),
-    #           binning=[50,0,0.05],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = 'IP_{3D}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_ip3d'%(lep_name, index), attribute = lep_getter("ip3d", index, abs_pdg, functor = lambda x: abs(x)),
-    #           binning=[50,0,0.05],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = '#sigma(IP)_{3D}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_sip3d'%(lep_name, index), attribute = lep_getter("sip3d", index, abs_pdg, functor = lambda x: abs(x)),
-    #           binning=[40,0,8],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = 'jetRelIso(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_jetRelIso'%(lep_name, index), attribute = lep_getter("jetRelIso", index, abs_pdg),
-    #           binning=[50,-.15,0.5],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = 'miniPFRelIso_all(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_miniPFRelIso_all'%(lep_name, index), attribute = lep_getter("miniPFRelIso_all", index, abs_pdg),
-    #           binning=[50,0,.5],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = 'pfRelIso03_all(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_pfRelIso03_all'%(lep_name, index), attribute = lep_getter("pfRelIso03_all", index, abs_pdg),
-    #           binning=[50,0,.5],
-    #         ))
-    #         plots.append(Plot(
-    #           texX = 'mvaTTH(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_mvaTTH'%(lep_name, index), attribute = lep_getter("mvaTTH", index, abs_pdg),
-    #           binning=[24,-1.2,1.2],
-    #         ))
-    #         #plots.append(Plot(
-    #         #  texX = 'mvaTOP(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #         #  name = '%s%i_mvaTOP'%(lep_name, index), attribute = lep_getter("mvaTOP", index, abs_pdg),
-    #         #  binning=[24,-1.2,1.2],
-    #         #))
-    #         plots.append(Plot(
-    #           texX = 'charge(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #           name = '%s%i_charge'%(lep_name, index), attribute = lep_getter("pdgId", index, abs_pdg, functor = charge),
-    #           binning=[3,-1,2],
-    #         ))
-    #         if lep_name == "mu":
-    #             plots.append(Plot(
-    #               texX = 'segmentComp(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #               name = '%s%i_segmentComp'%(lep_name, index), attribute = lep_getter("segmentComp", index, abs_pdg),
-    #               binning=[50,0,1],
-    #             ))
-    #             plots.append(Plot(
-    #               texX = 'nStations(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #               name = '%s%i_nStations'%(lep_name, index), attribute = lep_getter("nStations", index, abs_pdg),
-    #               binning=[10,0,10],
-    #             ))
-    #             plots.append(Plot(
-    #               texX = 'nTrackerLayers(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-    #               name = '%s%i_nTrackerLayers'%(lep_name, index), attribute = lep_getter("nTrackerLayers", index, abs_pdg),
-    #               binning=[20,0,20],
-    #             ))
+    for index in range(2):
+        for abs_pdg in [11, 13]:
+            lep_name = "mu" if abs_pdg==13 else "ele"
+            # plots.append(Plot(
+            #   texX = 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_pt'%(lep_name, index), attribute = lep_getter("pt", index, abs_pdg),
+            #   binning=[400//20,0,400],
+            # ))
+            # plots.append(Plot(
+            #   texX = '#eta(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_eta'%(lep_name, index), attribute = lep_getter("eta", index, abs_pdg),
+            #   binning=[30,-3,3],
+            # ))
+            # plots.append(Plot(
+            #   texX = '#phi(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_phi'%(lep_name, index), attribute = lep_getter("phi", index, abs_pdg),
+            #   binning=[30,-pi,pi],
+            # ))
+            # plots.append(Plot(
+            #   texX = 'dxy(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_dxy'%(lep_name, index), attribute = lep_getter("dxy", index, abs_pdg, functor = lambda x: abs(x)),
+            #   binning=[50,0,0.05],
+            # ))
+            # plots.append(Plot(
+            #   texX = 'dz(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_dz'%(lep_name, index), attribute = lep_getter("dz", index, abs_pdg, functor = lambda x: abs(x)),
+            #   binning=[50,0,0.05],
+            # ))
+            # plots.append(Plot(
+            #   texX = 'IP_{3D}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_ip3d'%(lep_name, index), attribute = lep_getter("ip3d", index, abs_pdg, functor = lambda x: abs(x)),
+            #   binning=[50,0,0.05],
+            # ))
+            # plots.append(Plot(
+            #   texX = '#sigma(IP)_{3D}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_sip3d'%(lep_name, index), attribute = lep_getter("sip3d", index, abs_pdg, functor = lambda x: abs(x)),
+            #   binning=[40,0,8],
+            # ))
+            # plots.append(Plot(
+            #   texX = 'jetRelIso(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_jetRelIso'%(lep_name, index), attribute = lep_getter("jetRelIso", index, abs_pdg),
+            #   binning=[50,-.15,0.5],
+            # ))
+            # plots.append(Plot(
+            #   texX = 'miniPFRelIso_all(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_miniPFRelIso_all'%(lep_name, index), attribute = lep_getter("miniPFRelIso_all", index, abs_pdg),
+            #   binning=[50,0,.5],
+            # ))
+            # plots.append(Plot(
+            #   texX = 'pfRelIso03_all(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_pfRelIso03_all'%(lep_name, index), attribute = lep_getter("pfRelIso03_all", index, abs_pdg),
+            #   binning=[50,0,.5],
+            # ))
+            # plots.append(Plot(
+            #   texX = 'mvaTTH(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_mvaTTH'%(lep_name, index), attribute = lep_getter("mvaTTH", index, abs_pdg),
+            #   binning=[24,-1.2,1.2],
+            # ))
+            # #plots.append(Plot(
+            # #  texX = 'mvaTOP(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            # #  name = '%s%i_mvaTOP'%(lep_name, index), attribute = lep_getter("mvaTOP", index, abs_pdg),
+            # #  binning=[24,-1.2,1.2],
+            # #))
+            # plots.append(Plot(
+            #   texX = 'charge(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+            #   name = '%s%i_charge'%(lep_name, index), attribute = lep_getter("pdgId", index, abs_pdg, functor = charge),
+            #   binning=[3,-1,2],
+            # ))
+            if lep_name == "mu":
+                pass
+                # plots.append(Plot(
+                #   texX = 'segmentComp(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+                #   name = '%s%i_segmentComp'%(lep_name, index), attribute = lep_getter("segmentComp", index, abs_pdg),
+                #   binning=[50,0,1],
+                # ))
+                # plots.append(Plot(
+                #   texX = 'nStations(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+                #   name = '%s%i_nStations'%(lep_name, index), attribute = lep_getter("nStations", index, abs_pdg),
+                #   binning=[10,0,10],
+                # ))
+                # plots.append(Plot(
+                #   texX = 'nTrackerLayers(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+                #   name = '%s%i_nTrackerLayers'%(lep_name, index), attribute = lep_getter("nTrackerLayers", index, abs_pdg),
+                #   binning=[20,0,20],
+                # ))
 
     plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
 
