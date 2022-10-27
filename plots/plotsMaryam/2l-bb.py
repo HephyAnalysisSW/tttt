@@ -55,7 +55,6 @@ h7.legendText = "mean_pt Gen bb"
 h8.legendText = "mean_pt Gen b"
 plots.append(Plot.fromHisto(name="max bbTaged jet's pt", histos=[[h1],[h2],[h7],[h8]], texX="pt", texY="Number of Events"))
 
-
 h3 = sample.get1DHistoFromDraw(bTag_max_pt, [100,0,1500], weightString =  "weight*137*((genTtbarId%100)>=52&&(genTtbarId%100)!=53&&"+cutInterpreter.cutString(args.selection)+")")
 h4 = sample.get1DHistoFromDraw(bTag_max_pt, [100,0,1500], weightString =  "weight*137*((genTtbarId%100)==51||(genTtbarId%100)==53&&"+cutInterpreter.cutString(args.selection)+")")
 h3.SetLineColor(2)
