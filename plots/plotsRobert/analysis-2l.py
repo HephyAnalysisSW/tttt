@@ -132,25 +132,15 @@ def drawPlots(plots, mode, dataMCScale):
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
             copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
-            
-# Read variables and sequences
-sequence       = []
-
-from tttt.Tools.objectSelection import isBJet
-from tttt.Tools.helpers import getObjDict
-
-#    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
-
-jetVars         = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F']#, 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F']
-jetVarNames     = [x.split('/')[0] for x in jetVars]
-
-def make_jets( event, sample ):
-    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
-    event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
-
-sequence.append( make_jets )
 
 read_variables = []
+
+#jetVars         = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F']#, 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F']
+#jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F','index/I']
+jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+
+jetVarNames     = [x.split('/')[0] for x in jetVars]
+#    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
 
 # the following we read for both, data and simulation 
 read_variables += [
@@ -170,6 +160,54 @@ read_variables_MC = [
     'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i,nBHadFromT/I,nBHadFromTbar/I,nBHadFromW/I,nBHadOther/I,nCHadFromW/I,nCHadOther/I]"
     ]
+
+            
+# Read variables and sequences
+sequence       = []
+
+from tttt.Tools.objectSelection import isBJet
+from tttt.Tools.helpers import getObjDict
+
+
+def make_jets( event, sample ):
+    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
+    event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+
+sequence.append( make_jets )
+
+#MVA
+import tttt.MVA.configs as configs
+config = configs.tttt_2l
+read_variables += config.read_variables
+
+# Add sequence that computes the MVA inputs
+def make_mva_inputs( event, sample ):
+    for mva_variable, func in config.mva_variables:
+        setattr( event, mva_variable, func(event, sample) )
+sequence.append( make_mva_inputs )
+
+# load models
+from keras.models import load_model
+
+models = [
+    #("tttt_3b_2l_lstm", False, load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l_lstm_LSTM/tttt_2l/multiclass_model.h5")),
+    ("tttt_3b_2l",      False, load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l/tttt_2l/multiclass_model.h5")),
+]
+
+def keras_predict( event, sample ):
+
+    # get model inputs assuming lstm
+    flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
+    for name, has_lstm, model in models:
+        print has_lstm, flat_variables, lstm_jets
+        prediction = model.predict( flat_variables if not has_lstm else [flat_variables, lstm_jets] )
+        setattr( event, name, prediction )
+        if not prediction>-float('inf'):
+            print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
+            print event.nJetGood
+            raise RuntimeError("Found NAN prediction?")
+
+sequence.append( keras_predict )
 
 # Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
@@ -220,6 +258,16 @@ for i_mode, mode in enumerate(allModes):
       attribute = lambda event, sample: 0.5 + i_mode,
       binning=[3, 0, 3],
     ))
+
+    for model_name, _, binning in models:
+        plots.append(Plot(
+            name = model_name,
+            texX = model_name, texY = 'Number of Events / 10 GeV',
+            attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
+            #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+            binning=[50,0,1],
+            addOverFlowBin='upper',
+        ))
 
     plots.append(Plot(
       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
