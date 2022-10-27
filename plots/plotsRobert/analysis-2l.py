@@ -129,24 +129,23 @@ sequence.append( make_jets )
 
 #MVA
 import tttt.MVA.configs.tttt_2l as config
-import onnxruntime as ort 
+import onnxruntime as ort
 read_variables = config.read_variables
 
-# Add sequence that computes the MVA inputs
-
 # ONNX load
-ort_sess = ort.InferenceSession("model.onnx",providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
- 
+ort_sess = ort.InferenceSession("model.onnx", providers = ['CPUExecutionProvider'])
+input_name = ort_sess.get_inputs()[0].name
+output_name = ort_sess.get_outputs()[0].name
+
+# Add sequence that computes the MVA inputs
 def make_mva( event, sample ):
     mva_inputs = []
     for mva_variable, func in config.mva_variables:
         val = func(event, sample)
         setattr( event, mva_variable, val )
         mva_inputs.append( val )
-
-    #print (mva_inputs)
-    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = ort_sess.run(None, {'my_input': np.array([mva_inputs])})[0]
-    #event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = 0.25, 0.25, 0.25, 0.25 
+    mva_inputs = np.array(mva_inputs, ndmin =2)
+    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = ort_sess.run([output_name], {input_name: mva_inputs.astype(np.float32)})[0][0]
 
 sequence.append( make_mva )
 
