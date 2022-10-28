@@ -1,5 +1,5 @@
 import copy, os, sys
-from RootTools.core.Sample import Sample 
+from RootTools.core.Sample import Sample
 import ROOT
 
 # Logging
@@ -18,7 +18,7 @@ logger.info("Loading data samples from directory %s", directory_)
 
 def getSample(pd, runName, lumi):
     runs = ["Run2016Bver1_preVFP", "Run2016Bver2_preVFP", "Run2016C_preVFP", "Run2016D_preVFP", "Run2016E_preVFP", "Run2016F_preVFP"]
-    dirlist = [directory_+"/"+pd+"_"+run for run in runs]
+    dirlist = [directory_+pd+"_"+run for run in runs]
     sample      = Sample.fromDirectory(name=(pd + '_' + runName), treeName="Events", texName=(pd + ' (' + runName + ')'), directory=dirlist)
     sample.lumi = lumi
     return sample
