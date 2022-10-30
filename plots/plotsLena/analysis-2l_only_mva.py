@@ -13,6 +13,7 @@ from   math                              import sqrt, cos, sin, pi, atan2, cosh
 
 # RootTools
 from RootTools.core.standard             import *
+from ROOT                                import TGraph, TCanvas
 
 # tttt
 from tttt.Tools.user                     import plot_directory
@@ -25,6 +26,7 @@ from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
 import Analysis.Tools.syncer
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Arguments
 import argparse
@@ -114,7 +116,18 @@ def drawPlots(plots, mode, dataMCScale):
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
             copyIndexPHP = True, extensions = ["png", "pdf"],
           )
-            
+      if isinstance( plot, TGraph):
+          plotting.draw(plot,
+            plot_directory = plot_directory_,
+            #ratio = None,
+            logX = False, logY = False, sorting = True,
+            #yRange = (0.9, "auto") if log else (0.001, "auto"),
+            #scaling = {0:1} if args.dataMCScaling else {},
+            #legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
+            #drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
+            copyIndexPHP = True, extensions = ["png", "pdf"],
+          )
+      
 # Read variables and sequences
 sequence       = []
 
@@ -137,7 +150,11 @@ ort_sess = ort.InferenceSession("model.onnx", providers = ['CPUExecutionProvider
 input_name = ort_sess.get_inputs()[0].name
 output_name = ort_sess.get_outputs()[0].name
 
+
 # Add sequence that computes the MVA inputs
+es = []
+eb = []
+
 def make_mva( event, sample ):
     mva_inputs = []
     for mva_variable, func in config.mva_variables:
@@ -145,7 +162,15 @@ def make_mva( event, sample ):
         setattr( event, mva_variable, val )
         mva_inputs.append( val )
     mva_inputs = np.array(mva_inputs, ndmin =2)
-    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = ort_sess.run([output_name], {input_name: mva_inputs.astype(np.float32)})[0][0]
+    lis = ort_sess.run([output_name], {input_name: mva_inputs.astype(np.float32)})[0][0] 
+    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = lis
+    es.append(lis[0])
+    eb.append(lis[1])
+    eb.append(lis[2])
+    eb.append(lis[3])
+    
+
+
 
 sequence.append( make_mva )
 
@@ -290,6 +315,7 @@ for i_mode, mode in enumerate(allModes):
         binning=[50,0,1],
         addOverFlowBin='upper',
     ))
+
 
 #     plots.append(Plot(
 #       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
@@ -809,5 +835,31 @@ for mode in ["SF","all"]:
             j.Add(l)
 
   drawPlots(allPlots['mumu'], mode, dataMCScale)
+
+
+#plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunIII', mode + "_log", args.selection)
+hist1, _ = np.histogram(es, 50)
+hist2, _ = np.histogram(eb, 50)
+f1 = np.sum(hist1)
+f2 = np.sum(hist2)
+ef1 = []
+ef2 = []
+x1 = 0
+x2 = 0
+for i in range (50):
+  x1 += hist1[50-1-i]
+  ef1.append(x1/f1)
+  x2 += hist2[50-1-i]
+  ef2.append(x2/f2)
+
+np.savetxt("model.txt", ef1, ef2)
+results_dir = './'
+sample_file_name = "Efficiency.png"
+plt.scatter(ef1,ef2)
+plt.xlabel("sample efficiency")
+plt.ylabel("background efficiency")
+plt.savefig(results_dir + sample_file_name)  
+
+
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
