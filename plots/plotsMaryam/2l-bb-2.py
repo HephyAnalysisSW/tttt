@@ -37,18 +37,18 @@ bbTag_max_pt   = "MaxIf$(JetGood_pt, (JetGood_btagDeepFlavbb/(JetGood_btagDeepFl
 bTag_max_pt    = "MaxIf$(JetGood_pt, (JetGood_btagDeepFlavb/(JetGood_btagDeepFlavbb+JetGood_btagDeepFlavlepb))/Max$(JetGood_btagDeepFlavb/(JetGood_btagDeepFlavbb+JetGood_btagDeepFlavlepb))==1)"
 bbTag_max_value   = "Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))"
 # this will not work: You're giving the mean of ALL jets IF the second condition is true for ANY jet, otherwise zero. -> Try Sum$ always with a TChain::Scan :-)
-bbTag_mean_pt  = "MaxIf$(Sum$(JetGood_pt)/Length$(JetGood_pt), (JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))/Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))!=1)"
+max_pt  = "MaxIf$(JetGood_pt, abs(JetGood_eta)<2.4)"
 
 # it is better to use ROOT.kBlue etc. instead of the numerical value. We'd like to look at the plot and the code at the same time.
 plot_cfgs = [
     {'name':'max_bb_pt', 'histos': [
-        {'legendText':'max(p_{T}) Gen bb',  'var':bbTag_max_pt,   'color':2,     'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
-        {'legendText':'max(p_{T}) Gen b',   'var':bbTag_max_pt,   'color':8,     'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+        {'legendText':'max(p_{T}) Gen bb bbTaged',  'var':bbTag_max_pt,   'color':2,     'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+        {'legendText':'max(p_{T}) Gen b bbTaged',   'var':bbTag_max_pt,   'color':8,     'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
     # this is likely meaningless (see above)
-        {'legendText':'mean(p_{T}) Gen bb', 'var':bbTag_mean_pt,  'color':632+2, 'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
-        {'legendText':'mean(p_{T}) Gen b',  'var':bbTag_mean_pt,  'color':416-1, 'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+        {'legendText':'max(p_{T}) Gen bb', 'var':max_pt,  'color':632+2, 'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+        {'legendText':'max(p_{T}) Gen b',  'var':max_pt,  'color':416-1, 'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
     ]},
-    # this seems redundant: 
+    # this seems redundant:
     {'name': 'max_b_pt', 'histos': [
         {'legendText':'max(p_{T}) Gen bb', 'var':bbTag_max_pt,    'color':2,      'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
         {'legendText':'max(p_{T}) Gen b',  'var':bbTag_max_pt,    'color':8,      'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
@@ -62,13 +62,15 @@ plot_cfgs = [
 
 plots = []
 for plot_cfg in plot_cfgs:
-
+    histos = []
     for histo in plot_cfg['histos']:
         histo['h'] = sample.get1DHistoFromDraw(histo['var'], histo['binning'], weightString = "weight*137*({sel})&&".format(sel=histo['selection'])+cutInterpreter.cutString(args.selection), addOverFlowBin = 'upper')
         histo['h'].SetLineColor(histo['color'])
-        histo['h'].legendText = histo['legendText'] 
+        histo['h'].legendText = histo['legendText']
+        histos.append([histo['h']])
 
-    plots.append(Plot.fromHisto(name=plot_cfg['name'], histos=[[histo['h']] for h in plot_cfg['histos']], texX="pt", texY="Number of Events"))
+    plots.append(Plot.fromHisto(name=plot_cfg['name'], histos=histos, texX="pt", texY="Number of Events"))
+
 
 
 for plot in plots:
@@ -84,4 +86,4 @@ for plot in plots:
         copyIndexPHP = True, extensions = ["png", "pdf", "root"],
       )
 
-Analysis.Tools.syncer.sync()
+#Analysis.Tools.syncer.sync()
