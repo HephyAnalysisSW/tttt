@@ -17,7 +17,7 @@ from RootTools.core.standard             import *
 # tttt
 from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
-from tttt.Tools.objectSelection          import lepString 
+from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList
 
 # Analysis
 from Analysis.Tools.helpers              import deltaPhi, deltaR
@@ -34,7 +34,7 @@ argParser.add_argument('--small',                             action='store_true
 argParser.add_argument('--noData',         action='store_true', help='Do not plot data.')
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?')
-argParser.add_argument('--plot_directory', action='store', default='TMB_4t')
+argParser.add_argument('--plot_directory', action='store', default='TMB_4t_v2')
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 args = argParser.parse_args()
 
@@ -48,7 +48,7 @@ if args.small: args.plot_directory += "_small"
 if args.noData:args.plot_directory += "_noData"
 
 # Simulated samples
-from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
+from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 
 # Split dileptonic TTBar into three different contributions
 sample_TTLep = TTLep
@@ -69,32 +69,29 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 # group all the simulated backgroundsamples 
-mc = [ TTLep_bb,TTLep_cc,TTLep_other, TTW, TTH, TTZ] 
-
-# Let's plot the signal separately
-all_mc = mc + [TTTT]
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, TTW, TTH, TTZ, TTTT] 
 
 # Now we add the data
 if not args.noData:
     from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
     data_sample = RunII
     data_sample.name = "data"
-    all_samples = all_mc +  [data_sample]
+    all_samples = mc +  [data_sample]
 else:
-    all_samples = all_mc 
+    all_samples = mc 
 
 # Here we compute the scaling of the simulation to the data luminosity (event.weight corresponds to 1/fb for simulation, hence we divide the data lumi in pb^-1 by 1000) 
 lumi_scale = 137. if args.noData else data_sample.lumi/1000.
 
 # We're going to "scale" the simulation if "small" is true. So let's define a "scale" which will correct this
-for sample in all_mc:
+for sample in mc:
     sample.scale  = 1 
 
 # For R&D we just use a fraction of the data
 if args.small:
     if not args.noData:
         data_sample.reduceFiles( factor = 100 )
-    for sample in all_mc :
+    for sample in mc :
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
         #sample.reduceFiles( to=1)
@@ -124,7 +121,7 @@ def drawPlots(plots, mode, dataMCScale):
       if isinstance( plot, Plot):
           plotting.draw(plot,
             plot_directory = plot_directory_,
-            ratio = None,
+            ratio =  {'yRange':(0.1,1.9)} if not args.noData else None,
             logX = False, logY = log, sorting = True,
             yRange = (0.9, "auto") if log else (0.001, "auto"),
             scaling = {0:1} if args.dataMCScaling else {},
@@ -137,7 +134,7 @@ read_variables = []
 
 #jetVars         = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F']#, 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F']
 #jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F','index/I']
-jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F' ]
 
 jetVarNames     = [x.split('/')[0] for x in jetVars]
 #    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
@@ -158,9 +155,8 @@ read_variables += [
 # the following we read only in simulation
 read_variables_MC = [
     'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
-    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i,nBHadFromT/I,nBHadFromTbar/I,nBHadFromW/I,nBHadOther/I,nCHadFromW/I,nCHadOther/I]"
+    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
-
             
 # Read variables and sequences
 sequence       = []
@@ -189,23 +185,31 @@ sequence.append( make_mva_inputs )
 # load models
 from keras.models import load_model
 
-models = [
-    #("tttt_3b_2l_lstm", False, load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l_lstm_LSTM/tttt_2l/multiclass_model.h5")),
-    ("tttt_3b_2l",      False, load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l/tttt_2l/multiclass_model.h5")),
+classes = [ts.name for ts in config.training_samples]
+models  = [
+    {'name':"tttt_3b_2l",     'classes':classes, 'has_lstm':False, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l/tttt_2l/multiclass_model.h5")},
+    {'name':"tttt_3b_2l_lstm",'classes':classes, 'has_lstm':True, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l_lstm_LSTM/tttt_2l/multiclass_model.h5")},
 ]
 
 def keras_predict( event, sample ):
 
     # get model inputs assuming lstm
     flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
-    for name, has_lstm, model in models:
-        print has_lstm, flat_variables, lstm_jets
-        prediction = model.predict( flat_variables if not has_lstm else [flat_variables, lstm_jets] )
-        setattr( event, name, prediction )
-        if not prediction>-float('inf'):
-            print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
-            print event.nJetGood
-            raise RuntimeError("Found NAN prediction?")
+    #print "flat_variables", flat_variables
+    #print "lstm_jets", lstm_jets 
+    for model in models:
+        #print has_lstm, flat_variables, lstm_jets
+        if model['has_lstm']:
+            prediction = model['model'].predict( [flat_variables, lstm_jets] )
+        else:
+            prediction = model['model'].predict( flat_variables )
+        for i_class_, class_ in enumerate(model['classes']):
+            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
+        #print (model['name'], model['classes'], prediction)
+        #if not prediction>-float('inf'):
+        #    print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
+        #    print event.nJetGood
+        #    raise RuntimeError("Found NAN prediction?")
 
 sequence.append( keras_predict )
 
@@ -217,6 +221,33 @@ def getLeptonSelection( mode ):
     elif mode=="mue":  return "Sum$({mu_string})==1&&Sum$({ele_string})==1".format(mu_string=mu_string,ele_string=ele_string)
     elif mode=="ee":   return "Sum$({mu_string})==0&&Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
     elif mode=='all':    return "Sum$({mu_string})+Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
+
+def charge(pdgId):
+    return -pdgId/abs(pdgId)
+
+# Getter functor for lepton quantities
+def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
+    if functor is not None:
+        if abs_pdg == 13:
+            def func_( event, sample ):
+                if debug:
+                    print "Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result",
+                    print functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+                return functor(getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+        else:
+            def func_( event, sample ):
+                return functor(getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]]) if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+    else:
+        if abs_pdg == 13:
+            def func_( event, sample ):
+                if debug:
+                    print "Returning", "Muon_%s"%branch, index, abs_pdg, "functor", functor, "result",
+                    print getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+                return getattr( event, "Muon_%s"%branch )[event.lep_muIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+        else:
+            def func_( event, sample ):
+                return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
+    return func_
 
 # We don't use tree formulas, but I leave them so you understand the syntax. TTreeFormulas are faster than if we compute things in the event loop.
 ttreeFormulas = {   
@@ -235,17 +266,17 @@ for i_mode, mode in enumerate(allModes):
 
     # coloring
     for sample in mc: sample.style = styles.fillStyle(sample.color)
-    TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
+    #TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
     if not args.noData:
         data_sample.style = styles.errorStyle( ROOT.kBlack ) 
 
     # read the MC variables only in MC; apply reweighting to simulation for specific detector effects
-    for sample in all_mc:
+    for sample in mc:
       sample.read_variables = read_variables_MC 
       sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
 
     # Define what we want to see.
-    stack = Stack(*all_samples)
+    stack = Stack(mc, [data_sample])
 
     # Define everything we want to have common to all plots
     Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
@@ -259,15 +290,17 @@ for i_mode, mode in enumerate(allModes):
       binning=[3, 0, 3],
     ))
 
-    for model_name, _, binning in models:
-        plots.append(Plot(
-            name = model_name,
-            texX = model_name, texY = 'Number of Events / 10 GeV',
-            attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
-            #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-            binning=[50,0,1],
-            addOverFlowBin='upper',
-        ))
+    for model in models:
+        for class_ in model['classes']:
+            model_name = model['name']+'_'+class_
+            plots.append(Plot(
+                name = model_name,
+                texX = model_name, texY = 'Number of Events',
+                attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
+                #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+                binning=[50,0,1],
+                addOverFlowBin='upper',
+            ))
 
     plots.append(Plot(
       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
@@ -476,6 +509,98 @@ for i_mode, mode in enumerate(allModes):
       name = 'jet1_pt', attribute = lambda event, sample: event.JetGood_pt[1],
       binning=[600/30,0,600],
     ))
+
+    for index in range(2):
+        for abs_pdg in [11, 13]:
+            lep_name = "mu" if abs_pdg==13 else "ele"
+            plots.append(Plot(
+              texX = 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_pt'%(lep_name, index), attribute = lep_getter("pt", index, abs_pdg),
+              binning=[400/20,0,400],
+            ))
+            plots.append(Plot(
+              texX = '#eta(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_eta'%(lep_name, index), attribute = lep_getter("eta", index, abs_pdg),
+              binning=[30,-3,3],
+            ))
+            plots.append(Plot(
+              texX = '#phi(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_phi'%(lep_name, index), attribute = lep_getter("phi", index, abs_pdg),
+              binning=[30,-pi,pi],
+            ))
+            plots.append(Plot(
+              texX = 'dxy(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_dxy'%(lep_name, index), attribute = lep_getter("dxy", index, abs_pdg, functor = lambda x: abs(x)),
+              binning=[50,0,0.05],
+            ))
+            plots.append(Plot(
+              texX = 'dz(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_dz'%(lep_name, index), attribute = lep_getter("dz", index, abs_pdg, functor = lambda x: abs(x)),
+              binning=[50,0,0.05],
+            ))
+            plots.append(Plot(
+              texX = 'IP_{3D}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_ip3d'%(lep_name, index), attribute = lep_getter("ip3d", index, abs_pdg, functor = lambda x: abs(x)),
+              binning=[50,0,0.05],
+            ))
+            plots.append(Plot(
+              texX = '#sigma(IP)_{3D}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_sip3d'%(lep_name, index), attribute = lep_getter("sip3d", index, abs_pdg, functor = lambda x: abs(x)),
+              binning=[40,0,8],
+            ))
+            plots.append(Plot(
+              texX = 'jetRelIso(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_jetRelIso'%(lep_name, index), attribute = lep_getter("jetRelIso", index, abs_pdg),
+              binning=[50,-.15,0.5],
+            ))
+            plots.append(Plot(
+              texX = 'miniPFRelIso_all(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_miniPFRelIso_all'%(lep_name, index), attribute = lep_getter("miniPFRelIso_all", index, abs_pdg),
+              binning=[50,0,.5],
+            ))
+            plots.append(Plot(
+              texX = 'pfRelIso03_all(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_pfRelIso03_all'%(lep_name, index), attribute = lep_getter("pfRelIso03_all", index, abs_pdg),
+              binning=[50,0,.5],
+            ))
+            plots.append(Plot(
+              texX = 'mvaTTH(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_mvaTTH'%(lep_name, index), attribute = lep_getter("mvaTTH", index, abs_pdg),
+              binning=[24,-1.2,1.2],
+            ))
+#            plots.append(Plot(
+#              texX = 'mvaTOP(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+#              name = '%s%i_mvaTOP'%(lep_name, index), attribute = lep_getter("mvaTOP", index, abs_pdg),
+#              binning=[24,-1.2,1.2],
+#            ))
+            plots.append(Plot(
+              texX = 'charge(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+              name = '%s%i_charge'%(lep_name, index), attribute = lep_getter("pdgId", index, abs_pdg, functor = charge),
+              binning=[3,-1,2],
+            ))
+            if lep_name == "mu":
+                plots.append(Plot(
+                  texX = 'segmentComp(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+                  name = '%s%i_segmentComp'%(lep_name, index), attribute = lep_getter("segmentComp", index, abs_pdg),
+                  binning=[50,0,1],
+                ))
+                plots.append(Plot(
+                  texX = 'nStations(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+                  name = '%s%i_nStations'%(lep_name, index), attribute = lep_getter("nStations", index, abs_pdg),
+                  binning=[10,0,10],
+                ))
+                plots.append(Plot(
+                  texX = 'nTrackerLayers(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+                  name = '%s%i_nTrackerLayers'%(lep_name, index), attribute = lep_getter("nTrackerLayers", index, abs_pdg),
+                  binning=[20,0,20],
+                ))
+            if lep_name == "ele":
+                for cbIdFlag in vidNestedWPBitMapNamingList:
+                    plots.append(Plot(
+                      texX = '%s(%s_{%i}) (GeV)'%(cbIdFlag, lep_name, index), texY = 'Number of Events',
+                      name = '%s%i_%s_Flag'%(lep_name, index, cbIdFlag), attribute = lep_getter("vidNestedWPBitmap", index, abs_pdg, functor = cbEleIdFlagGetter(cbIdFlag)),
+                      binning=[5,0,5],
+                    ))
 
     plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
 

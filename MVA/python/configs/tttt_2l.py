@@ -145,9 +145,9 @@ def predict_inputs( event, sample, jet_lstm = False):
         jets += [ [0.]*len(lstm_jetVarNames)]*(max(0, lstm_jets_maxN-len(jets))) 
         jets = np.array([jets])
 
-        return [ flat_variables, jets ]
+        return  flat_variables, jets 
     else:
-        return   flat_variables
+        return  flat_variables
 
 #define training samples for multiclassification
 import tttt.samples.nano_private_UL20_RunII_postProcessed_dilep as samples

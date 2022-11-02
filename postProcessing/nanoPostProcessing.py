@@ -61,7 +61,7 @@ def get_parser():
     argParser.add_argument('--flagTTBar',   action='store_true',                                                                        help="Is ttbar?" )
     argParser.add_argument('--addDoubleB',  action='store_true',                                                                        help="Add fine grained b-tagging information." )
     argParser.add_argument('--doCRReweighting',             action='store_true',                                                        help="color reconnection reweighting?")
-    argParser.add_argument('--triggerSelection',            action='store_true',                                                        help="Trigger selection?" )
+    argParser.add_argument('--noTriggerSelection',          action='store_true',                                                        help="Do NOT apply Trigger selection to Data?" )
     #argParser.add_argument('--skipGenLepMatching',          action='store_true',                                                        help="skip matched genleps??" )
     argParser.add_argument('--checkTTGJetsOverlap',         action='store_true',                                                        help="Keep TTGJetsEventType which can be used to clean TTG events from TTJets samples" )
     argParser.add_argument('--skipSystematicVariations',    action='store_true',                                                        help="Don't calulcate BTag, JES and JER variations.")
@@ -325,20 +325,22 @@ sample.copy_files( os.path.join(tmp_output_directory, "input") )
 # Apply trigger selection
 treeFormulas = {}
 from tttt.Tools.triggerSelector import triggerSelector
-if options.triggerSelection and (isTrilep or isDilep):
+if (isTrilep or isDilep):
     ts           = triggerSelector(year, isTrilep=isTrilep)
     triggerCond  = ts.getSelection(options.samples[0] if isData else "MC", triggerList = ts.getTriggerList(sample) )
-elif options.triggerSelection and isSinglelep:
+elif isSinglelep:
     electriggers = "HLT_Ele8_CaloIdM_TrackIdM_PFJet30||HLT_Ele17_CaloIdM_TrackIdM_PFJet30"
     muontriggers = "HLT_Mu3_PFJet40||HLT_Mu8||HLT_Mu17||HLT_Mu20||HLT_Mu27"
     triggerCond = "("+electriggers+"||"+muontriggers+")"
-    skimConds.append( triggerstring )
 
-if options.triggerSelection:
-    treeFormulas["triggerDecision"] =  {'string':triggerCond}
-    if isData:
-        logger.info("Sample will have the following trigger skim: %s"%triggerCond)
-        skimConds.append( triggerCond )
+# Add trigger decision to ntuple
+treeFormulas["triggerDecision"] =  {'string':triggerCond}
+logger.info("'triggerDecision' will correspond to: %s"%triggerCond)
+if not options.noTriggerSelection and isData:
+    logger.info("Sample will have the trigger skim applied!")
+    skimConds.append( triggerCond )
+else:
+    logger.info("Sample will have the trigger skim NOT applied!")
 
 # turn on all branches to be flexible for filter cut in skimCond etc.
 sample.chain.SetBranchStatus("*",1)
@@ -459,8 +461,7 @@ if isMC:
 
 new_variables = [ 'weight/F', 'year/I', 'preVFP/O']
 
-if options.triggerSelection and isTrilep:
-    new_variables+= ['triggerDecision/I']
+new_variables+= ['triggerDecision/I']
 
 read_variables.append( TreeVariable.fromString('L1PreFiringWeight_Dn/F') )
 read_variables.append( TreeVariable.fromString('L1PreFiringWeight_Nom/F') )
@@ -692,9 +693,8 @@ def filler( event ):
         event.reweightTopPt     = topPtReweightingFunc(getTopPtsForReweighting(r)) * topScaleF if doTopPtReweighting else 1.
 
     ################################################################################
-    # Trigger Decision
-    if options.triggerSelection:
-        event.triggerDecision = int(treeFormulas['triggerDecision']['TTreeFormula'].EvalInstance())
+    ## Trigger Decision
+    event.triggerDecision = int(treeFormulas['triggerDecision']['TTreeFormula'].EvalInstance())
 
     ################################################################################
     # Store Scale and PDF weights in a format that is readable with HEPHY framework

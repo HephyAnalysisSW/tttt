@@ -61,7 +61,7 @@ class triggerSelector:
 
     def getSelection(self, PD, triggerList = None):
 
-        # reduce the set of triggers in case 
+        # reduce the set of triggers in case a list is provided 
         for lst in [ "mm", "m", "ee", "e", "em"] if not self.isTrilep else ["mmm", "mm", "m", "eee", "ee", "e", "em", "eem", "emm" ]:
             res = []
             for trig in getattr(self, lst):
