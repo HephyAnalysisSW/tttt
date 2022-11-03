@@ -480,6 +480,8 @@ def eleSelector( lepton_selection, year, ptCut = 10):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
+                and abs(l["eta"]+l["deltaEtaSC"])<=1.4442\
+                and abs(l["eta"]+l["deltaEtaSC"])>=1.566\
                 and abs(l["dxy"])       < 0.05 \
                 and abs(l["dz"])        < 0.1 \
                 and l["sip3d"]          < 8.0 \
