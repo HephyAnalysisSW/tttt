@@ -192,7 +192,7 @@ def muonSelector( lepton_selection, year, ptCut = 10):
                 and abs(l["dz"])        < 0.1 \
                 and l["sip3d"]          < 8.0 \
                 and l['miniPFRelIso_all'] < 0.40 \
-                and l['mediumId'] 
+                and l['mediumId']
     elif lepton_selection == 'mvaTOPVL':
         def func(l):
             return \
