@@ -48,7 +48,9 @@ if args.small: args.plot_directory += "_small"
 if args.noData:args.plot_directory += "_noData"
 
 # Simulated samples
-from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+#from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
+
 
 # Split dileptonic TTBar into three different contributions
 sample_TTLep = TTLep
