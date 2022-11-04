@@ -23,7 +23,7 @@ from tttt.Tools.objectSelection          import lepString
 from Analysis.Tools.helpers              import deltaPhi, deltaR
 from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
-import Analysis.Tools.syncer
+#import Analysis.Tools.syncer
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -132,7 +132,8 @@ sequence       = []
 
 from tttt.Tools.objectSelection import isBJet
 from tttt.Tools.helpers import getObjDict
-jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F']
+jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F', 'index/F']
+#jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F','index/I']
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
@@ -140,37 +141,30 @@ def make_jets( event, sample ):
 sequence.append( make_jets )
 
 #MVA
-import tttt.MVA.configs.tttt_2l as config
+import tttt_2l_lena as config
 import onnxruntime as ort
 read_variables = config.read_variables
 
 
 # Add sequence that computes the MVA inputs
 
-
-def make_mva( event, sample ):
-    mva_inputs = []
+def mva_eval (event, sample):
     for mva_variable, func in config.mva_variables:
         val = func(event, sample)
         setattr( event, mva_variable, val )
-        mva_inputs.append( val )
-    mva_inputs = np.array(mva_inputs, ndmin =2)
-
+    flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
+    lstm_jets = np.nan_to_num(lstm_jets)
     if (LSTM):
-        lstm_inputs = []
-        ####make inputs as above for mva
-        #
-        #
-        lstm_inputs = np.array(mva_inputs, ndmin =3) #desired shape (1,max_timesteps = 10, num_features = 12)
-        lis = ort_sess.run(["output1"], {"input1": mva_inputs.astype(np.float32),"input2": lstm_inputs.astype(np.float32)})[0][0] 
+        lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets.astype(np.float32)})[0][0] 
     else:
-        lis = ort_sess.run(["output1"], {"input1": mva_inputs.astype(np.float32)})[0][0] 
-    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = lis
+        lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32)})[0][0] 
+    setattr( event, model, lis[0] )
     es.append(lis[0])
     eb.append(lis[1])
     eb.append(lis[2])
     eb.append(lis[3])
-sequence.append( make_mva )
+
+sequence.append(mva_eval)
 
 
 read_variables = []
@@ -239,33 +233,34 @@ ttreeFormulas = {
                     "nGenJet_absPF5":"Sum$(abs(GenJet_partonFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection),
     }
 
+
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
-allModels  = ["model.onnx", "model_lstm.onnx"]
+allModels  = [ "model","model_lstm"]
+weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_scale
+for sample in mc: sample.style = styles.fillStyle(sample.color)
+TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
+
+for sample in all_mc:
+    sample.read_variables = read_variables_MC 
+    sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
+    
+    #yt_TWZ_filter.scale = lumi_scale * 1.07314
+    stack = Stack(mc, TTTT)
+
 fig, ax = plt.subplots()
 for j, model in enumerate (allModels):
     # ONNX load
     es = []
     eb = []
-    ort_sess = ort.InferenceSession(model, providers = ['CPUExecutionProvider'])
+    ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'])
     LSTM = False
     if (str(model).find('lstm')!=-1): LSTM = True
     for i_mode, mode in enumerate(allModes):
         yields[mode] = {}
     
-        weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_scale
-    
-        for sample in mc: sample.style = styles.fillStyle(sample.color)
-        TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
-     
-        for sample in all_mc:
-          sample.read_variables = read_variables_MC 
-          sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
-    
-        #yt_TWZ_filter.scale = lumi_scale * 1.07314
-    
-        stack = Stack(mc, TTTT)
+        
     
         # Use some defaults
         Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
@@ -279,9 +274,10 @@ for j, model in enumerate (allModels):
         ))
     
         plots.append(Plot(
-            name = 'lenas_MVA_TTTT_'+str(j),
+            name = 'lenas_MVA_TTTT_'+str(model),
             texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
-            attribute = lambda event, sample:event.lenas_MVA_TTTT,
+            #attribute = lambda event, sample:event.(str(model)),
+            attribute = lambda event, sample, model_name=model: getattr(event, model_name),
             binning=[50,0,1],
             addOverFlowBin='upper',
         ))
