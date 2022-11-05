@@ -319,7 +319,7 @@ def cbEleIdFlagGetter( flag ):
 
     return getter
 
-def ECALGap(e):
+def passECALGap(e):
     if abs(e['pdgId']) == 11: absEta = abs(e["eta"] + e["deltaEtaSC"])   # eta supercluster
     else:                     absEta = abs(e["eta"])                     # eta
     return ( absEta > 1.566 or absEta < 1.4442 )
@@ -471,8 +471,7 @@ def eleSelector( lepton_selection, year, ptCut = 10):
             return \
                 l["pt"]                 >= ptCut \
                 and abs(l["eta"])       < 2.5 \
-                and abs(l["eta"]+l["deltaEtaSC"])<=1.4442\
-                and abs(l["eta"]+l["deltaEtaSC"])>=1.566\
+                and passECALGap(l)\
                 and abs(l["dxy"])       < 0.05 \
                 and abs(l["dz"])        < 0.1 \
                 and l["sip3d"]          < 8.0 \
@@ -516,7 +515,7 @@ def eleSelector( lepton_selection, year, ptCut = 10):
             if l["pt"] <= 25 and l["pt"] >5:
                 return \
                     abs(l["eta"]) < 2.5 \
-                    and ECALGap(l) \
+                    and passECALGap(l) \
                     and electronVIDSelector( l, idVal= 1 , removedCuts=['pt'] ) \
                     and (l['pfRelIso03_all']*l['pt']) < 5.0 \
                     and abs(l["dxy"])       < 0.02 \
@@ -524,7 +523,7 @@ def eleSelector( lepton_selection, year, ptCut = 10):
             elif l["pt"] > 25:
                 return \
                     abs(l["eta"]) < 2.5 \
-                    and ECALGap(l) \
+                    and passECALGap(l) \
                     and electronVIDSelector( l, idVal= 1 , removedCuts=['pt'] ) \
                     and l['pfRelIso03_all'] < 0.2 \
                     and abs(l["dxy"])       < 0.02 \
@@ -534,7 +533,7 @@ def eleSelector( lepton_selection, year, ptCut = 10):
             if l["pt"] <= 25 and l["pt"] >5:
                 return \
                     abs(l["eta"]) < 2.5 \
-                    and ECALGap(l) \
+                    and passECALGap(l) \
                     and electronVIDSelector( l, idVal= 1 , removedCuts=['pt', 'pfRelIso03_all'] ) \
                     and (l['pfRelIso03_all']*l['pt']) < 20.0 \
                     and abs(l["dxy"])       < 0.1 \
@@ -542,7 +541,7 @@ def eleSelector( lepton_selection, year, ptCut = 10):
             elif l["pt"] > 25:
                 return \
                     abs(l["eta"]) < 2.5 \
-                    and ECALGap(l) \
+                    and passECALGap(l) \
                     and electronVIDSelector( l, idVal= 1 , removedCuts=['pt', 'pfRelIso03_all'] ) \
                     and l['pfRelIso03_all'] < 0.8 \
                     and abs(l["dxy"])       < 0.1 \
