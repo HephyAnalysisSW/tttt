@@ -125,15 +125,6 @@ def lepString( eleMu = None, WP = 'VL', idx = None):
     else:
         return '('+lepString( 'ele', WP, idx=idx) + ')||(' + lepString( 'mu', WP, idx=idx) + ')'
 
-def lepStringNoMVA( eleMu = None, idx = None):
-    idx_str = "[%s]"%idx if idx is not None else ""
-    if eleMu=='ele':
-        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11".format( idx_str=idx_str )
-    elif eleMu=='mu':
-        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13".format( idx_str=idx_str )
-    else:
-        return '('+lepString( 'ele', WP, idx=idx) + ')||(' + lepString( 'mu', WP, idx=idx) + ')'
-
 def mvaTopWP(mvaTopThr, pdgId):
     mvaTOPs = mvaTOP['mu'] if abs(pdgId)==13 else mvaTOP['ele']
     return sum( [ int( mvaTopThr > th ) for th in mvaTOPs.values() ] )

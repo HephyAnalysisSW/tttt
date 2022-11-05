@@ -11,9 +11,11 @@ mIsoWP = { "VT":5, "T":4, "M":3 , "L":2 , "VL":1, 0:"None" }
 
 special_cuts = {
 
+    "trg":             "triggerDecision",
     "example":         "l1_pt>50",
     "singlelep":       "l1_pt>20",
     "dilep":           "l2_pt>20",
+    #"dilepSync":       "(Sum$(lep_pt>15)==2)&&l1_pt>25&&l2_pt>20",
     "dilepVL":         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20",
     "dilepL" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
     "dilepM" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
