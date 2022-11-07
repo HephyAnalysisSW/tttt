@@ -237,7 +237,7 @@ ttreeFormulas = {
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
-allModels  = [ "model","model_lstm"]
+allModels  = [ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model3_lstm","model4_lstm" ]
 weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_scale
 for sample in mc: sample.style = styles.fillStyle(sample.color)
 TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
@@ -249,7 +249,7 @@ for sample in all_mc:
     #yt_TWZ_filter.scale = lumi_scale * 1.07314
     stack = Stack(mc, TTTT)
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(15,10))
 for j, model in enumerate (allModels):
     # ONNX load
     es = []
@@ -354,7 +354,7 @@ for j, model in enumerate (allModels):
 
     results_dir = './'
     sample_file_name = "Efficiency.png"
-    plt.scatter(ef1,ef2, label = str(model))
+    ax.scatter(ef1,ef2, label = str(model))
     plt.legend()
     plt.xlabel("sample efficiency")
     plt.ylabel("background efficiency")
