@@ -6,8 +6,8 @@ import ROOT
 import logging
 logger = logging.getLogger(__name__)
 
-import tttt.samples.UL_nanoAODv9_locations as locations
-directory_ = locations.data_UL2016_preVFP
+import tttt.samples.config as config
+directory_ = config.location_data_UL2016_preVFP
 
 logger.info("Loading data samples from directory %s", directory_)
 
@@ -29,7 +29,8 @@ MuonEG_Run2016                    = getSample('MuonEG',           'Run2016',    
 allSamples += [MuonEG_Run2016, DoubleEG_Run2016, DoubleMuon_Run2016, SingleElectron_Run2016, SingleMuon_Run2016]
 
 Run2016_preVFP = Sample.combine("Run2016_preVFP", [MuonEG_Run2016, DoubleEG_Run2016, DoubleMuon_Run2016, SingleElectron_Run2016, SingleMuon_Run2016], texName = "Run2016")
-Run2016_preVFP.lumi = (19.5)*1000
+Run2016_preVFP.lumi = config.lumi_era["Run2016_preVFP"]
+
 allSamples.append(Run2016_preVFP)
 
 for s in allSamples:

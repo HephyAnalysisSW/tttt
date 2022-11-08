@@ -189,8 +189,8 @@ from keras.models import load_model
 
 classes = [ts.name for ts in config.training_samples]
 models  = [
-    {'name':"tttt_3b_2l",     'classes':classes, 'has_lstm':False, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l/tttt_2l/multiclass_model.h5")},
-    {'name':"tttt_3b_2l_lstm",'classes':classes, 'has_lstm':True, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l_lstm_LSTM/tttt_2l/multiclass_model.h5")},
+#    {'name':"tttt_3b_2l",     'classes':classes, 'has_lstm':False, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l/tttt_2l/multiclass_model.h5")},
+#    {'name':"tttt_3b_2l_lstm",'classes':classes, 'has_lstm':True, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l_lstm_LSTM/tttt_2l/multiclass_model.h5")},
 ]
 
 def keras_predict( event, sample ):
@@ -264,7 +264,7 @@ for i_mode, mode in enumerate(allModes):
 
     # "event.weight" is 0/1 for data, depending on whether it is from a certified lumi section. For MC, it corresponds to the 1/fb*cross-section/Nsimulated. So we multiply with the lumi in /fb.
     # This weight goes to the plot.
-    weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_scale
+    weight_ = lambda event, sample: event.weight if sample.isData else event.weight
 
     # coloring
     for sample in mc: sample.style = styles.fillStyle(sample.color)

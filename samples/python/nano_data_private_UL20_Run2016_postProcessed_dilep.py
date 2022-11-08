@@ -6,8 +6,8 @@ import ROOT
 import logging
 logger = logging.getLogger(__name__)
 
-import tttt.samples.UL_nanoAODv9_locations as locations
-directory_ = locations.data_UL2016
+import tttt.samples.config as config
+directory_ = config.location_data_UL2016
 
 logger.info("Loading data samples from directory %s", directory_)
 
@@ -17,7 +17,6 @@ def getSample(pd, runName, lumi):
     sample      = Sample.fromDirectory(name=(pd + '_' + runName), treeName="Events", texName=(pd + ' (' + runName + ')'), directory=dirlist)
     sample.lumi = lumi
     return sample
-
 
 allSamples = []
 
@@ -29,7 +28,8 @@ MuonEG_Run2016                    = getSample('MuonEG',           'Run2016',    
 allSamples += [MuonEG_Run2016, DoubleEG_Run2016, DoubleMuon_Run2016, SingleElectron_Run2016, SingleMuon_Run2016]
 
 Run2016 = Sample.combine("Run2016", [MuonEG_Run2016, DoubleEG_Run2016, DoubleMuon_Run2016, SingleElectron_Run2016, SingleMuon_Run2016], texName = "Run2016")
-Run2016.lumi = (16.5)*1000
+Run2016.lumi = config.lumi_era["Run2016"]
+
 allSamples.append(Run2016)
 
 for s in allSamples:

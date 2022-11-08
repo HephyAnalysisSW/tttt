@@ -8,8 +8,8 @@ logger = logging.getLogger(__name__)
 
 from tttt.samples.color import color
 
-import tttt.samples.UL_nanoAODv9_locations as locations
-directory_ = locations.mc_UL2016
+import tttt.samples.config as config
+directory_ = config.location_mc_UL2016
 #TTHnobb  TTHTobb  TTLep_pow_CP5  TTTT  TTWToLNu  TTWToQQ  TTZToLLNuNu  TTZToLLNuNu_m1to10  TTZToQQ
 
 def make_dirs( dirs ):
