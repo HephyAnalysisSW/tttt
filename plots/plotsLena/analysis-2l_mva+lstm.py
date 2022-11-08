@@ -237,7 +237,7 @@ ttreeFormulas = {
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
-allModels  = [ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model3_lstm","model4_lstm" ]
+allModels  = [ "model1"]#,"model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model3_lstm","model4_lstm" ]
 weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_scale
 for sample in mc: sample.style = styles.fillStyle(sample.color)
 TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
@@ -254,7 +254,7 @@ for j, model in enumerate (allModels):
     # ONNX load
     es = []
     eb = []
-    ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'])
+    ort_sess = ort.InferenceSession(model+".onnx")#, providers = ['CPUExecutionProvider'])
     LSTM = False
     if (str(model).find('lstm')!=-1): LSTM = True
     for i_mode, mode in enumerate(allModes):
@@ -337,8 +337,8 @@ for j, model in enumerate (allModels):
     
     drawPlots(allPlots['mumu'], mode, dataMCScale)
       
-    hist1, _ = np.histogram(es, 50)
-    hist2, _ = np.histogram(eb, 50)
+    hist1, _ = np.histogram(es, 50, range=(0, 1))
+    hist2, _ = np.histogram(eb, 50, range=(0, 1))
     f1 = np.sum(hist1)
     f2 = np.sum(hist2)
     ef1 = []
