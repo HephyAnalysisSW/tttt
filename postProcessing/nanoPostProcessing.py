@@ -36,8 +36,6 @@ from Analysis.Tools.puProfileDirDB           import puProfile
 from Analysis.Tools.LeptonTrackingEfficiency import LeptonTrackingEfficiency
 from Analysis.Tools.helpers                  import checkRootFile, deepCheckRootFile, deepCheckWeight, dRCleaning
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
-# central configuration
-targetLumi = 1000 #pb-1 Which lumi to normalize to
 
 def get_parser():
     ''' Argument parser for post-processing module.
@@ -429,6 +427,19 @@ if isData:
     lumiList = LumiList(os.path.expandvars(sample.json))
     logger.info( "Loaded json %s", sample.json )
 else:
+    # We normalize the simulation to the targetlumi. We set it to the luminosity collected in the data taking era.
+    import tttt.samples.config as samples_cfg
+    if options.era=='UL2016':
+        targetLumi = samples_cfg.lumi_era['Run2016']
+    elif options.era == 'UL2016_preVFP':
+        targetLumi = samples_cfg.lumi_era['Run2016_preVFP']
+    elif options.era == 'UL2017':
+        targetLumi = samples_cfg.lumi_era['Run2017']
+    elif options.era == 'UL2018':
+        targetLumi = samples_cfg.lumi_era['Run2018']
+    else:
+        raise RuntimeError("Era not known!: %r"%options.era)
+    logger.info( "This simulated sample will be normalized to %3.2f/fb", targetLumi/1000. )
     lumiScaleFactor = xSection*targetLumi/float(sample.normalization) if xSection is not None else None
     branchKeepStrings = branchKeepStrings_DATAMC + branchKeepStrings_MC
 
@@ -764,7 +775,7 @@ def filler( event ):
     leptons.sort(key = lambda p:-p['pt'])
 
     # Get all jets because they are needed to calculate the lepton mvaTOP
-    all_jets     = getJets(r, jetVars=jetVarNames)
+    all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if isMC else []))
 
     # Calculate variables for mvaTOP and get mvaTOP score
     for iLep, lep in enumerate(leptons):
@@ -830,6 +841,8 @@ def filler( event ):
         for b in jetVarNames:
             getattr(event, "JetGood_"+b)[iJet] = jet[b]
         if isMC:
+            event.JetGood_nBHadrons[iJet] = ord(jet["nBHadrons"])
+            event.JetGood_nCHadrons[iJet] = ord(jet["nCHadrons"])
             if store_jets[iJet]['genJetIdx'] >= 0:
                 if r.nGenJet<maxNJet:
                     try:
