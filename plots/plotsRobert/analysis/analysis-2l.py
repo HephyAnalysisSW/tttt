@@ -71,7 +71,7 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 # group all the simulated backgroundsamples 
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, TTW, TTH, TTZ, TTTT] 
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT] 
 
 # Now we add the data
 if not args.noData:
