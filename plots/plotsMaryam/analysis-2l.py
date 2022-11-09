@@ -46,7 +46,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 if args.small:args.plot_directory += "_small"
 
 # Simulated samples
-from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
+from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 
 # Split dileptonic TTBar into three different contributions
 sample_TTLep = TTLep
