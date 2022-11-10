@@ -454,7 +454,7 @@ jetVarNames     = [x.split('/')[0] for x in jetVars]
 genLepVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'genPartIdxMother/I', 'status/I', 'statusFlags/I'] # some might have different types
 genLepVarNames  = [x.split('/')[0] for x in genLepVars]
 # those are for writing leptons
-lepVars         = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTTH/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I','mvaTOP/F','mvaTOPWP/I', 'ptCone/F']
+lepVars         = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTTH/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I', 'ptCone/F', 'mvaTOP/F', 'mvaTOPWP/I', 'mvaTOPv2/F', 'mvaTOPv2WP/I', 'jetRelIso/F', 'jetBTag/F', 'jetPtRatio/F', 'jetNDauCharged/I']
 lepVarNames     = [x.split('/')[0] for x in lepVars]
 
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
@@ -512,7 +512,7 @@ new_variables += [\
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['nBTag/I', 'm3/F', 'minDLmass/F'] )
 
-new_variables.append( 'lep[%s]'% ( ','.join(lepVars + ['ptCone/F', 'jetBTag/F', 'mvaTOP/F', 'mvaTOPWP/I', 'mvaTOPv2/F', 'mvaTOPv2WP/I', 'jetPtRatio/F', 'jetNDauCharged/I', 'jetRelIso/F' ])) ) 
+new_variables.append( 'lep[%s]'% ( ','.join(lepVars )) ) 
 
 if isTrilep or isDilep or isSinglelep:
     new_variables.extend( ['nGoodMuons/I', 'nGoodElectrons/I', 'nGoodLeptons/I' ] )
@@ -797,6 +797,7 @@ def filler( event ):
         lep['mvaTOPWP'] = WP_v1
         lep['mvaTOPv2']   = mvaScore_v2
         lep['mvaTOPv2WP'] = WP_v2
+        lep['jetNDauCharged'] = ord(lep['jetNDauCharged'])
     
     # Remove leptons that do not fulfil quality criteria
     all_leptons = list(leptons) # Copy list to not loop over the list from which we remove entries 
