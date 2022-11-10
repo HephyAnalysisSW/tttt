@@ -25,7 +25,7 @@ from tttt.Tools.objectSelection  import getMuons, getElectrons, muonSelector, el
 
 
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
-from Analysis.Tools.LeptonSF_UL            import leptonSF as leptonSF
+from Analysis.Tools.LeptonSF_UL            import LeptonSF as leptonSF
 
 #Analysis
 from Analysis.Tools.mvaTOPreader  import mvaTOPreader
@@ -916,14 +916,14 @@ def filler( event ):
             event.reweightLeptonSF     = reduce(mul, [sf[0] for sf in leptonSFValues], 1)
             event.reweightLeptonSFDown = reduce(mul, [sf[1] for sf in leptonSFValues], 1)
             event.reweightLeptonSFUp   = reduce(mul, [sf[2] for sf in leptonSFValues], 1)
-            # if event.reweightLeptonSF ==0:
-            #    logger.error( "reweightLeptonSF is zero!")
-            #    print("reweightLeptonSF is zero!")
-            # else:
-            #    print("SF= ", event.reweightLeptonSF)
-            #    print(" pdgId=",l['pdgId']," pt=",l['pt']," eta=",((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF
+            if event.reweightLeptonSF ==0:
+               logger.error( "reweightLeptonSF is zero!")
+               print("reweightLeptonSF is zero!")
+            else:
+               print("SF= ", (SF for SF in leptonSFValues))
+               print((" pdgId=",l['pdgId']," pt=",l['pt']," eta=",((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF)
 
-            #event.reweightLeptonTrackingSF   = reduce(mul, [leptonTrackingSF.getSF(pdgId = l['pdgId'], pt = l['pt'], eta = ((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']))  for l in leptonsForSF], 1)
+            event.reweightLeptonTrackingSF   = reduce(mul, [leptonTrackingSF.getSF(pdgId = l['pdgId'], pt = l['pt'], eta = ((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']))  for l in leptonsForSF], 1)
 
     if isTrilep or isDilep:
         if len(leptons)>=2:
