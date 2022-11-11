@@ -33,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 from tttt.samples.color import color
 
-directory_ = "/scratch-cbe/users/robert.schoefbeck/tttt/nanoTuples/tttt_v1/UL2017/dilep/"
+import tttt.samples.UL_nanoAODv9_locations as locations
+directory_ = locations.mc_UL2017
 
 def make_dirs( dirs ):
     return [ os.path.join( directory_, dir_ ) for dir_ in dirs ]
