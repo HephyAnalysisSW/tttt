@@ -7,11 +7,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Data directory
-try:
-    directory_ = sys.modules['__main__'].directory_
-except:
-    import tttt.samples.UL_nanoAODv9_locations as locations
-    directory_ = locations.UL2016_preVFP
+import tttt.samples.UL_nanoAODv9_locations as locations
+directory_ = locations.data_UL2016_preVFP
 
 logger.info("Loading data samples from directory %s", directory_)
 
