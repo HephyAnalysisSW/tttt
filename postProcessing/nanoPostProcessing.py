@@ -58,6 +58,7 @@ def get_parser():
     argParser.add_argument('--small',       action='store_true',                                                                        help="Run the file on a small sample (for test purpose), bool flag set to True if used" )
     argParser.add_argument('--flagTTBar',   action='store_true',                                                                        help="Is ttbar?" )
     argParser.add_argument('--addDoubleB',  action='store_true',                                                                        help="Add fine grained b-tagging information." )
+    argParser.add_argument('--btag_WP',     action='store',         nargs='?',   type=str, default='medium',                             help="Which b-tagging WP?" )
     argParser.add_argument('--doCRReweighting',             action='store_true',                                                        help="color reconnection reweighting?")
     argParser.add_argument('--noTriggerSelection',          action='store_true',                                                        help="Do NOT apply Trigger selection to Data?" )
     #argParser.add_argument('--skipGenLepMatching',          action='store_true',                                                        help="skip matched genleps??" )
@@ -123,7 +124,7 @@ if options.event > 0:
     skimConds.append( "event == %s"%options.event )
 
 if isDilep:
-    skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.4) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.4)>=2" )
+    skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5)>=2" )
 elif isTrilep:
     skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)&&Electron_pfRelIso03_all<0.4) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5&&Muon_pfRelIso03_all<0.4)>=2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5)+Sum$(Muon_pt>10&&abs(Muon_eta)<2.5)>=3" )
 elif isSinglelep:
@@ -813,8 +814,13 @@ def filler( event ):
     clean_jets,_ = cleanJetsAndLeptons( all_jets, leptons )
     clean_jets_acc = filter(lambda j:abs(j['eta'])<2.4, clean_jets)
     jets         = filter(lambda j:j['pt']>30, clean_jets_acc)
-    bJets        = filter(lambda j:isBJet(j, tagger=b_tagger, year=options.era) and abs(j['eta'])<=2.4    , jets)
-    nonBJets     = filter(lambda j:not ( isBJet(j, tagger=b_tagger, year=options.era) and abs(j['eta'])<=2.4 ), jets)
+    bJets       = []
+    nonBJets    = []
+    for jet in jets:
+        if isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4:
+            bJets.append(jet)
+        else:
+            nonBJets.append(jet)
 
     fill_vector_collection( event, "lep", lepVarNames, leptons)
     event.nlep = len(leptons)

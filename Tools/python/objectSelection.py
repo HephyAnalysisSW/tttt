@@ -15,8 +15,43 @@ def isAnalysisJet(j, ptCut=30, absEtaCut=2.4, ptVar='pt', idVar='jetId', corrFac
   j_pt = j[ptVar] if not corrFactor else j[ptVar]*j[corrFactor]
   return j_pt>ptCut and abs(j['eta'])<absEtaCut and ( j[idVar] > 0 if idVar is not None else True )
 
-def isBJet(j, tagger = 'DeepFlavor', year = 2016):
-    if tagger == 'CSVv2':
+def isBJet(j, tagger = 'DeepFlavor', WP='medium', year = 2016):
+    if tagger == 'DeepFlavor' or tagger == 'DeepJet':
+        if WP == 'medium':
+            if year in [2016, "UL2016_preVFP"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
+                return j['btagDeepFlavB'] > 0.2598
+            elif year in [2016, "UL2016"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
+                return j['btagDeepFlavB'] > 0.2489
+            elif year in [2017, "UL2017"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
+                return j['btagDeepFlavB'] > 0.3040
+            elif year in [2018, "UL2018"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
+                return j['btagDeepFlavB'] > 0.2783
+            else:
+                raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+        elif WP == 'loose':
+            if year in [2016, "UL2016_preVFP"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
+                return j['btagDeepFlavB'] > 0.0508
+            elif year in [2016, "UL2016"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
+                return j['btagDeepFlavB'] > 0.0480
+            elif year in [2017, "UL2017"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
+                return j['btagDeepFlavB'] > 0.0532
+            elif year in [2018, "UL2018"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
+                return j['btagDeepFlavB'] > 0.0490
+            else:
+                raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+        else:
+            raise (NotImplementedError, "Don't know WP %s"%WP)
+    elif tagger == 'CSVv2':
+        if WP!='medium':
+            raise (NotImplementedError, "Don't know WP %s"%WP)
         if year in [2016, "UL2016", "UL2016_preVFP"]:
             # https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
             return j['btagCSVV2'] > 0.8484
@@ -26,6 +61,8 @@ def isBJet(j, tagger = 'DeepFlavor', year = 2016):
         else:
             raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
     elif tagger == 'DeepCSV':
+        if WP!='medium':
+            raise (NotImplementedError, "Don't know WP %s"%WP)
         if year in [2016, "UL2016_preVFP"]:
             #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
             return j['btagDeepB'] > 0.6001
@@ -38,21 +75,6 @@ def isBJet(j, tagger = 'DeepFlavor', year = 2016):
         elif year in [2018, "UL2018"]:
             # https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
             return j['btagDeepB'] > 0.4168
-        else:
-            raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
-    elif tagger == 'DeepFlavor' or tagger == 'DeepJet':
-        if year in [2016, "UL2016_preVFP"]:
-            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
-            return j['btagDeepFlavB'] > 0.2598
-        elif year in [2016, "UL2016"]:
-            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
-            return j['btagDeepFlavB'] > 0.2489
-        elif year in [2017, "UL2017"]:
-            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
-            return j['btagDeepFlavB'] > 0.3040
-        elif year in [2018, "UL2018"]:
-            #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
-            return j['btagDeepFlavB'] > 0.2783
         else:
             raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
 
