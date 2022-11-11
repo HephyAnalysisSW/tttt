@@ -68,7 +68,7 @@ TTLep_other.setSelectionString( "genTtbarId%100<40" )
 mc = [ TTLep_bb,TTLep_cc,TTLep_other] #, TTW, TTH, TTZ] 
 
 all_mc = mc + [TTTT]
-lumi_scale = 350
+lumi_scale = 137
 
 for sample in all_mc:
     sample.scale           = 1 
@@ -113,7 +113,7 @@ def drawPlots(plots, mode, dataMCScale):
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
-            copyIndexPHP = True, extensions = ["png", "pdf"],
+            copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
       if isinstance( plot, TGraph):
           plotting.draw(plot,
@@ -237,8 +237,8 @@ ttreeFormulas = {
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
-allModels  = [ "model1"]#,"model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model3_lstm","model4_lstm" ]
-weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_scale
+allModels  = [ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model3_lstm","model4_lstm" ]
+weight_ = lambda event, sample: event.weight if sample.isData else event.weight
 for sample in mc: sample.style = styles.fillStyle(sample.color)
 TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
 
@@ -254,7 +254,10 @@ for j, model in enumerate (allModels):
     # ONNX load
     es = []
     eb = []
-    ort_sess = ort.InferenceSession(model+".onnx")#, providers = ['CPUExecutionProvider'])
+    options = ort.SessionOptions()
+    options.intra_op_num_threads = 1
+    options.inter_op_num_threads = 1
+    ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
     LSTM = False
     if (str(model).find('lstm')!=-1): LSTM = True
     for i_mode, mode in enumerate(allModes):
@@ -336,29 +339,30 @@ for j, model in enumerate (allModels):
                 j.Add(l)
     
     drawPlots(allPlots['mumu'], mode, dataMCScale)
-      
-    hist1, _ = np.histogram(es, 50, range=(0, 1))
-    hist2, _ = np.histogram(eb, 50, range=(0, 1))
-    f1 = np.sum(hist1)
-    f2 = np.sum(hist2)
-    ef1 = []
-    ef2 = []
-    x1 = 0
-    x2 = 0
-    for i in range (50):
-        x1 += hist1[50-1-i]
-        ef1.append(x1/f1)
-        x2 += hist2[50-1-i]
-        ef2.append(x2/f2)
+    
+    for i in range(1,51): print (plots[-1].histos[0][0].GetBinContent(i))  
+    #hist1, _ = np.histogram(es, 50, range=(0, 1))
+    #hist2, _ = np.histogram(eb, 50, range=(0, 1))
+    #f1 = np.sum(hist1)
+    #f2 = np.sum(hist2)
+    #ef1 = []
+    #ef2 = []
+    #x1 = 0
+    #x2 = 0
+    #for i in range (50):
+     #   x1 += hist1[50-1-i]
+     #   ef1.append(x1/f1)
+     #   x2 += hist2[50-1-i]
+     #   ef2.append(x2/f2)
 
 
-    results_dir = './'
-    sample_file_name = "Efficiency.png"
-    ax.scatter(ef1,ef2, label = str(model))
-    plt.legend()
-    plt.xlabel("sample efficiency")
-    plt.ylabel("background efficiency")
-    plt.savefig(results_dir + sample_file_name)
+    #results_dir = './'
+    #sample_file_name = "Efficiency.png"
+    #ax.scatter(ef1,ef2, label = str(model))
+    #plt.legend()
+    #plt.xlabel("sample efficiency")
+    #plt.ylabel("background efficiency")
+    #plt.savefig(results_dir + sample_file_name)
       
       
 
