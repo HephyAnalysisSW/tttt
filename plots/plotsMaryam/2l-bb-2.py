@@ -12,7 +12,7 @@ import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO',      nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--plot_directory', action='store',      default='bb')
-argParser.add_argument('--small',       action='store_true',                                                                        help="Run the file on a small sample (for test purpose), bool flag set to True if used" )
+argParser.add_argument('--small',       action='store_true',                     help="Run the file on a small sample (for test purpose), bool flag set to True if used" )
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 args = argParser.parse_args()
 
@@ -36,27 +36,49 @@ plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_direct
 bbTag_max_pt   = "MaxIf$(JetGood_pt, (JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))/Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))==1)"
 bTag_max_pt    = "MaxIf$(JetGood_pt, (JetGood_btagDeepFlavb/(JetGood_btagDeepFlavbb+JetGood_btagDeepFlavlepb))/Max$(JetGood_btagDeepFlavb/(JetGood_btagDeepFlavbb+JetGood_btagDeepFlavlepb))==1)"
 bbTag_max_value   = "Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))"
-# this will not work: You're giving the mean of ALL jets IF the second condition is true for ANY jet, otherwise zero. -> Try Sum$ always with a TChain::Scan :-)
 max_pt  = "MaxIf$(JetGood_pt, abs(JetGood_eta)<2.4)"
 
-# it is better to use ROOT.kBlue etc. instead of the numerical value. We'd like to look at the plot and the code at the same time.
 plot_cfgs = [
-    {'name':'max_bb_pt', 'histos': [
-        {'legendText':'max(p_{T}) Gen bb bbTaged',  'var':bbTag_max_pt,   'color':2,     'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
-        {'legendText':'max(p_{T}) Gen b bbTaged',   'var':bbTag_max_pt,   'color':8,     'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+    {'name':'max_bb_max_pt', 'texX':"pt", 'histos': [
+        {'legendText':'Gen bb',  'var':bbTag_max_pt,   'color':ROOT.kRed,     'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+        {'legendText':'Gen b',   'var':bbTag_max_pt,   'color':ROOT.kGreen,   'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
     # this is likely meaningless (see above)
-        {'legendText':'max(p_{T}) Gen bb', 'var':max_pt,  'color':632+2, 'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
-        {'legendText':'max(p_{T}) Gen b',  'var':max_pt,  'color':416-1, 'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+    #     {'legendText':'Gen bb', 'var':max_pt,  'color':632+2, 'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+    #     {'legendText':'Gen b',  'var':max_pt,  'color':416-1, 'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
     ]},
     # this seems redundant:
-    {'name': 'max_b_pt', 'histos': [
-        {'legendText':'max(p_{T}) Gen bb', 'var':bbTag_max_pt,    'color':2,      'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
-        {'legendText':'max(p_{T}) Gen b',  'var':bbTag_max_pt,    'color':8,      'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
-    ]},
+    # {'name': 'max_b_pt', 'histos': [
+    #     {'legendText':'max(p_{T}) Gen bb', 'var':bbTag_max_pt,    'color':ROOT.kRed,      'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+    #     {'legendText':'max(p_{T}) Gen b',  'var':bbTag_max_pt,    'color':ROOT.kRed+2,      'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+    # ]},
     # the ratio can be any positive number, not just between [0,1]
-    {'name':'bb_over_blepb', 'histos': [
-        {'legendText':'bbTag_value Gen bb','var':bbTag_max_value, 'color':2,     'binning':[20,0,2], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
-        {'legendText':'bbTag_value Gen b', 'var':bbTag_max_value, 'color':8,     'binning':[20,0,2], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+    {'name':'bb_over_blepb', 'texX':"bbTag_max_value", 'histos': [
+        {'legendText':'Gen bb','var':bbTag_max_value, 'color':ROOT.kRed,     'binning':[30,0,3], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+        {'legendText':'Gen b', 'var':bbTag_max_value, 'color':ROOT.kGreen,   'binning':[30,0,3], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+    ]},
+
+    {'name':'max_bb_pt_nBHadrons', 'texX':"pt", 'histos': [
+        {'legendText':'0BH',  'var':bbTag_max_pt,   'color':ROOT.kRed,   'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==0"},
+        {'legendText':'1BH',  'var':bbTag_max_pt,   'color':ROOT.kRed-9, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==1"},
+        {'legendText':'2BH',  'var':bbTag_max_pt,   'color':ROOT.kRed+3, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==2"},
+    ]},
+
+    {'name':'max_bb_value_nBHadrons', 'texX':"bbTag_max_value", 'histos': [
+        {'legendText':'0BH',  'var':bbTag_max_value,   'color':ROOT.kRed,   'binning':[30,0,3], 'selection':"JetGood_nBHadrons==0"},
+        {'legendText':'1BH',  'var':bbTag_max_value,   'color':ROOT.kRed-9, 'binning':[30,0,3], 'selection':"JetGood_nBHadrons==1"},
+        {'legendText':'2BH',  'var':bbTag_max_value,   'color':ROOT.kRed+3, 'binning':[30,0,3], 'selection':"JetGood_nBHadrons==2"},
+    ]},
+
+    {'name':'max_pt_nBHadrons', 'texX':"pt", 'histos': [
+        {'legendText':'0BH',  'var':max_pt,   'color':ROOT.kRed,   'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==0"},
+        {'legendText':'1BH',  'var':max_pt,   'color':ROOT.kRed-9, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==1"},
+        {'legendText':'2BH',  'var':max_pt,   'color':ROOT.kRed+3, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==2"},
+    ]},
+
+    {'name':'pt_nBHadrons', 'texX':"pt", 'histos': [
+        {'legendText':'0BH',  'var':"JetGood_pt",   'color':ROOT.kRed,   'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==0"},
+        {'legendText':'1BH',  'var':"JetGood_pt",   'color':ROOT.kRed-9, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==1"},
+        {'legendText':'2BH',  'var':"JetGood_pt",   'color':ROOT.kRed+3, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==2"},
     ]},
 ]
 
@@ -64,13 +86,12 @@ plots = []
 for plot_cfg in plot_cfgs:
     histos = []
     for histo in plot_cfg['histos']:
-        histo['h'] = sample.get1DHistoFromDraw(histo['var'], histo['binning'], weightString = "weight*137*({sel})&&".format(sel=histo['selection'])+cutInterpreter.cutString(args.selection), addOverFlowBin = 'upper')
+        histo['h'] = sample.get1DHistoFromDraw(histo['var'], histo['binning'], weightString = "weight*({sel})&&".format(sel=histo['selection'])+cutInterpreter.cutString(args.selection), addOverFlowBin = 'upper')
         histo['h'].SetLineColor(histo['color'])
         histo['h'].legendText = histo['legendText']
         histos.append([histo['h']])
 
-    plots.append(Plot.fromHisto(name=plot_cfg['name'], histos=histos, texX="pt", texY="Number of Events"))
-
+    plots.append(Plot.fromHisto(name=plot_cfg['name'], histos=histos, texX=plot_cfg['texX'], texY="Number of Events"))
 
 
 for plot in plots:
