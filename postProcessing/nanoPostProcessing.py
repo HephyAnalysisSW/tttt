@@ -19,13 +19,11 @@ from RootTools.core.standard import *
 # User specific
 import tttt.Tools.user as user
 
-# tttt
+# tttt 
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
-from tttt.Tools.objectSelection  import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs
-
-
+from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
-from Analysis.Tools.LeptonSF_UL            import LeptonSF as leptonSF
+from tttt.Tools.leptonSF            import leptonSF as leptonSF_
 
 #Analysis
 from Analysis.Tools.mvaTOPreader  import mvaTOPreader
@@ -62,12 +60,12 @@ def get_parser():
     argParser.add_argument('--addDoubleB',  action='store_true',                                                                        help="Add fine grained b-tagging information." )
     argParser.add_argument('--btag_WP',     action='store',         nargs='?',   type=str, default='medium',                             help="Which b-tagging WP?" )
     argParser.add_argument('--doCRReweighting',             action='store_true',                                                        help="color reconnection reweighting?")
-    argParser.add_argument('--triggerSelection',            action='store_true',                                                        help="Trigger selection?" )
+    argParser.add_argument('--noTriggerSelection',          action='store_true',                                                        help="Do NOT apply Trigger selection to Data?" )
     #argParser.add_argument('--skipGenLepMatching',          action='store_true',                                                        help="skip matched genleps??" )
     argParser.add_argument('--checkTTGJetsOverlap',         action='store_true',                                                        help="Keep TTGJetsEventType which can be used to clean TTG events from TTJets samples" )
     argParser.add_argument('--skipSystematicVariations',    action='store_true',                                                        help="Don't calulcate BTag, JES and JER variations.")
     argParser.add_argument('--noTopPtReweighting',          action='store_true',                                                        help="Skip top pt reweighting.")
-    argParser.add_argument('--forceProxy',                  action='store_true',                                                        help="Don't check certificate")
+    argParser.add_argument('--forceProxy',                  action='store_true',                                                        help="Skip Nano tools?")
     argParser.add_argument('--skipNanoTools',               action='store_true',                                                        help="Skipt the nanoAOD tools step for computing JEC/JER/MET etc uncertainties")
     argParser.add_argument('--keepNanoAOD',                 action='store_true',                                                        help="Keep nanoAOD output?")
     argParser.add_argument('--reuseNanoAOD',                action='store_true',                                                        help="Keep nanoAOD output?")
@@ -81,12 +79,12 @@ options = get_parser().parse_args()
 
 if options.era not in [ 'UL2016', 'UL2016_preVFP', 'UL2017', 'UL2018' ]:
     raise Exception("Era %s not known"%options.era)
-if "UL2016" == options.era:
-    year = 2016
-elif "UL2016_preVFP" == options.era:
+if "UL2016" == options.era: 
+    year = 2016 
+elif "UL2016_preVFP" == options.era: 
     year = 2016
 elif "UL2017" == options.era:
-    year = 2017
+    year = 2017 
 elif "UL2018" == options.era:
     year = 2018
 
@@ -149,7 +147,7 @@ if options.era == "UL2016":
     from tttt.samples.nano_mc_private_UL20_Summer16  import allSamples as mcSamples
     from tttt.samples.nano_data_private_UL20_Run2016 import allSamples as dataSamples
     allSamples = mcSamples + dataSamples
-elif options.era == "UL2016_preVFP":
+elif options.era == "UL2016_preVFP": 
     from tttt.samples.nano_mc_private_UL20_Summer16_preVFP  import allSamples as mcSamples
     from tttt.samples.nano_data_private_UL20_Run2016_preVFP import allSamples as dataSamples
     allSamples = mcSamples + dataSamples
@@ -326,20 +324,22 @@ sample.copy_files( os.path.join(tmp_output_directory, "input") )
 # Apply trigger selection
 treeFormulas = {}
 from tttt.Tools.triggerSelector import triggerSelector
-if options.triggerSelection and (isTrilep or isDilep):
+if (isTrilep or isDilep):
     ts           = triggerSelector(year, isTrilep=isTrilep)
     triggerCond  = ts.getSelection(options.samples[0] if isData else "MC", triggerList = ts.getTriggerList(sample) )
-elif options.triggerSelection and isSinglelep:
+elif isSinglelep:
     electriggers = "HLT_Ele8_CaloIdM_TrackIdM_PFJet30||HLT_Ele17_CaloIdM_TrackIdM_PFJet30"
     muontriggers = "HLT_Mu3_PFJet40||HLT_Mu8||HLT_Mu17||HLT_Mu20||HLT_Mu27"
     triggerCond = "("+electriggers+"||"+muontriggers+")"
-    skimConds.append( triggerstring )
 
-if options.triggerSelection:
-    treeFormulas["triggerDecision"] =  {'string':triggerCond}
-    if isData:
-        logger.info("Sample will have the following trigger skim: %s"%triggerCond)
-        skimConds.append( triggerCond )
+# Add trigger decision to ntuple
+treeFormulas["triggerDecision"] =  {'string':triggerCond}
+logger.info("'triggerDecision' will correspond to: %s"%triggerCond)
+if not options.noTriggerSelection and isData:
+    logger.info("Sample will have the trigger skim applied!")
+    skimConds.append( triggerCond )
+else:
+    logger.info("Sample will have the trigger skim NOT applied!")
 
 # turn on all branches to be flexible for filter cut in skimCond etc.
 sample.chain.SetBranchStatus("*",1)
@@ -376,7 +376,7 @@ else:
     logger.info( "Sample will NOT have top pt reweighting. topScaleF=%f",topScaleF )
 
 ################################################################################
-# CR reweighting
+# CR reweighting 
 if options.doCRReweighting:
     from Analysis.Tools.colorReconnectionReweighting import getCRWeight, getCRDrawString
     logger.info( "Sample will have CR reweighting." )
@@ -473,8 +473,7 @@ if isMC:
 
 new_variables = [ 'weight/F', 'year/I', 'preVFP/O']
 
-if options.triggerSelection and isTrilep:
-    new_variables+= ['triggerDecision/I']
+new_variables+= ['triggerDecision/I']
 
 read_variables.append( TreeVariable.fromString('L1PreFiringWeight_Dn/F') )
 read_variables.append( TreeVariable.fromString('L1PreFiringWeight_Nom/F') )
@@ -498,7 +497,7 @@ read_variables += [\
     TreeVariable.fromString('nMuon/I'),
     VectorTreeVariable.fromString('Muon[pt/F,eta/F,phi/F,pdgId/I,mediumId/O,miniPFRelIso_all/F,miniPFRelIso_chg/F,pfRelIso03_all/F,sip3d/F,dxy/F,dz/F,charge/I,mvaTTH/F,jetNDauCharged/b,jetPtRelv2/F,jetRelIso/F,segmentComp/F,isGlobal/O,isTracker/O]'),
     TreeVariable.fromString('nJet/I'),
-    VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars) ) ) ]
+    VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars + (['nBHadrons/b', 'nCHadrons/b'] if isMC else []) )))]
 if addReweights:
     read_variables.extend( ["nLHEReweightingWeight/I" ] )#, "nLHEReweighting/I", "LHEReweighting[Weight/F]" ] ) # need to set alias later
 if isMC:
@@ -507,14 +506,14 @@ if isMC:
 
 new_variables += [\
     'overlapRemoval/I','nlep/I',
-    'JetGood[%s]'% ( ','.join(jetVars+['index/I']) + ',genPt/F' ),
+    'JetGood[%s]'% ( ','.join(jetVars+['index/I']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if isMC else '' )),
     'met_pt/F', 'met_phi/F',
 ]
 
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['nBTag/I', 'm3/F', 'minDLmass/F'] )
 
-new_variables.append( 'lep[%s]'% ( ','.join(lepVars + ['ptCone/F', 'jetBTag/F', 'mvaTOP/F', 'mvaTOPWP/I', 'mvaTOPv2/F', 'mvaTOPv2WP/I', 'jetPtRatio/F', 'jetNDauCharged/I', 'jetRelIso/F' ])) )
+new_variables.append( 'lep[%s]'% ( ','.join(lepVars )) ) 
 
 if isTrilep or isDilep or isSinglelep:
     new_variables.extend( ['nGoodMuons/I', 'nGoodElectrons/I', 'nGoodLeptons/I' ] )
@@ -597,7 +596,7 @@ if not options.skipNanoTools:
 
     runPeriod = None
     if sample.isData:
-        runString = sample.name
+        runString = sample.name 
         runString = runString.replace("_preVFP", "")
         runString = runString.replace("ver1", "")
         runString = runString.replace("ver2", "")
@@ -630,7 +629,7 @@ if not options.skipNanoTools:
     sample.files = newFileList
     sample.clear()
 
-# Define mvaTOP reader
+# Define mvaTOP reader 
 mvaTOPreader_ = mvaTOPreader(year = options.era, versions = ["v1", "v2"])
 
 # Define a reader
@@ -696,7 +695,7 @@ def filler( event ):
     # PU reweighting
     if isMC and hasattr(r, "Pileup_nTrueInt"):
         from Analysis.Tools.puWeightsUL			import getPUReweight
-        event.reweightPU     = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="nominal")
+        event.reweightPU     = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="nominal") 
         event.reweightPUDown = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="down" )
         event.reweightPUUp   = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="up" )
 
@@ -706,9 +705,8 @@ def filler( event ):
         event.reweightTopPt     = topPtReweightingFunc(getTopPtsForReweighting(r)) * topScaleF if doTopPtReweighting else 1.
 
     ################################################################################
-    # Trigger Decision
-    if options.triggerSelection:
-        event.triggerDecision = int(treeFormulas['triggerDecision']['TTreeFormula'].EvalInstance())
+    ## Trigger Decision
+    event.triggerDecision = int(treeFormulas['triggerDecision']['TTreeFormula'].EvalInstance())
 
     ################################################################################
     # Store Scale and PDF weights in a format that is readable with HEPHY framework
@@ -717,14 +715,14 @@ def filler( event ):
         for i,w in enumerate(scale_weights):
             event.Scale_Weight[i] = w
         event.nScale = r.nLHEScaleWeight
-
+        
         pdf_weights = [reader.sample.chain.GetLeaf("LHEPdfWeight").GetValue(i_weight) for i_weight in range(r.nLHEPdfWeight)]
         for i,w in enumerate(pdf_weights):
             event.PDF_Weight[i] = w
         event.nPDF = r.nLHEPdfWeight
-
+        
     ################################################################################
-    # reweights
+    # reweights        
     if addReweights:
 
         include_missing_refpoint = False
@@ -756,7 +754,7 @@ def filler( event ):
 
     allSlimmedJets      = getJets(r)
     event.reweightL1Prefire, event.reweightL1PrefireUp, event.reweightL1PrefireDown = r.L1PreFiringWeight_Nom, r.L1PreFiringWeight_Up, r.L1PreFiringWeight_Dn
-
+    
     # get electrons and muons
     electrons_pt10  = getGoodElectrons(r, ele_selector = eleSelector_)
     muons_pt10      = getGoodMuons    (r, mu_selector  = muSelector_ )
@@ -765,22 +763,22 @@ def filler( event ):
         e['pdgId']      = int( -11*e['charge'] )
         e['eleIndex']   = e['index']
         e['muIndex']    = -1
-
+        
     for m in muons_pt10:
         m['pdgId']      = int( -13*m['charge'] )
         m['muIndex']    = m['index']
         m['eleIndex']   = -1
-
-    # make list of leptons
+        
+    # make list of leptons 
     leptons = electrons_pt10+muons_pt10
     leptons.sort(key = lambda p:-p['pt'])
 
     # Get all jets because they are needed to calculate the lepton mvaTOP
     all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if isMC else []))
-
-    # Calculate variables for mvaTOP and get mvaTOP score
+    
+    # Calculate variables for mvaTOP and get mvaTOP score 
     for iLep, lep in enumerate(leptons):
-        # closest jet
+        # closest jet 
         dRmin = 0.4
         bscore_nextjet = 0
         ptCone = 0.67*lep['pt']*(1+lep['jetRelIso']) # if no jet in 0.4, jetRelIso = pfRelIso04_all
@@ -803,15 +801,15 @@ def filler( event ):
         lep['jetNDauCharged'] = ord(lep['jetNDauCharged'])
     
     # Remove leptons that do not fulfil quality criteria
-    all_leptons = list(leptons) # Copy list to not loop over the list from which we remove entries
+    all_leptons = list(leptons) # Copy list to not loop over the list from which we remove entries 
     for lep in all_leptons:
         if lep['mvaTOPWP'] < 1:
             leptons.remove(lep)
-
+            
     # Now set index corresponding to cleaned list
     for iLep, lep in enumerate(leptons):
         lep['index'] = iLep
-
+    
     # Now create cleaned jets, b jets, ...
     clean_jets,_ = cleanJetsAndLeptons( all_jets, leptons )
     clean_jets_acc = filter(lambda j:abs(j['eta'])<2.4, clean_jets)
@@ -827,7 +825,7 @@ def filler( event ):
     fill_vector_collection( event, "lep", lepVarNames, leptons)
     event.nlep = len(leptons)
     event.minDLmass = getMinDLMass(leptons)
-
+    
     # store the correct MET (EE Fix for 2017)
     if options.era == 2017:# and not options.fastSim:
         # v2 recipe. Could also use our own recipe
@@ -919,18 +917,14 @@ def filler( event ):
             event.reweightTriggerDown   = trig_eff - trig_eff_err
 
             leptonsForSF   = ( leptons[:2] if isDilep else (leptons[:3] if isTrilep else leptons[:1]) )
-            leptonSFValues = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF ]
-            event.reweightLeptonSF     = reduce(mul, [sf[0] for sf in leptonSFValues], 1)
-            event.reweightLeptonSFDown = reduce(mul, [sf[1] for sf in leptonSFValues], 1)
-            event.reweightLeptonSFUp   = reduce(mul, [sf[2] for sf in leptonSFValues], 1)
-            if event.reweightLeptonSF ==0:
-               logger.error( "reweightLeptonSF is zero!")
-               print("reweightLeptonSF is zero!")
-            else:
-               print("SF= ", (SF for SF in leptonSFValues))
-               print((" pdgId=",l['pdgId']," pt=",l['pt']," eta=",((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF)
+            #leptonSFValues = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF ]
+            #event.reweightLeptonSF     = reduce(mul, [sf[0] for sf in leptonSFValues], 1)
+            #event.reweightLeptonSFDown = reduce(mul, [sf[1] for sf in leptonSFValues], 1)
+            #event.reweightLeptonSFUp   = reduce(mul, [sf[2] for sf in leptonSFValues], 1)
+            #if event.reweightLeptonSF ==0:
+            #    logger.error( "reweightLeptonSF is zero!")
 
-            event.reweightLeptonTrackingSF   = reduce(mul, [leptonTrackingSF.getSF(pdgId = l['pdgId'], pt = l['pt'], eta = ((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']))  for l in leptonsForSF], 1)
+            #event.reweightLeptonTrackingSF   = reduce(mul, [leptonTrackingSF.getSF(pdgId = l['pdgId'], pt = l['pt'], eta = ((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']))  for l in leptonsForSF], 1)
 
     if isTrilep or isDilep:
         if len(leptons)>=2:
