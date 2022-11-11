@@ -57,22 +57,10 @@ plot_cfgs = [
         {'legendText':'Gen b', 'var':bbTag_max_value, 'color':ROOT.kGreen,   'binning':[30,0,3], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
     ]},
 
-    {'name':'max_bb_pt_nBHadrons', 'texX':"pt", 'histos': [
-        {'legendText':'0BH',  'var':bbTag_max_pt,   'color':ROOT.kRed,   'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==0"},
-        {'legendText':'1BH',  'var':bbTag_max_pt,   'color':ROOT.kRed-9, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==1"},
-        {'legendText':'2BH',  'var':bbTag_max_pt,   'color':ROOT.kRed+3, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==2"},
-    ]},
-
     {'name':'max_bb_value_nBHadrons', 'texX':"bbTag_max_value", 'histos': [
         {'legendText':'0BH',  'var':bbTag_max_value,   'color':ROOT.kRed,   'binning':[30,0,3], 'selection':"JetGood_nBHadrons==0"},
         {'legendText':'1BH',  'var':bbTag_max_value,   'color':ROOT.kRed-9, 'binning':[30,0,3], 'selection':"JetGood_nBHadrons==1"},
         {'legendText':'2BH',  'var':bbTag_max_value,   'color':ROOT.kRed+3, 'binning':[30,0,3], 'selection':"JetGood_nBHadrons==2"},
-    ]},
-
-    {'name':'max_pt_nBHadrons', 'texX':"pt", 'histos': [
-        {'legendText':'0BH',  'var':max_pt,   'color':ROOT.kRed,   'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==0"},
-        {'legendText':'1BH',  'var':max_pt,   'color':ROOT.kRed-9, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==1"},
-        {'legendText':'2BH',  'var':max_pt,   'color':ROOT.kRed+3, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==2"},
     ]},
 
     {'name':'pt_nBHadrons', 'texX':"pt", 'histos': [
@@ -80,12 +68,19 @@ plot_cfgs = [
         {'legendText':'1BH',  'var':"JetGood_pt",   'color':ROOT.kRed-9, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==1"},
         {'legendText':'2BH',  'var':"JetGood_pt",   'color':ROOT.kRed+3, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==2"},
     ]},
+
+    {'name':'pt_nBHadrons_course', 'texX':"pt", 'histos': [
+        {'legendText':'0BH',  'var':"JetGood_pt",   'color':ROOT.kRed,   'binning':[100,0,100], 'selection':"JetGood_nBHadrons==0"},
+        {'legendText':'1BH',  'var':"JetGood_pt",   'color':ROOT.kRed-9, 'binning':[100,0,100], 'selection':"JetGood_nBHadrons==1"},
+        {'legendText':'2BH',  'var':"JetGood_pt",   'color':ROOT.kRed+3, 'binning':[100,0,100], 'selection':"JetGood_nBHadrons==2"},
+    ]},
 ]
 
 plots = []
 for plot_cfg in plot_cfgs:
     histos = []
     for histo in plot_cfg['histos']:
+        print(histo['var'], histo['binning'], "weight*({sel})&&".format(sel=histo['selection'])+cutInterpreter.cutString(args.selection))
         histo['h'] = sample.get1DHistoFromDraw(histo['var'], histo['binning'], weightString = "weight*({sel})&&".format(sel=histo['selection'])+cutInterpreter.cutString(args.selection), addOverFlowBin = 'upper')
         histo['h'].SetLineColor(histo['color'])
         histo['h'].legendText = histo['legendText']
