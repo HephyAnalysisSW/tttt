@@ -9,8 +9,8 @@ class triggerSelector:
     def getTriggerList( sample ):
         return [t.GetName() for t in sample.chain.GetListOfBranches() if t.GetName().startswith("HLT_")]
 
-    def __init__(self, year, isDilep = True):
-        self.isDilep = isDilep
+    def __init__(self, year, isTrilep = True):
+        self.isTrilep = isTrilep
 
         if year == 2016:
 
@@ -23,7 +23,7 @@ class triggerSelector:
                             "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL",       #data runs B-G & MC
                             "HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ",      #data only run H
                             "HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ",    #data only run H
-                            "HLT_IsoMu24",                              #data & MC
+                            "HLT_IsoMu24",                             #data & MC
                             "HLT_IsoTkMu24"                             #data & MC
                             ]#Done
 
@@ -31,7 +31,7 @@ class triggerSelector:
             self.eee    =    ["HLT_Ele16_Ele12_Ele8_CaloIdL_TrackIdL"]
             #This is kept for counting purposes, check if correct
 
-            self.ee     =   ["HLT_Ele23_Ele12_caloIdL_TrackIdL_IsoVL_DZ",       #data & MC
+            self.ee     =   ["HLT_Ele23_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",       #data & MC
                             "HLT_DoubleEle33_CaloIdL_MW",                       #data & MC
                             "HLT_DoubleEle33_CaloIdL_GsfTrkIdVL",               #data & MC
                             "HLT_Ele27_WPTight_Gsf"                             #data & MC
@@ -43,8 +43,8 @@ class triggerSelector:
                             "HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ",    #data only run H
                             "HLT_Mu23_TrkIsoVVL_Ele12_CaloIdL_TrackIdL_IsoVL_DZ",   #data only run H
                             "HLT_Ele27_WPTight_Gsf",                                #data & MC
-                            "HLT_IsoMu24",                                          #data & MC
-                            "HLT IsoTkMu24"                                         #data & MC
+                            #"HLT_IsoMu24",                                          #data & MC
+                            "HLT_IsoTkMu24"                                         #data & MC
                             ]#Done
 
             self.emm    =   ["HLT_DiMu9_Ele9_CaloIdL_TrackIdL"]
@@ -155,9 +155,11 @@ class triggerSelector:
     def getSelection(self, PD, triggerList = None):
 
         # reduce the set of triggers in case
-        for lst in [ "mm", "m", "ee", "e", "em"] if self.isDilep else ["mmm", "mm", "m", "eee", "ee", "e", "em", "eem", "emm" ]:
+        for lst in [ "mm", "m", "ee", "e", "em"] if not self.isTrilep else ["mmm", "mm", "m", "eee", "ee", "e", "em", "eem", "emm" ]:
+            print("Which list are you taking"+ str(lst))
             res = []
             for trig in getattr(self, lst):
+                print("My list of triggers"+trig)
                 if type(triggerList)==type([]) and not trig in triggerList:
                     logger.warning( "Removing trigger %s", trig )
                 else:
@@ -165,9 +167,9 @@ class triggerSelector:
             setattr( self, 'red_'+lst, res )
 
         # define which triggers should be used for which dataset
-        self.DoubleMuon     = "(%s)"%"||".join(self.red_mm if not self.isDilep else self.red_mmm + self.red_mm)
-        self.DoubleEG       = "(%s)"%"||".join(self.red_ee if not self.isDilep else self.red_eee + self.red_ee)
-        self.MuonEG         = "(%s)"%"||".join(self.red_em if not self.isDilep else self.red_em + self.red_eem + self.red_emm)
+        self.DoubleMuon     = "(%s)"%"||".join(self.red_mm if not self.isTrilep else self.red_mmm + self.red_mm)
+        self.DoubleEG       = "(%s)"%"||".join(self.red_ee if not self.isTrilep else self.red_eee + self.red_ee)
+        self.MuonEG         = "(%s)"%"||".join(self.red_em if not self.isTrilep else self.red_em + self.red_eem + self.red_emm)
         self.SingleMuon     = "(%s)"%"||".join(self.red_m)
         self.SingleElectron = "(%s)"%"||".join(self.red_e)
         self.EGamma         = "(%s)"%"||".join(self.red_ee+self.red_e)
