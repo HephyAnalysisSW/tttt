@@ -41,10 +41,10 @@ def n4leptons( pT1=25, pT2=20, pT3=10):
     return "Sum$(%s)+Sum$(%s)>=1&&Sum$(%s)+Sum$(%s)>=2&&Sum$(%s)+Sum$(%s)==4"%(mu_string(pT1),ele_string(pT1), mu_string(pT2),ele_string(pT2),mu_string(pT3),ele_string(pT3))
 
 #remove k-factors after reprocessing!
-allsamples.TTTT.scale = 1.3149511150170272 
-allsamples.TTLep.scale= 1.0124257194656598
-allsamples.TTW.scale  = 1.1502692119432207 
-allsamples.TTZ.scale  = 0.9457478005865103
+#allsamples.TTTT.scale = 1.3149511150170272 
+#allsamples.TTLep.scale= 1.0124257194656598
+#allsamples.TTW.scale  = 1.1502692119432207 
+#allsamples.TTZ.scale  = 0.9457478005865103
 
 #Define chains for signals and backgrounds
 samples = [
