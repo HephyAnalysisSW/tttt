@@ -19,11 +19,11 @@ from RootTools.core.standard import *
 # User specific
 import tttt.Tools.user as user
 
-# tttt 
+# tttt
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
 from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
-from tttt.Tools.leptonSF            import leptonSF as leptonSF_
+from Analysis.Tools.LeptonSF_UL            import LeptonSF
 
 #Analysis
 from Analysis.Tools.mvaTOPreader  import mvaTOPreader
@@ -79,12 +79,12 @@ options = get_parser().parse_args()
 
 if options.era not in [ 'UL2016', 'UL2016_preVFP', 'UL2017', 'UL2018' ]:
     raise Exception("Era %s not known"%options.era)
-if "UL2016" == options.era: 
-    year = 2016 
-elif "UL2016_preVFP" == options.era: 
+if "UL2016" == options.era:
+    year = 2016
+elif "UL2016_preVFP" == options.era:
     year = 2016
 elif "UL2017" == options.era:
-    year = 2017 
+    year = 2017
 elif "UL2018" == options.era:
     year = 2018
 
@@ -147,7 +147,7 @@ if options.era == "UL2016":
     from tttt.samples.nano_mc_private_UL20_Summer16  import allSamples as mcSamples
     from tttt.samples.nano_data_private_UL20_Run2016 import allSamples as dataSamples
     allSamples = mcSamples + dataSamples
-elif options.era == "UL2016_preVFP": 
+elif options.era == "UL2016_preVFP":
     from tttt.samples.nano_mc_private_UL20_Summer16_preVFP  import allSamples as mcSamples
     from tttt.samples.nano_data_private_UL20_Run2016_preVFP import allSamples as dataSamples
     allSamples = mcSamples + dataSamples
@@ -178,6 +178,9 @@ assert isData or len(set([s.xSection for s in samples]))==1, "Not all samples ha
 assert isMC or len(samples)==1, "Don't concatenate data samples"
 
 xSection = samples[0].xSection if isMC else None
+
+#LeptonSF
+leptonSF = LeptonSF(options.era, muID='medium', elID='tight')
 
 # apply MET filter
 skimConds.append( getFilterCut(options.era, isData=isData, ignoreJSON=True, skipWeight=True, skipECalFilter=True) )
@@ -376,7 +379,7 @@ else:
     logger.info( "Sample will NOT have top pt reweighting. topScaleF=%f",topScaleF )
 
 ################################################################################
-# CR reweighting 
+# CR reweighting
 if options.doCRReweighting:
     from Analysis.Tools.colorReconnectionReweighting import getCRWeight, getCRDrawString
     logger.info( "Sample will have CR reweighting." )
@@ -513,7 +516,7 @@ new_variables += [\
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['nBTag/I', 'm3/F', 'minDLmass/F'] )
 
-new_variables.append( 'lep[%s]'% ( ','.join(lepVars )) ) 
+new_variables.append( 'lep[%s]'% ( ','.join(lepVars )) )
 
 if isTrilep or isDilep or isSinglelep:
     new_variables.extend( ['nGoodMuons/I', 'nGoodElectrons/I', 'nGoodLeptons/I' ] )
@@ -596,7 +599,7 @@ if not options.skipNanoTools:
 
     runPeriod = None
     if sample.isData:
-        runString = sample.name 
+        runString = sample.name
         runString = runString.replace("_preVFP", "")
         runString = runString.replace("ver1", "")
         runString = runString.replace("ver2", "")
@@ -629,7 +632,7 @@ if not options.skipNanoTools:
     sample.files = newFileList
     sample.clear()
 
-# Define mvaTOP reader 
+# Define mvaTOP reader
 mvaTOPreader_ = mvaTOPreader(year = options.era, versions = ["v1", "v2"])
 
 # Define a reader
@@ -695,7 +698,7 @@ def filler( event ):
     # PU reweighting
     if isMC and hasattr(r, "Pileup_nTrueInt"):
         from Analysis.Tools.puWeightsUL			import getPUReweight
-        event.reweightPU     = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="nominal") 
+        event.reweightPU     = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="nominal")
         event.reweightPUDown = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="down" )
         event.reweightPUUp   = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="up" )
 
@@ -715,14 +718,14 @@ def filler( event ):
         for i,w in enumerate(scale_weights):
             event.Scale_Weight[i] = w
         event.nScale = r.nLHEScaleWeight
-        
+
         pdf_weights = [reader.sample.chain.GetLeaf("LHEPdfWeight").GetValue(i_weight) for i_weight in range(r.nLHEPdfWeight)]
         for i,w in enumerate(pdf_weights):
             event.PDF_Weight[i] = w
         event.nPDF = r.nLHEPdfWeight
-        
+
     ################################################################################
-    # reweights        
+    # reweights
     if addReweights:
 
         include_missing_refpoint = False
@@ -754,7 +757,7 @@ def filler( event ):
 
     allSlimmedJets      = getJets(r)
     event.reweightL1Prefire, event.reweightL1PrefireUp, event.reweightL1PrefireDown = r.L1PreFiringWeight_Nom, r.L1PreFiringWeight_Up, r.L1PreFiringWeight_Dn
-    
+
     # get electrons and muons
     electrons_pt10  = getGoodElectrons(r, ele_selector = eleSelector_)
     muons_pt10      = getGoodMuons    (r, mu_selector  = muSelector_ )
@@ -763,22 +766,22 @@ def filler( event ):
         e['pdgId']      = int( -11*e['charge'] )
         e['eleIndex']   = e['index']
         e['muIndex']    = -1
-        
+
     for m in muons_pt10:
         m['pdgId']      = int( -13*m['charge'] )
         m['muIndex']    = m['index']
         m['eleIndex']   = -1
-        
-    # make list of leptons 
+
+    # make list of leptons
     leptons = electrons_pt10+muons_pt10
     leptons.sort(key = lambda p:-p['pt'])
 
     # Get all jets because they are needed to calculate the lepton mvaTOP
     all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if isMC else []))
-    
-    # Calculate variables for mvaTOP and get mvaTOP score 
+
+    # Calculate variables for mvaTOP and get mvaTOP score
     for iLep, lep in enumerate(leptons):
-        # closest jet 
+        # closest jet
         dRmin = 0.4
         bscore_nextjet = 0
         ptCone = 0.67*lep['pt']*(1+lep['jetRelIso']) # if no jet in 0.4, jetRelIso = pfRelIso04_all
@@ -799,17 +802,17 @@ def filler( event ):
         lep['mvaTOPv2']   = mvaScore_v2
         lep['mvaTOPv2WP'] = WP_v2
         lep['jetNDauCharged'] = ord(lep['jetNDauCharged'])
-    
+
     # Remove leptons that do not fulfil quality criteria
-    all_leptons = list(leptons) # Copy list to not loop over the list from which we remove entries 
+    all_leptons = list(leptons) # Copy list to not loop over the list from which we remove entries
     for lep in all_leptons:
         if lep['mvaTOPWP'] < 1:
             leptons.remove(lep)
-            
+
     # Now set index corresponding to cleaned list
     for iLep, lep in enumerate(leptons):
         lep['index'] = iLep
-    
+
     # Now create cleaned jets, b jets, ...
     clean_jets,_ = cleanJetsAndLeptons( all_jets, leptons )
     clean_jets_acc = filter(lambda j:abs(j['eta'])<2.4, clean_jets)
@@ -825,7 +828,7 @@ def filler( event ):
     fill_vector_collection( event, "lep", lepVarNames, leptons)
     event.nlep = len(leptons)
     event.minDLmass = getMinDLMass(leptons)
-    
+
     # store the correct MET (EE Fix for 2017)
     if options.era == 2017:# and not options.fastSim:
         # v2 recipe. Could also use our own recipe
@@ -917,14 +920,14 @@ def filler( event ):
             event.reweightTriggerDown   = trig_eff - trig_eff_err
 
             leptonsForSF   = ( leptons[:2] if isDilep else (leptons[:3] if isTrilep else leptons[:1]) )
-            #leptonSFValues = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF ]
-            #event.reweightLeptonSF     = reduce(mul, [sf[0] for sf in leptonSFValues], 1)
-            #event.reweightLeptonSFDown = reduce(mul, [sf[1] for sf in leptonSFValues], 1)
-            #event.reweightLeptonSFUp   = reduce(mul, [sf[2] for sf in leptonSFValues], 1)
-            #if event.reweightLeptonSF ==0:
-            #    logger.error( "reweightLeptonSF is zero!")
-
-            #event.reweightLeptonTrackingSF   = reduce(mul, [leptonTrackingSF.getSF(pdgId = l['pdgId'], pt = l['pt'], eta = ((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']))  for l in leptonsForSF], 1)
+            leptonSFValues = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF ]
+            event.reweightLeptonSF     = reduce(mul, [sf[0] for sf in leptonSFValues], 1)
+            event.reweightLeptonSFDown = reduce(mul, [sf[1] for sf in leptonSFValues], 1)
+            event.reweightLeptonSFUp   = reduce(mul, [sf[2] for sf in leptonSFValues], 1)
+            if event.reweightLeptonSF ==0:
+               logger.error( "reweightLeptonSF is zero!")
+            
+            event.reweightLeptonTrackingSF   = reduce(mul, [leptonTrackingSF.getSF(pdgId = l['pdgId'], pt = l['pt'], eta = ((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']))  for l in leptonsForSF], 1)
 
     if isTrilep or isDilep:
         if len(leptons)>=2:
