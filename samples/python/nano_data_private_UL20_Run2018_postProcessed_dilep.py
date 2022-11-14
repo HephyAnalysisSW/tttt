@@ -6,9 +6,8 @@ import ROOT
 import logging
 logger = logging.getLogger(__name__)
 
-# Data directory
-import tttt.samples.UL_nanoAODv9_locations as locations
-directory_ = locations.data_UL2018
+import tttt.samples.config as config
+directory_ = config.location_data_UL2018
 
 logger.info("Loading data samples from directory %s", directory_)
 
@@ -28,7 +27,7 @@ SingleMuon_Run2018               = getSample('SingleMuon',       'Run2018',     
 allSamples += [MuonEG_Run2018, EGamma_Run2018, DoubleMuon_Run2018, SingleMuon_Run2018]
 
 Run2018 = Sample.combine("Run2018", [MuonEG_Run2018, EGamma_Run2018, DoubleMuon_Run2018, SingleMuon_Run2018], texName = "Run2018")
-Run2018.lumi = (59.97)*1000
+Run2018.lumi = config.lumi_era["Run2018"] 
 allSamples.append( Run2018 )
 
 for s in allSamples:
