@@ -17,7 +17,7 @@ from ROOT                                import TGraph, TCanvas
 # tttt
 from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
-from tttt.Tools.objectSelection          import lepString 
+from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList 
 
 # Analysis
 from Analysis.Tools.helpers              import deltaPhi, deltaR
@@ -109,23 +109,13 @@ def drawPlots(plots, mode, dataMCScale):
             plot_directory = plot_directory_,
             ratio = None,
             logX = False, logY = log, sorting = True,
-            #yRange = (0.9, "auto") if log else (0.001, "auto"),
+            yRange = (0.9, "auto") if log else (0.001, "auto"),
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
             copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
-      if isinstance( plot, TGraph):
-          plotting.draw(plot,
-            plot_directory = plot_directory_,
-            #ratio = None,
-            logX = False, logY = False, sorting = True,
-            #yRange = (0.9, "auto") if log else (0.001, "auto"),
-            #scaling = {0:1} if args.dataMCScaling else {},
-            #legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
-            #drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
-            copyIndexPHP = True, extensions = ["png", "pdf"],
-          )
+      
       
 # Read variables and sequences
 sequence       = []
@@ -234,22 +224,11 @@ yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
 allModels  = ["model1_db_lstm"]#[ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
-weight_ = lambda event, sample: event.weight if sample.isData else event.weight
-for sample in mc: sample.style = styles.fillStyle(sample.color)
-TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
 
-for sample in all_mc:
-    sample.read_variables = read_variables_MC 
-    sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
-    
-    #yt_TWZ_filter.scale = lumi_scale * 1.07314
-    stack = Stack(mc, TTTT)
 
 fig, ax = plt.subplots(figsize=(15,10))
 for j, model in enumerate (allModels):
     # ONNX load
-    es = []
-    eb = []
     options = ort.SessionOptions()
     options.intra_op_num_threads = 1
     options.inter_op_num_threads = 1
@@ -259,11 +238,19 @@ for j, model in enumerate (allModels):
     if (str(model).find('lstm')!=-1): LSTM = True
     if (str(model).find('db')!=-1): db = True
     model=model+str("_v4")
+    
     for i_mode, mode in enumerate(allModes):
+        for sample in mc: sample.style = styles.fillStyle(sample.color)
+        TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
         yields[mode] = {}
-    
-        
-    
+        weight_ = lambda event, sample: event.weight if sample.isData else event.weight
+        for sample in all_mc:
+            sample.read_variables = read_variables_MC 
+            sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
+
+    #   Define what we want to see.
+        stack = Stack(all_mc)
+  
         # Use some defaults
         Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
     
@@ -315,7 +302,7 @@ for j, model in enumerate (allModels):
             
         yields[mode]["data"] = 0
     
-        yields[mode]["MC"] = sum(yields[mode][s.name] for s in mc)
+        yields[mode]["MC"] = sum(yields[mode][s.name] for s in all_mc)
         dataMCScale        = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
     
         drawPlots(plots, mode, dataMCScale)
