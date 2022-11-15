@@ -17,23 +17,24 @@ from RootTools.core.standard             import *
 # tttt
 from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
-from tttt.Tools.objectSelection          import lepString 
+from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList
 
 # Analysis
 from Analysis.Tools.helpers              import deltaPhi, deltaR
 from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
-import Analysis.Tools.syncer
+#import Analysis.Tools.syncer
 import numpy as np
 
 # Arguments
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?', )
+argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?')
+argParser.add_argument('--noData',         action='store_true', help='Do not plot data.')
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
-argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?', )
-argParser.add_argument('--plot_directory', action='store', default='TMB_4t')
+argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?')
+argParser.add_argument('--plot_directory', action='store', default='TMB_4t_p3')
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 args = argParser.parse_args()
 
@@ -43,10 +44,15 @@ import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
-if args.small:args.plot_directory += "_small"
+if args.small: args.plot_directory += "_small"
+if args.noData:args.plot_directory += "_noData"
 
+# Simulated samples
 from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+#from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
 
+
+# Split dileptonic TTBar into three different contributions
 sample_TTLep = TTLep
 # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
 TTLep_bb    = copy.deepcopy( sample_TTLep )
@@ -64,29 +70,40 @@ TTLep_other.name = "TTLep_other"
 TTLep_other.texName = "t#bar{t} + light j." 
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
-mc = [ TTLep_bb,TTLep_cc,TTLep_other] #, TTW, TTH, TTZ] 
+# group all the simulated backgroundsamples 
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, TTTT] 
+#mc = [  TTTT] 
+# Now we add the data
+if not args.noData:
+    from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
+    data_sample = RunII
+    data_sample.name = "data"
+    all_samples = mc +  [data_sample]
+else:
+    all_samples = mc 
 
-all_mc = mc + [TTTT]
-lumi_scale = 350#sum(lumi_year.values())/1000.
+# Here we compute the scaling of the simulation to the data luminosity (event.weight corresponds to 1/fb for simulation, hence we divide the data lumi in pb^-1 by 1000) 
+lumi_scale = 137. if args.noData else data_sample.lumi/1000.
 
-for sample in all_mc:
-    sample.scale           = 1 
+# We're going to "scale" the simulation if "small" is true. So let's define a "scale" which will correct this
+for sample in mc:
+    sample.scale  = 1 
 
+# For R&D we just use a fraction of the data
 if args.small:
-    for sample in all_mc:
+    if not args.noData:
+        data_sample.reduceFiles( factor = 100 )
+    for sample in mc :
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
         #sample.reduceFiles( to=1)
         sample.scale /= sample.normalization
 
-# Text on the plots
+# Helpers for putting text on the plots
 tex = ROOT.TLatex()
 tex.SetNDC()
 tex.SetTextSize(0.04)
 tex.SetTextAlign(11) # align right
-
-def charge(pdgId):
-    return -pdgId//abs(pdgId)
 
 def drawObjects( dataMCScale, lumi_scale ):
     lines = [
@@ -97,7 +114,7 @@ def drawObjects( dataMCScale, lumi_scale ):
 
 def drawPlots(plots, mode, dataMCScale):
   for log in [False, True]:
-    plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunIII', mode + ("_log" if log else ""), args.selection)
+    plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), args.selection)
     for plot in plots:
       if not max(l.GetMaximum() for l in sum(plot.histos,[])): continue # Empty plot
 
@@ -106,75 +123,103 @@ def drawPlots(plots, mode, dataMCScale):
       if isinstance( plot, Plot):
           plotting.draw(plot,
             plot_directory = plot_directory_,
-            ratio = None,
+            ratio =  {'yRange':(0.1,1.9)} if not args.noData else None,
             logX = False, logY = log, sorting = True,
             yRange = (0.9, "auto") if log else (0.001, "auto"),
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
-            copyIndexPHP = True, extensions = ["png", "pdf"],
+            copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
+
+read_variables = []
+
+#jetVars         = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F']#, 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F']
+#jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F','index/I']
+jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F' ]
+
+jetVarNames     = [x.split('/')[0] for x in jetVars]
+#    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
+
+# the following we read for both, data and simulation 
+read_variables += [
+    "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
+    "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
+    "l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
+    "JetGood[%s]"%(",".join(jetVars)),
+    "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I,mvaTOP/F]",
+    "Z1_l1_index/I", "Z1_l2_index/I",  
+    "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
+    "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
+    "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
+]
+
+# the following we read only in simulation
+read_variables_MC = [
+    'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
+    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
+    ]
             
 # Read variables and sequences
 sequence       = []
 
 from tttt.Tools.objectSelection import isBJet
 from tttt.Tools.helpers import getObjDict
-jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F']
-jetVarNames      = [x.split('/')[0] for x in jetVars]
+
+
 def make_jets( event, sample ):
-    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
-    event.bJets    = [j for j in event.jets if isBJet(j, year=event.year) and abs(j['eta'])<=2.4]
+    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
+    event.bJets = [j for j in event.jets if isBJet(j, year=event.year) and abs(j['eta'])<=2.4]
+
 sequence.append( make_jets )
 
 #MVA
-import tttt.MVA.configs.tttt_2l as config
+import tttt_2l_lena as config
 import onnxruntime as ort
-read_variables = config.read_variables
-
-# ONNX load
-ort_sess = ort.InferenceSession("model.onnx", providers = ['CPUExecutionProvider'])
-input_name = ort_sess.get_inputs()[0].name
-output_name = ort_sess.get_outputs()[0].name
+read_variables += config.read_variables
+test = []
 
 # Add sequence that computes the MVA inputs
-def make_mva( event, sample ):
-    mva_inputs = []
-    for mva_variable, func in config.mva_variables:
-        val = func(event, sample)
-        setattr( event, mva_variable, val )
-        mva_inputs.append( val )
-    mva_inputs = np.array(mva_inputs, ndmin =2)
-    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = ort_sess.run([output_name], {input_name: mva_inputs.astype(np.float32)})[0][0]
 
-sequence.append( make_mva )
+# Add sequence that computes the MVA inputs
+def make_mva_inputs( event, sample ):
+   for mva_variable, func in config.mva_variables:
+       setattr( event, mva_variable, func(event, sample) )
+sequence.append( make_mva_inputs ) 
 
-read_variables = []
+allModels  = ["model1_db_lstm"]#[ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
+options = ort.SessionOptions()
+options.intra_op_num_threads = 1
+options.inter_op_num_threads = 1
 
-# the following we read for both, data and simulation 
-lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
+def torch_predict( event, sample ):
+    flat_variables, lstm_jets_nodb = config.predict_inputs( event, sample, db = False, jet_lstm = True)
+    _, lstm_jets_db = config.predict_inputs( event, sample, db = True, jet_lstm = True)
+    lstm_jets_nodb = np.nan_to_num(lstm_jets_nodb)
+    lstm_jets_db = np.nan_to_num(lstm_jets_db)
+    #print('\n',flat_variables.shape, '\n',lstm_jets_db.shape, '\n',lstm_jets_nodb.shape, '\n')
+    for model in allModels:
+        ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
+        LSTM = False
+        db = False
+        if (str(model).find('lstm')!=-1): LSTM = True
+        if (str(model).find('db')!=-1): db = True
+        if (LSTM):
+            if (db):
+                lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets_db.astype(np.float32)})[0][0] 
+            else:
+                lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets_nodb.astype(np.float32)})[0][0] 
+        else:
+            lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32)})[0][0] 
+        #print(lis[0])    
+        if lis.any()<0 or lis.any()>1:
+            raise RuntimeError("Found NAN prediction?")
+        setattr( event, model, lis[0] )
+        #print(lis[0])
+        test.append(lis[0])
+sequence.append( torch_predict )
 
-read_variables += [
-    "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
-    "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
-    "l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
-    "JetGood[%s]"%(",".join(jetVars)),
-    "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I]",
-    "Z1_l1_index/I", "Z1_l2_index/I", #"nonZ1_l1_index/I", "nonZ1_l2_index/I", 
-    "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
-    "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
-    "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
-    "nlep/I", "m3/F",
-    "lep[%s]"%(",".join(lepVars)),
-]
-
-# define 3l selections
-# the following we read only in simulation
-read_variables_MC = [
-    'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
-    "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
-    ]
-
+# Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
 ele_string = lepString('ele','VL')
 def getLeptonSelection( mode ):
@@ -182,6 +227,9 @@ def getLeptonSelection( mode ):
     elif mode=="mue":  return "Sum$({mu_string})==1&&Sum$({ele_string})==1".format(mu_string=mu_string,ele_string=ele_string)
     elif mode=="ee":   return "Sum$({mu_string})==0&&Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
     elif mode=='all':    return "Sum$({mu_string})+Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
+
+def charge(pdgId):
+    return -pdgId/abs(pdgId)
 
 # Getter functor for lepton quantities
 def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
@@ -207,89 +255,67 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
                 return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
     return func_
 
-#mu0_charge   = lep_getter("pdgId", 0, 13, functor = charge)
-#ele0_charge = lep_getter("pdgId", 0, 11, functor = charge)
-#mu1_charge   = lep_getter("pdgId", 1, 13, functor = charge)
-#ele1_charge = lep_getter("pdgId", 1, 11, functor = charge)
-#def test(event, sample):
-#    mu0_ch  = mu0_charge(event, sample)
-#    ele0_ch = ele0_charge(event, sample)
-#    mu1_ch  = mu1_charge(event, sample)
-#    ele1_ch = ele1_charge(event, sample)
-#    print "mu0_ch",mu0_ch, "ele0_ch",ele0_ch, "mu1_ch",mu1_ch, "ele1_ch",ele1_ch
-#
-#sequence.append( test )
-
-# 3l trainign variables
-
-#def make_training_observables_3l(event, sample):
-#
-#    event.nonZ1l1_Z1_deltaPhi = deltaPhi(event.lep_phi[event.nonZ1_l1_index], event.Z1_phi)
-#    event.nonZ1l1_Z1_deltaEta = abs(event.lep_eta[event.nonZ1_l1_index] - event.Z1_eta)
-#    event.nonZ1l1_Z1_deltaR   = deltaR({'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
-#    event.jet0_Z1_deltaR      = deltaR({'eta':event.JetGood_eta[0], 'phi':event.JetGood_phi[0]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
-#    event.jet0_nonZ1l1_deltaR = deltaR({'eta':event.JetGood_eta[0], 'phi':event.JetGood_phi[0]}, {'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]})
-#    event.jet1_Z1_deltaR      = deltaR({'eta':event.JetGood_eta[1], 'phi':event.JetGood_phi[1]}, {'eta':event.Z1_eta, 'phi':event.Z1_phi})
-#    event.jet1_nonZ1l1_deltaR = deltaR({'eta':event.JetGood_eta[1], 'phi':event.JetGood_phi[1]}, {'eta':event.lep_eta[event.nonZ1_l1_index], 'phi':event.lep_phi[event.nonZ1_l1_index]})
-#
-#sequence.append( make_training_observables_3l )
-
-# OBJ: TBranch   GenJet_nBHadFromT   number of matched B hadrons with a top quark in their ancestry : 0 at: 0x311fbb0
-# OBJ: TBranch   GenJet_nBHadFromTbar    number of matched B hadrons with an anti-top quark in their ancestry : 0 at: 0x31206e0
-# OBJ: TBranch   GenJet_nBHadFromW   number of matched B hadrons with a W boson in their ancestry : 0 at: 0x3121220
-# OBJ: TBranch   GenJet_nBHadOther   number of matched B hadrons with no W boson or top quark in their ancestry : 0 at: 0x3121d50
-# OBJ: TBranch   GenJet_nCHadFromW   number of matched prompt (no intermediate B) C hadrons with a W boson in their ancestry : 0 at: 0x3122890
-# OBJ: TBranch   GenJet_nCHadOther   number of matched prompt (no intermediate B) C hadrons with no W boson or top quark in their ancestry : 0 at: 0x31233e0
-
-genJetSelection = "GenJet_pt>30&&abs(GenJet_eta)<2.4"
-
+# We don't use tree formulas, but I leave them so you understand the syntax. TTreeFormulas are faster than if we compute things in the event loop.
 ttreeFormulas = {   
-                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection), 
-                    "nGenJet_absPF5":"Sum$(abs(GenJet_partonFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection),
-#                    "nGenJet_min1BHadFromTorTbar":"Sum$(GenJet_nBHadFromT+GenJet_nBHadFromTbar>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
-#                    "nGenJet_min1BHadFromW":"Sum$(GenJet_nBHadFromW>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
-#                    "nGenJet_min1BHadOther":"Sum$(GenJet_nBHadOther>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
-#                    "nGenJet_min1CHadFromW":"Sum$(GenJet_nCHadFromW>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
-#                    "nGenJet_min1CHadOther":"Sum$(GenJet_nCHadOther>=1&&{genJetSelection})".format(genJetSelection=genJetSelection),
+#                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection), 
     }
 
+#allModels  = ["model1_db_lstm"]#[ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
+# for j, model in enumerate (allModels):
+    ##ONNX load
+    # options = ort.SessionOptions()
+    # options.intra_op_num_threads = 1
+    # options.inter_op_num_threads = 1
+    # ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
+    # LSTM = False
+    # db = False
+    # if (str(model).find('lstm')!=-1): LSTM = True
+    # if (str(model).find('db')!=-1): db = True
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
 for i_mode, mode in enumerate(allModes):
     yields[mode] = {}
 
-    weight_ = lambda event, sample: event.weight if sample.isData else event.weight*lumi_scale
+    # "event.weight" is 0/1 for data, depending on whether it is from a certified lumi section. For MC, it corresponds to the 1/fb*cross-section/Nsimulated. So we multiply with the lumi in /fb.
+    # This weight goes to the plot.
+    weight_ = lambda event, sample: event.weight if sample.isData else event.weight
 
+    # coloring
     for sample in mc: sample.style = styles.fillStyle(sample.color)
-    TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
- 
-    for sample in all_mc:
+    #TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
+    if not args.noData:
+        data_sample.style = styles.errorStyle( ROOT.kBlack ) 
+
+    # read the MC variables only in MC; apply reweighting to simulation for specific detector effects
+    for sample in mc:
       sample.read_variables = read_variables_MC 
       sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
 
-    #yt_TWZ_filter.scale = lumi_scale * 1.07314
+    # Define what we want to see.
+    stack = Stack(mc, [data_sample])
 
-    stack = Stack(mc, TTTT)
-
-    # Use some defaults
+    # Define everything we want to have common to all plots
     Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
 
     plots = []
 
+    # A special plot that holds the yields of all modes
     plots.append(Plot(
       name = 'yield', texX = '', texY = 'Number of Events',
       attribute = lambda event, sample: 0.5 + i_mode,
       binning=[3, 0, 3],
     ))
 
-    plots.append(Plot(
-        name = 'lenas_MVA_TTTT',
-        texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
-        attribute = lambda event, sample:event.lenas_MVA_TTTT,
-        binning=[50,0,1],
-        addOverFlowBin='upper',
-    ))
+    for model in allModels:
+        plots.append(Plot(
+          name = 'lenas_MVA_TTTT_'+str(model),
+          texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name),
+          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          binning=[50,0,1],
+          addOverFlowBin='upper',
+        ))
 
     plots.append(Plot(
       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
@@ -297,55 +323,6 @@ for i_mode, mode in enumerate(allModes):
       binning=[50,0,50],
       addOverFlowBin='upper',
     ))
-
-    plots.append(Plot(
-      name = 'nGenJet_absHF5', texY = 'Number of Events',
-      attribute = lambda event, sample: event.nGenJet_absHF5,
-      binning=[7,-0.5,6.5],
-      addOverFlowBin='upper',
-    ))
-
-    plots.append(Plot(
-      name = 'nGenJet_absPF5', texY = 'Number of Events',
-      attribute = lambda event, sample: event.nGenJet_absPF5,
-      binning=[7,-0.5,6.5],
-      addOverFlowBin='upper',
-    ))
-
-#    plots.append(Plot(
-#      name = 'nGenJet_min1BHadFromTorTbar', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.nGenJet_min1BHadFromTorTbar,
-#      binning=[7,-0.5,6.5],
-#      addOverFlowBin='upper',
-#    ))
-#
-#    plots.append(Plot(
-#      name = 'nGenJet_min1BHadFromW', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.nGenJet_min1BHadFromW,
-#      binning=[7,-0.5,6.5],
-#      addOverFlowBin='upper',
-#    ))
-#
-#    plots.append(Plot(
-#      name = 'nGenJet_min1BHadOther', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.nGenJet_min1BHadOther,
-#      binning=[7,-0.5,6.5],
-#      addOverFlowBin='upper',
-#    ))
-#
-#    plots.append(Plot(
-#      name = 'nGenJet_min1CHadFromW', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.nGenJet_min1CHadFromW,
-#      binning=[7,-0.5,6.5],
-#      addOverFlowBin='upper',
-#    ))
-#
-#    plots.append(Plot(
-#      name = 'nGenJet_min1CHadOther', texY = 'Number of Events',
-#      attribute = lambda event, sample: event.nGenJet_min1CHadOther,
-#      binning=[7,-0.5,6.5],
-#      addOverFlowBin='upper',
-#    ))
 
     plots.append(Plot(
         name = 'l1_pt',
@@ -453,44 +430,6 @@ for i_mode, mode in enumerate(allModes):
     ))
 
     plots.append(Plot(
-        name = "dPhiZJet",
-        texX = '#Delta#phi(Z,j1)', texY = 'Number of Events',
-        attribute = lambda event, sample: deltaPhi(event.Z1_phi, event.JetGood_phi[0]),
-        binning=[20,0,pi],
-    ))
-
-    #plots.append(Plot(
-    #    name = "l1_Z1_pt",
-    #    texX = 'p_{T}(l_{1,Z}) (GeV)', texY = 'Number of Events / 10 GeV',
-    #    attribute = lambda event, sample:event.lep_pt[event.Z1_l1_index],
-    #    binning=[30,0,300],
-    #    addOverFlowBin='upper',
-    #))
-
-    #plots.append(Plot(
-    #    name = "l1_Z1_pt_coarse",
-    #    texX = 'p_{T}(l_{1,Z}) (GeV)', texY = 'Number of Events / 40 GeV',
-    #    attribute = lambda event, sample:event.lep_pt[event.Z1_l1_index],
-    #    binning=[10,0,400],
-    #    addOverFlowBin='upper',
-    #))
-
-    #plots.append(Plot(
-    #    name = 'l1_Z1_pt_ext', texX = 'p_{T}(l_{1,Z}) (GeV)', texY = 'Number of Events / 20 GeV',
-    #    attribute = lambda event, sample:event.lep_pt[event.Z1_l1_index],
-    #    binning=[20,40,440],
-    #    addOverFlowBin='upper',
-    #))
-
-    #plots.append(Plot(
-    #    name = "l2_Z1_pt",
-    #    texX = 'p_{T}(l_{2,Z}) (GeV)', texY = 'Number of Events / 10 GeV',
-    #    attribute = lambda event, sample:event.lep_pt[event.Z1_l2_index],
-    #    binning=[20,0,200],
-    #    addOverFlowBin='upper',
-    #))
-
-    plots.append(Plot(
       texX = 'p_{T}(leading l) (GeV)', texY = 'Number of Events / 20 GeV',
       name = 'lep1_pt', attribute = lambda event, sample: event.lep_pt[0],
       binning=[400//20,0,400],
@@ -507,53 +446,6 @@ for i_mode, mode in enumerate(allModes):
       name = 'lep3_pt', attribute = lambda event, sample: event.lep_pt[2],
       binning=[150//10,0,150],
     ))
-
-    #plots.append(Plot(
-    #    name = "l2_Z1_pt_coarse",
-    #    texX = 'p_{T}(l_{2,Z}) (GeV)', texY = 'Number of Events / 10 GeV',
-    #    attribute = lambda event, sample:event.lep_pt[event.Z1_l2_index],
-    #    binning=[10,0,200],
-    #    addOverFlowBin='upper',
-    #))
-
-    #plots.append(Plot(
-    #    name = 'l2_Z1_pt_ext', texX = 'p_{T}(l_{2,Z}) (GeV)', texY = 'Number of Events / 20 GeV',
-    #    attribute = lambda event, sample:event.lep_pt[event.Z1_l2_index],
-    #    binning=[20,0,400],
-    #    addOverFlowBin='upper',
-    #))
-
-    #plots.append(Plot(
-    #    name = 'lnonZ1_pt',
-    #    texX = 'p_{T}(l_{1,extra}) (GeV)', texY = 'Number of Events / 20 GeV',
-    #    attribute = lambda event, sample:event.lep_pt[event.nonZ1_l1_index],
-    #    binning=[15,0,300],
-    #    addOverFlowBin='upper',
-    #))
-
-    #plots.append(Plot(
-    #    name = 'lnonZ1_pt_coarse',
-    #    texX = 'p_{T}(l_{1,extra}) (GeV)', texY = 'Number of Events / 60 GeV',
-    #    attribute = lambda event, sample:event.lep_pt[event.nonZ1_l1_index],
-    #    binning=[3,0,180],
-    #    addOverFlowBin='upper',
-    #))
-
-    #plots.append(Plot(
-    #    name = 'lnonZ1_charge',
-    #    texX = 'Charge(l_{1,extra})', texY = 'Number of Events',
-    #    attribute = lambda event, sample:-event.lep_pdgId[event.nonZ1_l1_index]/abs(event.lep_pdgId[event.nonZ1_l1_index]),
-    #    binning=[2,-1,1],
-    #    addOverFlowBin='upper',
-    #))
-
-    #plots.append(Plot(
-    #    name = 'lnonZ1_eta',
-    #    texX = '#eta(l_{1,extra})', texY = 'Number of Events',
-    #    attribute = lambda event, sample: event.lep_eta[event.nonZ1_l1_index],
-    #    binning=[20,-3,3],
-    #))
-
     plots.append(Plot(
         texX = 'M(ll) (GeV)', texY = 'Number of Events / 20 GeV',
         attribute = TreeVariable.fromString( "Z1_mass/F" ),
@@ -633,52 +525,6 @@ for i_mode, mode in enumerate(allModes):
       binning=[600//30,0,600],
     ))
 
-#    plots.append(Plot(
-#        name = "W_pt",
-#        texX = 'p_{T}(W) (GeV)', texY = 'Number of Events / 20 GeV',
-#        attribute = lambda event, sample:event.W_pt,
-#        binning=[20,0,400],
-#    ))
-
-    # 3l training variables
-
-    #plots.append(Plot(
-    #  texX = '#Delta\#phi(nonZ-l_{1}, Z_{1})', texY = 'Number of Events',
-    #  name = 'nonZ1l1_Z1_deltaPhi', attribute = lambda event, sample: event.nonZ1l1_Z1_deltaPhi,
-    #  binning=[20,0,pi],
-    #))
-    #plots.append(Plot(
-    #  texX = '#Delta#eta(nonZ-l_{1}, Z_{1})', texY = 'Number of Events',
-    #  name = 'nonZ1l1_Z1_deltaEta', attribute = lambda event, sample: event.nonZ1l1_Z1_deltaEta,
-    #  binning=[20,0,6],
-    #))
-    #plots.append(Plot(
-    #  texX = '#Delta R(nonZ-l_{1}, Z_{1})', texY = 'Number of Event',
-    #  name = 'nonZ1l1_Z1_deltaR', attribute = lambda event, sample: event.nonZ1l1_Z1_deltaR,
-    #  binning=[20,0,6],
-    #))
-
-    #plots.append(Plot(
-    #  texX = '#Delta R(jet_{0}, Z_{1})', texY = 'Number of Events',
-    #  name = 'jet0_Z1_deltaR', attribute = lambda event, sample: event.jet0_Z1_deltaR,
-    #  binning=[20,0,6],
-    #))
-    #plots.append(Plot(
-    #  texX = '#Delta R(jet_{0}, nonZ-l_{1})', texY = 'Number of Events',
-    #  name = 'jet0_nonZ1l1_deltaR', attribute = lambda event, sample: event.jet0_nonZ1l1_deltaR,
-    #  binning=[20,0,6],
-    #))
-    #plots.append(Plot(
-    #  texX = '#Delta R(jet_{1}, Z_{1})', texY = 'Number of Events',
-    #  name = 'jet1_Z1_deltaR', attribute = lambda event, sample: event.jet1_Z1_deltaR,
-    #  binning=[20,0,6],
-    #))
-    #plots.append(Plot(
-    #  texX = '#Delta R(jet_{1}, nonZ-l_{1})', texY = 'Number of Events',
-    #  name = 'jet1_nonZ1l1', attribute = lambda event, sample: event.jet1_nonZ1l1_deltaR,
-    #  binning=[20,0,6],
-    #))
-    
     for index in range(2):
         for abs_pdg in [11, 13]:
             lep_name = "mu" if abs_pdg==13 else "ele"
@@ -737,11 +583,11 @@ for i_mode, mode in enumerate(allModes):
               name = '%s%i_mvaTTH'%(lep_name, index), attribute = lep_getter("mvaTTH", index, abs_pdg),
               binning=[24,-1.2,1.2],
             ))
-            #plots.append(Plot(
-            #  texX = 'mvaTOP(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-            #  name = '%s%i_mvaTOP'%(lep_name, index), attribute = lep_getter("mvaTOP", index, abs_pdg),
-            #  binning=[24,-1.2,1.2],
-            #))
+#            plots.append(Plot(
+#              texX = 'mvaTOP(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
+#              name = '%s%i_mvaTOP'%(lep_name, index), attribute = lep_getter("mvaTOP", index, abs_pdg),
+#              binning=[24,-1.2,1.2],
+#            ))
             plots.append(Plot(
               texX = 'charge(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
               name = '%s%i_charge'%(lep_name, index), attribute = lep_getter("pdgId", index, abs_pdg, functor = charge),
@@ -763,6 +609,13 @@ for i_mode, mode in enumerate(allModes):
                   name = '%s%i_nTrackerLayers'%(lep_name, index), attribute = lep_getter("nTrackerLayers", index, abs_pdg),
                   binning=[20,0,20],
                 ))
+            if lep_name == "ele":
+                for cbIdFlag in vidNestedWPBitMapNamingList:
+                    plots.append(Plot(
+                      texX = '%s(%s_{%i}) (GeV)'%(cbIdFlag, lep_name, index), texY = 'Number of Events',
+                      name = '%s%i_%s_Flag'%(lep_name, index, cbIdFlag), attribute = lep_getter("vidNestedWPBitmap", index, abs_pdg, functor = cbEleIdFlagGetter(cbIdFlag)),
+                      binning=[5,0,5],
+                    ))
 
     plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
 
@@ -784,29 +637,40 @@ for i_mode, mode in enumerate(allModes):
             h.GetXaxis().SetBinLabel(4, "medium")
             h.GetXaxis().SetBinLabel(5, "tight")
         
-    yields[mode]["data"] = 0
+    #yields[mode]["data"] = 0
 
     yields[mode]["MC"] = sum(yields[mode][s.name] for s in mc)
-    dataMCScale        = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
+    if args.noData:
+        dataMCScale = 1.
+    else:
+        dataMCScale        = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
 
     drawPlots(plots, mode, dataMCScale)
     allPlots[mode] = plots
 
 # Add the different channels into SF and all
 for mode in ["SF","all"]:
-  yields[mode] = {}
-  for y in yields[allModes[0]]:
-    try:    yields[mode][y] = sum(yields[c][y] for c in (['ee','mumu'] if mode=="SF" else ['ee','mumu','mue']))
-    except: yields[mode][y] = 0
-  dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
+    yields[mode] = {}
+    for y in yields[allModes[0]]:
+        try:    yields[mode][y] = sum(yields[c][y] for c in (['ee','mumu'] if mode=="SF" else ['ee','mumu','mue']))
+        except: yields[mode][y] = 0
+    if args.noData:
+        dataMCScale = 1.
+    else:
+        dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
+    for plot in allPlots['mumu']:
+        for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
+            for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
+                for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
+                    if i==k: j.Add(l)
 
-  for plot in allPlots['mumu']:
-    for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
-      for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
-        for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
-          if i==k:
-            j.Add(l)
-
-  drawPlots(allPlots['mumu'], mode, dataMCScale)
+    drawPlots(allPlots['mumu'], mode, dataMCScale)
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
+
+for plot in plots:
+    for i in range (len(mc)):
+        if (plot.histos[0][i].GetTitle().find('TTTT')!=-1):
+            count = 0
+            for j in range (1, plot.histos[0][i].GetNbinsX()+1): count+=plot.histos[0][i].GetBinContent(j)
+            print("TTTT_events in ", plot.histos[0][i].GetTitle(), count)
