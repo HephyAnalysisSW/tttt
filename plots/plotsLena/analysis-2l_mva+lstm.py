@@ -237,7 +237,7 @@ ttreeFormulas = {
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
-allModels  = [ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model3_lstm","model4_lstm" ]
+allModels  = [ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
 weight_ = lambda event, sample: event.weight if sample.isData else event.weight
 for sample in mc: sample.style = styles.fillStyle(sample.color)
 TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
@@ -260,6 +260,7 @@ for j, model in enumerate (allModels):
     ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
     LSTM = False
     if (str(model).find('lstm')!=-1): LSTM = True
+    model=model+str("_v4")
     for i_mode, mode in enumerate(allModes):
         yields[mode] = {}
     

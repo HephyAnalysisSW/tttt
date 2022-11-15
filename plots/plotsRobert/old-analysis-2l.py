@@ -125,7 +125,7 @@ def drawPlots(plots, mode, dataMCScale):
             plot_directory = plot_directory_,
             ratio =  {'yRange':(0.1,1.9)} if not args.noData else None,
             logX = False, logY = log, sorting = True,
-            yRange = (0.9, "auto") if log else (0.001, "auto"),
+            yRange = (0.9, "auto") if log else (0.000, "auto"),
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
@@ -290,17 +290,6 @@ ttreeFormulas = {
 #                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection), 
     }
 
-#allModels  = ["model1_db_lstm"]#[ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
-# for j, model in enumerate (allModels):
-    ##ONNX load
-    # options = ort.SessionOptions()
-    # options.intra_op_num_threads = 1
-    # options.inter_op_num_threads = 1
-    # ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
-    # LSTM = False
-    # db = False
-    # if (str(model).find('lstm')!=-1): LSTM = True
-    # if (str(model).find('db')!=-1): db = True
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
