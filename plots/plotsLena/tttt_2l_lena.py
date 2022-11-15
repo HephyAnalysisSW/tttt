@@ -32,9 +32,12 @@ jetVarNames      = [x.split('/')[0] for x in jetVars]
 
 lstm_jets_maxN   = 10
 #lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
-lstm_jetVars_lena= ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavC/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+#lstm_jetVars_lena = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavC/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+lstm_jetVars_lena     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+lstm_jetVars_lena_db  = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
 #lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 lstm_jetVarNames_lena = [x.split('/')[0] for x in lstm_jetVars_lena]
+lstm_jetVarNames_lena_db = [x.split('/')[0] for x in lstm_jetVars_lena_db]
 
 
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
@@ -118,8 +121,11 @@ all_mva_variables = {
      "mva_jet7_pt"               :(lambda event, sample: event.JetGood_pt[7]          if event.nJetGood >=8 else 0),
 }
 
-def lstm_jets(event, sample):
-    jets = [ getObjDict( event, 'Jet_', lstm_jetVarNames_lena, event.JetGood_index[i] ) for i in range(int(event.nJetGood)) ]
+def lstm_jets(db, event, sample):
+    if (db): 
+        jets = [ getObjDict( event, 'Jet_', lstm_jetVarNames_lena_db, event.JetGood_index[i] ) for i in range(int(event.nJetGood)) ]
+    else:
+        jets = [ getObjDict( event, 'Jet_', lstm_jetVarNames_lena, event.JetGood_index[i] ) for i in range(int(event.nJetGood)) ]
     #jets = filter( jet_vector_var['selector'], jets )
     return jets 
 
@@ -137,15 +143,20 @@ mva_variables  = [ (key, value) for key, value in all_mva_variables.items() if k
 import numpy as np
 import operator
 
-def predict_inputs( event, sample, jet_lstm = False):
+def predict_inputs( event, sample, db, jet_lstm = False):
     flat_variables = np.array([[getattr( event, mva_variable) for mva_variable, _ in mva_variables]])
     if jet_lstm:
         lstm_jets_maxN = 10 #remove after retraining
         jet_vector_var = mva_vector_variables["mva_Jet"]
-        jets = mva_vector_variables["mva_Jet"]["func"](event,sample=None) 
-        jets =  [ [ operator.itemgetter(varname)(jet) for varname in lstm_jetVarNames_lena] for jet in jets[:lstm_jets_maxN] ]
-        # zero padding
-        jets += [ [0.]*len(lstm_jetVarNames_lena)]*(max(0, lstm_jets_maxN-len(jets))) 
+        jets = mva_vector_variables["mva_Jet"]["func"](db,event,sample=None) 
+        if (db):
+            jets =  [ [ operator.itemgetter(varname)(jet) for varname in lstm_jetVarNames_lena_db] for jet in jets[:lstm_jets_maxN] ]
+            # zero padding
+            jets += [ [0.]*len(lstm_jetVarNames_lena_db)]*(max(0, lstm_jets_maxN-len(jets))) 
+        else:
+            jets =  [ [ operator.itemgetter(varname)(jet) for varname in lstm_jetVarNames_lena] for jet in jets[:lstm_jets_maxN] ]
+            # zero padding
+            jets += [ [0.]*len(lstm_jetVarNames_lena)]*(max(0, lstm_jets_maxN-len(jets))) 
         jets = np.array([jets])
 
         return [ flat_variables, jets ]
