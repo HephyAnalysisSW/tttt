@@ -53,7 +53,7 @@ read_variables = [\
                     "l3_mvaTOP/F",
                     "year/I",
                     ]
-# sequence 
+# sequence
 sequence = []
 
 # Fisher informations
@@ -62,16 +62,22 @@ FIs = {
 
 from tttt.Tools.objectSelection import isBJet
 def make_jets( event, sample ):
-    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
+    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
 sequence.append( make_jets )
 
 all_mva_variables = {
 
-# global event properties     
+# global event properties
      "mva_nJetGood"              :(lambda event, sample: event.nJetGood),
      "mva_nBTag"                 :(lambda event, sample: event.nBTag),
      "mva_nlep"                  :(lambda event, sample: event.nlep),
+
+     "mva_bTagL"                 :(lambda event, sample: event.JetGood_btagDeepB if (event.nJetGood >=1 and event.JetGood_btagDeepB>=.0494) else -10)),
+     "mva_bTagM"                 :(lambda event, sample: event.JetGood_btagDeepB if (event.nJetGood >=1 and event.JetGood_btagDeepB0>=.2770) else -10)),
+     "mva_bTagM"                 :(lambda event, sample: event.JetGood_btagDeepB if (event.nJetGood >=1 and event.JetGood_btagDeepB>=0.7264)else -10)),
+
+
 
      "mva_mT_l1"                 :(lambda event, sample: sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))),
      "mva_mT_l2"                 :(lambda event, sample: sqrt(2*event.l2_pt*event.met_pt*(1-cos(event.l2_phi-event.met_phi)))),
@@ -84,7 +90,7 @@ all_mva_variables = {
      "mva_l2_eta"                :(lambda event, sample: event.l2_eta),
      "mva_l3_pt"                 :(lambda event, sample: event.l3_pt),
      "mva_l3_eta"                :(lambda event, sample: event.l3_eta),
-     
+
      "mva_mj_12"                 :(lambda event, sample: sqrt(event.jets[0]['pt']*event.jets[1]['pt']*cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))  if event.nJetGood >=2 else 0),
      "mva_mlj_11"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[0]['pt']*cosh(event.l1_eta-event.jets[0]['eta'])-cos(event.l1_phi-event.jets[0]['phi'])) if event.nJetGood >=1 else 0),
      "mva_mlj_12"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[1]['pt']*cosh(event.l1_eta-event.jets[1]['eta'])-cos(event.l1_phi-event.jets[1]['phi'])) if event.nJetGood >=2 else 0),
@@ -127,7 +133,7 @@ def lstm_jets(event, sample):
 
 # for the filler
 mva_vector_variables    =   {
-    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10} 
+    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10}
     "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames}
 }
 
