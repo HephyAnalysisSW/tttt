@@ -2,92 +2,73 @@ from RootTools.core.standard import *
 import os
 import ROOT
 import array
+import config_roc as config
 
-#ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/TMB/Tools/scripts/tdrstyle.C")
-#ROOT.setTDRStyle()
 
-dirname = "/groups/hephy/cms/lena.wild/www/tttt/plots/analysisPlots/tttt_small/RunIII/all_log/dilepL-offZ1-njet4p-btag2p-ht500/"
+dirname = config.dirname
+results_dir = dirname+"roc/"
+if not os.path.exists( results_dir ): 
+    os.makedirs( results_dir )
+
+data_root = config.data_root
 roc = {}
 
-
-data_root = [
-("flat batch=5000", os.path.join(dirname, "lenas_MVA_TTTT_model1.root"),600),
-("flat batch=10000", os.path.join(dirname, "lenas_MVA_TTTT_model2.root"),820),
-("flat batch=20000", os.path.join(dirname, "lenas_MVA_TTTT_model3.root"),1),
-("flat batch=100000", os.path.join(dirname, "lenas_MVA_TTTT_model4.root"),400),
-("flat hs1=features*3", os.path.join(dirname, "lenas_MVA_TTTT_model5.root"),840),
-("flat hs1=features*4", os.path.join(dirname, "lenas_MVA_TTTT_model6.root"),900),
-("flat hs1=features*5", os.path.join(dirname, "lenas_MVA_TTTT_model7.root"),920),
-("flat hs1=features+5", os.path.join(dirname, "lenas_MVA_TTTT_model8.root"),616),
-("flat hs1=features+10", os.path.join(dirname, "lenas_MVA_TTTT_model9.root"),890),
-("flat hs1=features+15", os.path.join(dirname, "lenas_MVA_TTTT_model10.root"),632),
-("flat hs1=features+30", os.path.join(dirname, "lenas_MVA_TTTT_model11.root"),432),
-#("lstm layers=1", os.path.join(dirname, "lenas_MVA_TTTT_model1_lstm.root"),880),
-#("lstm layers=2", os.path.join(dirname, "lenas_MVA_TTTT_model2_lstm.root"),606),
-#("lstm layers=3", os.path.join(dirname, "lenas_MVA_TTTT_model3_lstm.root"), 870),
-#("lstm layers=4", os.path.join(dirname, "lenas_MVA_TTTT_model4_lstm.root"),882)
-]
-for name, filename, color in data_root:
-    f = ROOT.TFile.Open(filename)
-    canvas = f.Get(f.GetListOfKeys().At(0).GetName())
-    bkg = canvas.GetListOfPrimitives().At(1)
-    sig = canvas.GetListOfPrimitives().At(4)
-
-    print ("sig",sig.GetName())
-    print ("bkg",bkg.GetName())
-
-    sig.Scale(1./sig.Integral())
-    bkg.Scale(1./bkg.Integral())
-
-    sig_eff = []
-    bkg_eff = []
-    for i_bin in reversed(range(1,sig.GetNbinsX()+1)):
-        sig_eff .append( sig.Integral(i_bin, sig.GetNbinsX()))
-        bkg_eff .append( bkg.Integral(i_bin, sig.GetNbinsX()))
-        #print i_bin, sig_eff, bkg_eff
-
-    roc[name] = ROOT.TGraph(len(sig_eff), array.array('d',bkg_eff), array.array('d',sig_eff))
-    roc[name].SetLineColor(color)
-    roc[name].SetLineWidth(2)
-    
+for selection, Title, Name in data_root:
+    for name, filename, color in selection:
+        print(name)
+        f = ROOT.TFile.Open(filename)
+        canvas = f.Get(f.GetListOfKeys().At(0).GetName())
+        bkg1 = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(1)
+        bkg2 = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(2)
+        bkg3 = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(3)
+        sig = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(4)
+        a=bkg1.Integral()
+        b=bkg2.Integral()
+        c=bkg3.Integral()
+        print ("sig",sig.GetName())
+        print ("bkg1",bkg1.GetName())
+        print ("bkg2",bkg2.GetName())
+        print ("bkg3",bkg3.GetName())
+        sig.Scale(1./sig.Integral())
+        bkg1.Scale(1./(a+b+c))
+        bkg2.Scale(1./(a+b+c))
+        bkg3.Scale(1./(a+b+c))
+        sig_eff = []
+        bkg_eff = []
+        for i_bin in reversed(range(1,sig.GetNbinsX()+1)):
+            sig_eff .append( sig.Integral(i_bin, sig.GetNbinsX()))
+            bkg_eff .append( bkg1.Integral(i_bin, sig.GetNbinsX())+bkg2.Integral(i_bin, sig.GetNbinsX())+bkg3.Integral(i_bin, sig.GetNbinsX()))
+            #print (sig_eff[-1],bkg_eff[-1])
+        roc[name] = ROOT.TGraph(len(sig_eff), array.array('d',bkg_eff), array.array('d',sig_eff))
+        roc[name].SetLineColor(color)
+        roc[name].SetLineWidth(2)
+        
 
 
 
-c1 = ROOT.TCanvas()
-i=0
-roc["flat batch=20000"].Draw("AL")
-for name, filename, color in data_root:
-    roc[name].Draw("SAME")
-    roc[name].SetTitle("")
-    roc[name].GetXaxis().SetTitle("total background efficiency")
-    roc[name].GetYaxis().SetTitle("t#bar{t}t#bar{t} signal efficiency")
-    d=0.6
-    i +=1
-    roc[name].GetXaxis().SetRangeUser(0,1-d)
-    roc[name].GetYaxis().SetRangeUser(d,1)
-    #roc[name].SetMarkerStyle(0)
-    #roc[name].SetMarkerColor(int(i))
+    c1 = ROOT.TCanvas()
+    roc[selection[0][0]].Draw("AL")
+    for name, filename, color in selection:
+        roc[name].Draw("SAME")
+        roc[name].SetTitle(Title)
+        roc[name].GetXaxis().SetTitle("total background efficiency")
+        roc[name].GetYaxis().SetTitle("t#bar{t}t#bar{t} signal efficiency")
+        d=0.4
+        roc[name].GetXaxis().SetRangeUser(0,1-d)
+        roc[name].GetYaxis().SetRangeUser(d,1)
 
 
-l = ROOT.TLegend(0.6, 0.5, 0.9, 0.14)
-l.SetFillStyle(0)
-l.SetShadowColor(0)
-l.SetBorderSize(0)
+    l = ROOT.TLegend(0.5, 0.3, 0.9, 0.14)
+    l.SetFillStyle(0)
+    l.SetShadowColor(0)
+    l.SetBorderSize(0)
+    for name, filename, color in selection:
+        l.AddEntry( roc[name], name )
+    l.Draw()
 
-for name, filename, color in data_root:
-    l.AddEntry( roc[name], name )
-    
- 
-l.Draw()
-
-ROOT.gStyle.SetOptStat(0)
-c1.SetTitle("")
-c1.RedrawAxis()
-#c1.SetLogy()
-#c1.SetLogx()
-#c1.SetGridy()
-#c1.SetGridx()
-c1.Print(os.path.join(dirname, "roc.png"))
-c1.Print(os.path.join(dirname, "roc.pdf"))
-c1.Print(os.path.join(dirname, "roc.root"))
-#Analysis.Tools.syncer.sync()
+    ROOT.gStyle.SetOptStat(0)
+    c1.SetTitle("")
+    c1.RedrawAxis()
+    c1.Print(os.path.join(results_dir,Name+".png"))
+    #c1.Print(os.path.join(results_dir,Name+".pdf"))
+    #c1.Print(os.path.join(results_dir,Name+".root"))
