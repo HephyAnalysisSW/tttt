@@ -12,7 +12,7 @@ from RootTools.core.standard import *
 from tttt.Tools.helpers import getVarValue, getObjDict
 
 # MVA configuration
-import tttt.MVA.configs  as configs 
+import tttt.MVA.configs  as configs
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
@@ -48,7 +48,7 @@ for sample in config.training_samples:
 
 if not found:
     logger.error( "Need sample to be one of %s, got %s", ",".join( sample_names ), args.sample )
-    sys.exit()     
+    sys.exit()
 
 logger.info( "Processing sample %s", sample.name )
 
@@ -63,7 +63,7 @@ if args.small:
 if hasattr( config, "selectionString"):
     sample.addSelectionString( config.selectionString )
     logger.info( "Add selectionstring %s", config.selectionString )
-    subDir += "_"+config.selection
+    subDir += "_attempt"
 else:
     logger.info( "Do not use selectionstring" )
 
@@ -100,7 +100,7 @@ def filler( event ):
 
     # copy vector variables
     for name, vector_var in config.mva_vector_variables.iteritems():
-        objs = vector_var["func"]( r, sample=None ) 
+        objs = vector_var["func"]( r, sample=None )
 
         fill_vector_collection( event, name, vector_var['varnames'], objs )
 
@@ -110,7 +110,7 @@ def filler( event ):
             #print( event, 'mva_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] ) )
             setattr( event, 'FI_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] )[1][0][0] )
 
-# Create a maker. Maker class will be compiled. 
+# Create a maker. Maker class will be compiled.
 
 # scalar variables
 mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
@@ -123,7 +123,7 @@ for name, vector_var in config.mva_vector_variables.iteritems():
 if hasattr( config, "FIs"):
     FI_variables = ["FI_%s/F"%var for var in config.FIs.keys() ]
 else:
-    FI_variables = [] 
+    FI_variables = []
 
 tmp_dir     = ROOT.gDirectory
 
@@ -136,8 +136,8 @@ outputfile = ROOT.TFile.Open(output_file, 'recreate')
 outputfile.cd()
 maker = TreeMaker(
     sequence  = [ filler ],
-    variables = map(TreeVariable.fromString, 
-          mva_variables+FI_variables,  
+    variables = map(TreeVariable.fromString,
+          mva_variables+FI_variables,
         ),
     treeName = "Events"
     )
