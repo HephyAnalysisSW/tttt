@@ -88,8 +88,12 @@ all_mva_variables = {
      "mva_mlj_11"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[0]['pt']*cosh(event.l1_eta-event.jets[0]['eta'])-cos(event.l1_phi-event.jets[0]['phi'])) if event.nJetGood >=1 else 0),
      "mva_mlj_12"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[1]['pt']*cosh(event.l1_eta-event.jets[1]['eta'])-cos(event.l1_phi-event.jets[1]['phi'])) if event.nJetGood >=2 else 0),
 
-     "mva_dPhil_12"              :(lambda event, sample: deltaPhi(event.l1_phi, event.l2_phi)),
-     "mva_dPhij_12"              :(lambda event, sample: deltaPhi(event.JetGood_phi[0], event.JetGood_phi[1]) if event.nJetGood >=2 else 0),
+     # Use these when retraining:
+     #"mva_dPhil_12"              :(lambda event, sample: deltaPhi(event.l1_phi, event.l2_phi)),
+     #"mva_dPhij_12"              :(lambda event, sample: deltaPhi(event.JetGood_phi[0], event.JetGood_phi[1]) if event.nJetGood >=2 else 0),
+     # Keep old version vor consistently evaluating: 
+     "mva_dPhil_12"              :(lambda event, sample: acos(cos(event.l1_phi-event.l2_phi))),
+     "mva_dPhij_12"              :(lambda event, sample: acos(cos(event.JetGood_phi[0]-event.JetGood_phi[1])) if event.nJetGood >=2 else 0),
 
      "mva_dEtal_12"              :(lambda event, sample: event.l1_eta-event.l2_eta),
      "mva_dEtaj_12"              :(lambda event, sample: event.JetGood_eta[0] - event.JetGood_eta[1] if event.nJetGood >=2 else -10),
