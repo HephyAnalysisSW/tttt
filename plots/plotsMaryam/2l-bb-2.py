@@ -39,12 +39,17 @@ bbTag_max_value   = "Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_
 max_pt  = "MaxIf$(JetGood_pt, abs(JetGood_eta)<2.4)"
 
 plot_cfgs = [
-    {'name':'max_bb_max_pt', 'texX':"pt", 'histos': [
-        {'legendText':'Gen bb',  'var':bbTag_max_pt,   'color':ROOT.kRed,     'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
-        {'legendText':'Gen b',   'var':bbTag_max_pt,   'color':ROOT.kGreen,   'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+    {'name':'max_bb_max_pt', 'texX':"max jet_pt", 'histos': [
+        {'legendText':'genTtbarId=52,54,55',  'var':bbTag_max_pt,   'color':ROOT.kRed,     'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+        {'legendText':'genTtbarId=51,53',     'var':bbTag_max_pt,   'color':ROOT.kGreen,   'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
     # this is likely meaningless (see above)
     #     {'legendText':'Gen bb', 'var':max_pt,  'color':632+2, 'binning':[100,0,1500], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
     #     {'legendText':'Gen b',  'var':max_pt,  'color':416-1, 'binning':[100,0,1500], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+    ]},
+
+    {'name':'max_bb_max_pt_course', 'texX':"max jet_pt", 'histos': [
+        {'legendText':'genTtbarId=52,54,55',  'var':bbTag_max_pt,   'color':ROOT.kRed,     'binning':[100,30,200], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+        {'legendText':'genTtbarId=51,53',     'var':bbTag_max_pt,   'color':ROOT.kGreen,   'binning':[100,30,200], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
     ]},
     # this seems redundant:
     # {'name': 'max_b_pt', 'histos': [
@@ -53,34 +58,57 @@ plot_cfgs = [
     # ]},
     # the ratio can be any positive number, not just between [0,1]
     {'name':'bb_over_blepb', 'texX':"bbTag_max_value", 'histos': [
-        {'legendText':'Gen bb','var':bbTag_max_value, 'color':ROOT.kRed,     'binning':[30,0,3], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
-        {'legendText':'Gen b', 'var':bbTag_max_value, 'color':ROOT.kGreen,   'binning':[30,0,3], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+        {'legendText':'genTtbarId=52,54,55','var':bbTag_max_value, 'color':ROOT.kRed,     'binning':[30,0,3], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+        {'legendText':'genTtbarId=51,53',   'var':bbTag_max_value, 'color':ROOT.kGreen,   'binning':[30,0,3], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
     ]},
 
-    {'name':'max_bb_value_nBHadrons', 'texX':"bbTag_max_value", 'histos': [
+    {'name':'nBHadrons', 'texX':"nBHadrons", 'histos': [
+        {'legendText':'genTtbarId=52,54,55','var':"JetGood_nBHadrons", 'color':ROOT.kRed,     'binning':[3,0,3], 'selection':"(genTtbarId%100)>=52&&(genTtbarId%100)!=53"},
+        {'legendText':'genTtbarId=51,53',   'var':"JetGood_nBHadrons", 'color':ROOT.kGreen,   'binning':[3,0,3], 'selection':"((genTtbarId%100)==51||(genTtbarId%100)==53)"},
+    ]},
+
+    {'name':'nBHadrons', 'texX':"nBHadrons", 'histos': [
+        {'legendText':'genTtbarId=51',  'var':"Max$(JetGood_nBHadrons)",  'color':416-9,     'binning':[3,0,3], 'selection':"(genTtbarId%100)==51"},
+        {'legendText':'genTtbarId=52',  'var':"Max$(JetGood_nBHadrons)",  'color':632+1,     'binning':[3,0,3], 'selection':"(genTtbarId%100)==52"},
+        {'legendText':'genTtbarId=53',  'var':"Max$(JetGood_nBHadrons)",  'color':416+3,     'binning':[3,0,3], 'selection':"(genTtbarId%100)==53"},
+        {'legendText':'genTtbarId=54',  'var':"Max$(JetGood_nBHadrons)",  'color':632+2,     'binning':[3,0,3], 'selection':"(genTtbarId%100)==54"},
+        {'legendText':'genTtbarId=55',  'var':"Max$(JetGood_nBHadrons)",  'color':632-7,     'binning':[3,0,3], 'selection':"(genTtbarId%100)==55"},
+    ]},
+
+    {'name':'max_bb_value_nBHadrons', 'texX':"max(bb/b+lepb)", 'histos': [
         {'legendText':'0BH',  'var':bbTag_max_value,   'color':ROOT.kRed,   'binning':[30,0,3], 'selection':"JetGood_nBHadrons==0"},
         {'legendText':'1BH',  'var':bbTag_max_value,   'color':ROOT.kRed-9, 'binning':[30,0,3], 'selection':"JetGood_nBHadrons==1"},
         {'legendText':'2BH',  'var':bbTag_max_value,   'color':ROOT.kRed+3, 'binning':[30,0,3], 'selection':"JetGood_nBHadrons==2"},
     ]},
 
-    {'name':'pt_nBHadrons', 'texX':"pt", 'histos': [
+    {'name':'pt_nBHadrons', 'texX':"jet_pt", 'histos': [
         {'legendText':'0BH',  'var':"JetGood_pt",   'color':ROOT.kRed,   'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==0"},
         {'legendText':'1BH',  'var':"JetGood_pt",   'color':ROOT.kRed-9, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==1"},
         {'legendText':'2BH',  'var':"JetGood_pt",   'color':ROOT.kRed+3, 'binning':[100,0,1500], 'selection':"JetGood_nBHadrons==2"},
     ]},
 
-    {'name':'pt_nBHadrons_course', 'texX':"pt", 'histos': [
-        {'legendText':'0BH',  'var':"JetGood_pt",   'color':ROOT.kRed,   'binning':[100,0,100], 'selection':"JetGood_nBHadrons==0"},
-        {'legendText':'1BH',  'var':"JetGood_pt",   'color':ROOT.kRed-9, 'binning':[100,0,100], 'selection':"JetGood_nBHadrons==1"},
-        {'legendText':'2BH',  'var':"JetGood_pt",   'color':ROOT.kRed+3, 'binning':[100,0,100], 'selection':"JetGood_nBHadrons==2"},
+    {'name':'pt_nBHadrons_course', 'texX':"jet_pt", 'histos': [
+        {'legendText':'0BH',  'var':"JetGood_pt",   'color':ROOT.kRed,   'binning':[100,30,200], 'selection':"JetGood_nBHadrons==0"},
+        {'legendText':'1BH',  'var':"JetGood_pt",   'color':ROOT.kRed-9, 'binning':[100,30,200], 'selection':"JetGood_nBHadrons==1"},
+        {'legendText':'2BH',  'var':"JetGood_pt",   'color':ROOT.kRed+3, 'binning':[100,30,200], 'selection':"JetGood_nBHadrons==2"},
     ]},
+
+    {'name':'bb_disc_value_nBHadrons', 'texX':"bb/b+lepb", 'histos': [
+        {'legendText':'0BH',  'var':"JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb)",   'color':ROOT.kRed,   'binning':[30,0,3], 'selection':"JetGood_nBHadrons==0"},
+        {'legendText':'1BH',  'var':"JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb)",   'color':ROOT.kRed-9, 'binning':[30,0,3], 'selection':"JetGood_nBHadrons==1"},
+        {'legendText':'2BH',  'var':"JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb)",   'color':ROOT.kRed+3, 'binning':[30,0,3], 'selection':"JetGood_nBHadrons==2"},
+    ]},
+
+    {'name':'bb_disc_value_nBHadrons', 'texX':"max(bb/b+lepb)", 'histos': [
+        {'legendText':'all jets',  'var':bbTag_max_value,   'color':ROOT.kRed,   'binning':[30,0,3], 'selection':"JetGood_nBHadrons==0"},
+    ]},
+
 ]
 
 plots = []
 for plot_cfg in plot_cfgs:
     histos = []
     for histo in plot_cfg['histos']:
-        print(histo['var'], histo['binning'], "weight*({sel})&&".format(sel=histo['selection'])+cutInterpreter.cutString(args.selection))
         histo['h'] = sample.get1DHistoFromDraw(histo['var'], histo['binning'], weightString = "weight*({sel})&&".format(sel=histo['selection'])+cutInterpreter.cutString(args.selection), addOverFlowBin = 'upper')
         histo['h'].SetLineColor(histo['color'])
         histo['h'].legendText = histo['legendText']
