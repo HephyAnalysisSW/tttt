@@ -3,6 +3,7 @@ import  ROOT
 from    math    import pi, sqrt, cos, sin, sinh, log, cosh, acos
 from    array   import array
 import  itertools
+import Analysis.Tools.mt2Calculator
 
 # Logging
 import  logging
@@ -338,3 +339,23 @@ def cosThetaStarTop(l, W, t):
     W_newSys.Boost(-boostvectortop)
     costhetastar = cos( lepton_newSys.Angle(W_newSys.Vect()) )
     return costhetastar
+
+
+def MT2(pt1, eta1, phi1, pt2, eta2, phi2, metphi, metpt, bjets, nonbjets, mt2Calculator):
+
+    mt2Calculator.reset()
+    mt2Calculator.setLeptons(pt1, eta1, phi1, pt2, eta2, phi2)
+    mt2Calculator.setMet(metphi, metpt)
+    mt2ll = mt2Calculator.mt2ll()
+    #print("mt2ll:" + str(mt2ll))
+    b1, b2 = (bjets + nonbjets)[:2]
+    mt2Calculator.setBJets(b1['pt'], b1['eta'], b1['phi'], b2['pt'], b2['eta'], b2['phi'])
+    #Check ".L $CMSSW_BASE/src/Analysis/Tools/scripts/mt2_bisect.cpp+"
+    #A weird message appears for mt2bb sometimes
+    #TBC
+    mt2bb = mt2Calculator.mt2bb()
+    #print("mt2bb:" + str(mt2bb))
+    mt2blbl = mt2Calculator.mt2blbl()
+    #print("mt2blbl:" + str(mt2blbl))
+
+    return [mt2ll, mt2bb, mt2blbl]

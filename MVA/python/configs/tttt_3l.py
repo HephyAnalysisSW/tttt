@@ -3,15 +3,19 @@
 # Standard imports
 from operator                   import attrgetter
 from math                       import pi, sqrt, cosh, cos, acos
-import ROOT, os
+import ROOT, os, heapq
+import itertools
 
 # RootTools
 from RootTools.core.standard     import *
 
 # helpers
-from tttt.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict
+from tttt.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict, MT2
 #from tWZ.Tools.objectSelection  import isBJet, isAnalysisJet
 from Analysis.Tools.WeightInfo       import WeightInfo
+
+
+#from Analysis.Tools.mt2Calculator    import mt2Calculator
 
 import logging
 logger = logging.getLogger(__name__)
@@ -22,8 +26,13 @@ jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F', 
 
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 
+alljetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F', 'index/I']
+
+alljetVarNames      = [x.split('/')[0] for x in alljetVars]
+
+
 lstm_jets_maxN   = 10
-lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavC/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavC/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F', 'mass/F']
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
@@ -31,6 +40,7 @@ lepVarNames      = [x.split('/')[0] for x in lepVars]
 
 # Training variables
 read_variables = [\
+                    "nJet/I",
                     "nBTag/I",
                     "nJetGood/I",
                     "nlep/I",
@@ -53,7 +63,7 @@ read_variables = [\
                     "l3_mvaTOP/F",
                     "year/I",
                     ]
-# sequence 
+# sequence
 sequence = []
 
 # Fisher informations
@@ -62,17 +72,28 @@ FIs = {
 
 from tttt.Tools.objectSelection import isBJet
 def make_jets( event, sample ):
-    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
+    #event.alljets  = [getObjDict(event, "Jet_", alljetVarNames, i) for i in range(int(event.nJet))]
+    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
 sequence.append( make_jets )
 
+from Analysis.Tools.mt2Calculator import mt2Calculator
+mt2Calculator = mt2Calculator()
+
+
 all_mva_variables = {
 
-# global event properties     
+# global event properties
      "mva_nJetGood"              :(lambda event, sample: event.nJetGood),
      "mva_nBTag"                 :(lambda event, sample: event.nBTag),
      "mva_nlep"                  :(lambda event, sample: event.nlep),
 
+     #B-tagging
+     "mva_nBTagL"                :(lambda event, sample: event.nJetGood if (event.JetGood_btagDeepFlavB>=.0494) else -10),
+     "mva_nBTagM"                :(lambda event, sample: event.nJetGood if (event.JetGood_btagDeepFlavB>=.2770) else -10),
+     "mva_nBTagT"                :(lambda event, sample: event.nJetGood if (event.JetGood_btagDeepFlavB>=0.7264) else -10),
+
+     #Leptons
      "mva_mT_l1"                 :(lambda event, sample: sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))),
      "mva_mT_l2"                 :(lambda event, sample: sqrt(2*event.l2_pt*event.met_pt*(1-cos(event.l2_phi-event.met_phi)))),
      "mva_mT_l3"                 :(lambda event, sample: sqrt(2*event.l3_pt*event.met_pt*(1-cos(event.l3_phi-event.met_phi)))),
@@ -84,13 +105,14 @@ all_mva_variables = {
      "mva_l2_eta"                :(lambda event, sample: event.l2_eta),
      "mva_l3_pt"                 :(lambda event, sample: event.l3_pt),
      "mva_l3_eta"                :(lambda event, sample: event.l3_eta),
-     
+
+
      "mva_mj_12"                 :(lambda event, sample: sqrt(event.jets[0]['pt']*event.jets[1]['pt']*cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))  if event.nJetGood >=2 else 0),
      "mva_mlj_11"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[0]['pt']*cosh(event.l1_eta-event.jets[0]['eta'])-cos(event.l1_phi-event.jets[0]['phi'])) if event.nJetGood >=1 else 0),
      "mva_mlj_12"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[1]['pt']*cosh(event.l1_eta-event.jets[1]['eta'])-cos(event.l1_phi-event.jets[1]['phi'])) if event.nJetGood >=2 else 0),
 
-     "mva_dPhil_12"              :(lambda event, sample: acos(cos(event.l1_phi-event.l2_phi))),
-     "mva_dPhij_12"              :(lambda event, sample: acos(cos(event.JetGood_phi[0]-event.JetGood_phi[1])) if event.nJetGood >=2 else 0),
+     "mva_dPhil_12"              :(lambda event, sample: deltaPhi(event.l1_phi, event.l2_phi)),
+     "mva_dPhij_12"              :(lambda event, sample: deltaPhi(event.JetGood_phi[0],event.JetGood_phi[1]) if event.nJetGood >=2 else 0),
 
      "mva_dEtal_12"              :(lambda event, sample: event.l1_eta-event.l2_eta),
      "mva_dEtaj_12"              :(lambda event, sample: event.JetGood_eta[0] - event.JetGood_eta[1] if event.nJetGood >=2 else -10),
@@ -98,6 +120,20 @@ all_mva_variables = {
      "mva_ht"                    :(lambda event, sample: sum( [j['pt'] for j in event.jets] ) ),
      "mva_htb"                   :(lambda event, sample: sum( [j['pt'] for j in event.bJets] ) ),
      "mva_ht_ratio"              :(lambda event, sample: sum( [j['pt'] for j in event.jets[:4]])/ sum( [j['pt'] for j in event.jets ]) if event.nJetGood>=4 else 1 ),
+
+     "mva_deltaR_bb"             :(lambda event, sample: min([deltaR(event.bJets[i],event.bJets[j])if i!=j else 10000 for i in range(len(event.bJets)) for j in range(len(event.bJets))]) if len(event.bJets)>=2 else 10000),
+     "mva_deltaR_2l"             :(lambda event, sample: sqrt(deltaPhi(event.l1_phi, event.l2_phi)**2 + (event.l1_eta - event.l2_eta)**2)),
+     "mva_mpt_ratio"             :(lambda event, sample: max([(event.Jet_mass[event.JetGood_index[i]]/event.Jet_pt[event.JetGood_index[i]]) for i in range(event.nJetGood)]) if event.nJetGood>=1 else 0),
+
+     "mva_mt2_bb"                :(lambda event, sample: MT2(event.l1_pt, event.l1_eta, event.l1_phi, event.l2_pt, event.l2_eta, event.l2_phi, event.met_pt, event.met_phi, event.bJets, event.jets, mt2Calculator)[0] if len(event.jets)>=2 else 0),
+     "mva_mt2_blbl"              :(lambda event, sample : MT2(event.l1_pt, event.l1_eta, event.l1_phi, event.l2_pt, event.l2_eta, event.l2_phi, event.met_pt, event.met_phi, event.bJets, event.jets, mt2Calculator)[1] if len(event.jets)>=2 else 0),
+     "mva_mt2_blbl"              :(lambda event, sample : MT2(event.l1_pt, event.l1_eta, event.l1_phi, event.l2_pt, event.l2_eta, event.l2_phi, event.met_pt, event.met_phi, event.bJets, event.jets, mt2Calculator)[2] if len(event.jets)>=2 else 0),
+
+     #"mva_deltaR_bl1"             :(lambda event, sample: min([deltaR(event.nlep[i],event.bJets[j])if i!=j else 10000 for i in range(event.nlep) for j in range(len(event.bJets))]) if len(event.bJets)>=2 else 10000),
+     #"mva_deltaR_bl2"             :(lambda event, sample: heapq.nsmallest(2, [deltaR(event.bJets[i],event.bJets[j])if i!=j else 10000 for i in range(len(event.bJets)) for j in range(len(event.bJets))]) if len(event.bJets)>=2 else 10000),
+
+     "mva_jet_BTag_0"            :(lambda event, sample: max(event.JetGood_btagDeepFlavB)),
+     #"mva_jet_BTag_1"            :(lambda event, sample: (heapq.nlargest(4, max(event.JetGood_btagDeepFlavB[i])) for i in range(event.nJetGood))),
 
      "mva_jet0_pt"               :(lambda event, sample: event.JetGood_pt[0]          if event.nJetGood >=1 else 0),
      "mva_jet0_eta"              :(lambda event, sample: event.JetGood_eta[0]         if event.nJetGood >=1 else -10),
@@ -108,6 +144,8 @@ all_mva_variables = {
      "mva_jet2_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=3 else 0),
      "mva_jet2_eta"              :(lambda event, sample: event.JetGood_eta[2]         if event.nJetGood >=3 else -10),
      "mva_jet2_btagDeepB"        :(lambda event, sample: event.JetGood_btagDeepB[2]   if (event.nJetGood >=3 and event.JetGood_btagDeepB[2]>-10) else -10),
+
+
 
      "mva_jet3_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=4 else 0),
      "mva_jet4_pt"               :(lambda event, sample: event.JetGood_pt[2]          if event.nJetGood >=5 else 0),
@@ -127,7 +165,7 @@ def lstm_jets(event, sample):
 
 # for the filler
 mva_vector_variables    =   {
-    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10} 
+    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10}
     "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames}
 }
 

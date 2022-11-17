@@ -1,4 +1,4 @@
-from    tWZ.Tools.helpers import mZ, getVarValue, getObjDict, deltaR
+from    tttt.Tools.helpers import mZ, getVarValue, getObjDict, deltaR
 
 # standard imports
 from    math import *

@@ -55,7 +55,7 @@ read_variables = [\
                     "l2_phi/F",
                     "year/I",
                     ]
-# sequence 
+# sequence
 sequence = []
 
 # Fisher informations
@@ -64,13 +64,13 @@ FIs = {
 
 from tttt.Tools.objectSelection import isBJet
 def make_jets( event, sample ):
-    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
+    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
 sequence.append( make_jets )
 
 all_mva_variables = {
 
-# global event properties     
+# global event properties
      "mva_nJetGood"              :(lambda event, sample: event.nJetGood),
      "mva_nBTag"                 :(lambda event, sample: event.nBTag),
      "mva_nlep"                  :(lambda event, sample: event.nlep),
@@ -83,11 +83,15 @@ all_mva_variables = {
      "mva_l1_eta"                :(lambda event, sample: event.l1_eta),
      "mva_l2_pt"                 :(lambda event, sample: event.l2_pt),
      "mva_l2_eta"                :(lambda event, sample: event.l2_eta),
-     
+
      "mva_mj_12"                 :(lambda event, sample: sqrt(event.jets[0]['pt']*event.jets[1]['pt']*cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))  if event.nJetGood >=2 else 0),
      "mva_mlj_11"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[0]['pt']*cosh(event.l1_eta-event.jets[0]['eta'])-cos(event.l1_phi-event.jets[0]['phi'])) if event.nJetGood >=1 else 0),
      "mva_mlj_12"                :(lambda event, sample: sqrt(event.l1_pt*event.jets[1]['pt']*cosh(event.l1_eta-event.jets[1]['eta'])-cos(event.l1_phi-event.jets[1]['phi'])) if event.nJetGood >=2 else 0),
 
+     # Use these when retraining:
+     #"mva_dPhil_12"              :(lambda event, sample: deltaPhi(event.l1_phi, event.l2_phi)),
+     #"mva_dPhij_12"              :(lambda event, sample: deltaPhi(event.JetGood_phi[0], event.JetGood_phi[1]) if event.nJetGood >=2 else 0),
+     # Keep old version vor consistently evaluating: 
      "mva_dPhil_12"              :(lambda event, sample: acos(cos(event.l1_phi-event.l2_phi))),
      "mva_dPhij_12"              :(lambda event, sample: acos(cos(event.JetGood_phi[0]-event.JetGood_phi[1])) if event.nJetGood >=2 else 0),
 
@@ -118,12 +122,12 @@ all_mva_variables = {
 def lstm_jets(event, sample):
     jets = [ getObjDict( event, 'Jet_', lstm_jetVarNames, event.JetGood_index[i] ) for i in range(int(event.nJetGood)) ]
     #jets = filter( jet_vector_var['selector'], jets )
-    return jets 
+    return jets
 
 # for the filler
 mva_vector_variables    =   {
-    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10} 
-    "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames} 
+    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10}
+    "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames}
 }
 
 ## Using all variables
@@ -139,13 +143,13 @@ def predict_inputs( event, sample, jet_lstm = False):
     if jet_lstm:
         lstm_jets_maxN = 10 #remove after retraining
         jet_vector_var = mva_vector_variables["mva_Jet"]
-        jets = mva_vector_variables["mva_Jet"]["func"](event,sample=None) 
+        jets = mva_vector_variables["mva_Jet"]["func"](event,sample=None)
         jets =  [ [ operator.itemgetter(varname)(jet) for varname in lstm_jetVarNames] for jet in jets[:lstm_jets_maxN] ]
         # zero padding
-        jets += [ [0.]*len(lstm_jetVarNames)]*(max(0, lstm_jets_maxN-len(jets))) 
+        jets += [ [0.]*len(lstm_jetVarNames)]*(max(0, lstm_jets_maxN-len(jets)))
         jets = np.array([jets])
 
-        return  flat_variables, jets 
+        return  flat_variables, jets
     else:
         return  flat_variables
 
