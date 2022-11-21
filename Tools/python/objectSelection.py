@@ -1,4 +1,4 @@
-from    tttt.Tools.helpers import mZ, getVarValue, getObjDict, deltaR
+from    tWZ.Tools.helpers import mZ, getVarValue, getObjDict, deltaR
 
 # standard imports
 from    math import *
@@ -15,7 +15,7 @@ def isAnalysisJet(j, ptCut=25, absEtaCut=2.4, ptVar='pt', idVar='jetId', corrFac
   j_pt = j[ptVar] if not corrFactor else j[ptVar]*j[corrFactor]
   return j_pt>ptCut and abs(j['eta'])<absEtaCut and ( j[idVar] >= 2 if idVar is not None else True )
 
-def isBJet(j, tagger = 'DeepFlavor', WP='medium', year = 2016):
+def isBJet(j, tagger = 'DeepFlavor', WP='loose', year = 2016):
     if tagger == 'DeepFlavor' or tagger == 'DeepJet':
         if WP == 'medium':
             if year in [2016, "UL2016_preVFP"]:
@@ -187,6 +187,19 @@ def muonSelector( lepton_selection, year, ptCut = 10):
                 and l['miniPFRelIso_all'] < 0.40 \
                 and l['mediumId']\
                 and ( (l['mvaTOP'] > 0.64) or (l['jetPtRelv2']> 0.45 and (l['jetBTag'] <  0.025 if l['jetIdx'] >= 0 else True)) )
+
+    elif lepton_selection == 'mvaTOPT':
+        def func(l):
+            return \
+                l["pt"]                 >= ptCut \
+                and abs(l["eta"])       < 2.4 \
+                and abs(l["dxy"])       < 0.05 \
+                and abs(l["dz"])        < 0.1 \
+                and l["sip3d"]          < 8.0 \
+                and l['miniPFRelIso_all'] < 0.40 \
+                and l['mediumId']\
+                and l['mvaTOP'] > 0.64
+
     elif lepton_selection == 'presel':
         #L133 to L143 of http://cms.cern.ch/iCMS/jsp/openfile.jsp?tp=draft&files=AN2022_016_v3.pdf
         def func(l):
@@ -387,6 +400,21 @@ def eleSelector( lepton_selection, year, ptCut = 10):
                 and l['convVeto']\
                 and l['tightCharge']    >= 2\
                 and ((l['mvaTOP'] > 0.81) or (l['mvaFall17V2noIso_WPL'] and (l['jetPtRelv2']> pt_ratio and (l['jetBTag'] <  0.1 if l['jetIdx'] >= 0 else True) ) ))
+
+    elif lepton_selection == 'mvaTOPT':
+        def func(l):
+            return \
+                l["pt"]                 >= ptCut \
+                and abs(l["eta"])       < 2.5 \
+                and passECALGap(l)\
+                and abs(l["dxy"])       < 0.05 \
+                and abs(l["dz"])        < 0.1 \
+                and l["sip3d"]          < 8.0 \
+                and l['miniPFRelIso_all'] < 0.40 \
+                and ord(l["lostHits"])  < 2 \
+                and l['convVeto']\
+                and l['tightCharge']    >= 2\
+                and l['mvaTOP'] > 0.81
 
     elif lepton_selection == 'presel':
         # L133 - 143 of http://cms.cern.ch/iCMS/jsp/openfile.jsp?tp=draft&files=AN2022_016_v3.pdf
