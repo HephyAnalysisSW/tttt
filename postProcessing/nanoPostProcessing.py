@@ -23,7 +23,7 @@ import tttt.Tools.user as user
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
 from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs, isAnalysisJet
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
-from Analysis.Tools.LeptonSF_UL            import LeptonSF
+from Analysis.Tools.LeptonSF_UL     import LeptonSF
 
 #Analysis
 from Analysis.Tools.mvaTOPreader  import mvaTOPreader
@@ -832,7 +832,7 @@ def filler( event ):
         lep['index'] = iLep
 
     # Now create cleaned jets, b jets, ...
-    clean_jets,_,unclean_jets = cleanJetsAndLeptons( analysis_jets, [l for l in leptons if l['isFO']] )
+    clean_jets,unclean_jets = cleanJetsAndLeptons( analysis_jets, [l for l in leptons if l['isFO']] )
     clean_jets_acc = filter(lambda j:abs(j['eta'])<2.4, clean_jets)
     jets         = filter(lambda j:j['pt']>25, clean_jets_acc)
     bJets       = []
