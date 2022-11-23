@@ -187,7 +187,7 @@ def make_mva_inputs( event, sample ):
        setattr( event, mva_variable, func(event, sample) )
 sequence.append( make_mva_inputs ) 
 
-allModels  = ["model1_db_lstm"]#[ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
+allModels  = ["model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
 options = ort.SessionOptions()
 options.intra_op_num_threads = 1
 options.inter_op_num_threads = 1
@@ -199,7 +199,7 @@ def torch_predict( event, sample ):
     lstm_jets_db = np.nan_to_num(lstm_jets_db)
     #print('\n',flat_variables.shape, '\n',lstm_jets_db.shape, '\n',lstm_jets_nodb.shape, '\n')
     for model in allModels:
-        ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
+        ort_sess = ort.InferenceSession("models/"+model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
         LSTM = False
         db = False
         if (str(model).find('lstm')!=-1): LSTM = True
@@ -260,17 +260,6 @@ ttreeFormulas = {
 #                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection), 
     }
 
-#allModels  = ["model1_db_lstm"]#[ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
-# for j, model in enumerate (allModels):
-    ##ONNX load
-    # options = ort.SessionOptions()
-    # options.intra_op_num_threads = 1
-    # options.inter_op_num_threads = 1
-    # ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
-    # LSTM = False
-    # db = False
-    # if (str(model).find('lstm')!=-1): LSTM = True
-    # if (str(model).find('db')!=-1): db = True
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
@@ -313,7 +302,7 @@ for i_mode, mode in enumerate(allModes):
           texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
           attribute = lambda event, sample, model_name=model: getattr(event, model_name),
           #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[10,0,1],
+          binning=[500,0,1],
           addOverFlowBin='upper',
         ))
 
