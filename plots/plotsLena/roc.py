@@ -3,16 +3,15 @@ import os
 import ROOT
 import array
 import config_roc as config
-
+import Analysis.Tools.syncer
 
 dirname = config.dirname
+
 results_dir = dirname+"roc/"
 if not os.path.exists( results_dir ): 
     os.makedirs( results_dir )
-
 data_root = config.data_root
 roc = {}
-
 for selection, Title, Name in data_root:
     for name, filename, color in selection:
         print(name)
@@ -70,5 +69,3 @@ for selection, Title, Name in data_root:
     c1.SetTitle("")
     c1.RedrawAxis()
     c1.Print(os.path.join(results_dir,Name+".png"))
-    #c1.Print(os.path.join(results_dir,Name+".pdf"))
-    #c1.Print(os.path.join(results_dir,Name+".root"))
