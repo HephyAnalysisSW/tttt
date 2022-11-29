@@ -849,8 +849,6 @@ def filler( event ):
             bJets.append(jet)
         else:
             nonBJets.append(jet)
-    for j in bJets:
-        if j['pt'] >25 and j['pt']<30: print(j)
 
 
     fill_vector_collection( event, "lep", lepVarNames, leptons)
@@ -951,12 +949,13 @@ def filler( event ):
 
             leptonsForSF   = ( leptons[:2] if isDilep else (leptons[:3] if isTrilep else leptons[:1]) )
             leptonSFValues = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF ]
+            leptonSFUp     = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']), sigma=1) for l in leptonsForSF ]
+            leptonSFDown   = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']), sigma=-1) for l in leptonsForSF ]
             event.reweightLeptonSF     = reduce(mul, [sf for sf in leptonSFValues], 1)
-            # event.reweightLeptonSFDown = reduce(mul, [sf[1] for sf in leptonSFValues], 1)
-            # event.reweightLeptonSFUp   = reduce(mul, [sf[2] for sf in leptonSFValues], 1)
+            event.reweightLeptonSFDown = reduce(mul, [sf for sf in leptonSFDown], 1)
+            event.reweightLeptonSFUp   = reduce(mul, [sf for sf in leptonSFUp], 1)
             if event.reweightLeptonSF ==0:
                logger.error( "reweightLeptonSF is zero!")
-
             # event.reweightLeptonTrackingSF   = reduce(mul, [leptonTrackingSF.getSF(pdgId = l['pdgId'], pt = l['pt'], eta = ((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']))  for l in leptonsForSF], 1)
 
     if isTrilep or isDilep:
