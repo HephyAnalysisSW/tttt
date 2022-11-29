@@ -1,13 +1,14 @@
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTLep_pow_CP5  #SPLIT300
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample T_tch_pow   #SPLIT300
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample Tbar_tch_pow  #SPLIT100
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample T_tWch  #SPLIT100
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TBar_tWch  #SPLIT100
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTTT  #SPLIT100
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTWToLNu #SPLIT50
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTWToQQ #SPLIT21
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTZToLLNuNu #SPLIT50
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTZToLLNuNu_m1to10 #SPLIT26
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTZToQQ #SPLIT50
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTHnobb #SPLIT50
-python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v4_btag_loose --sample TTHTobb #SPLIT50
+python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --flagTT   --sample TTLep_pow_CP5  #SPLIT300
+python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --flagTTbb --sample TTbb  #SPLIT20
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample T_tch_pow   #SPLIT300
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample Tbar_tch_pow  #SPLIT100
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample T_tWch  #SPLIT100
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TBar_tWch  #SPLIT100
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TTTT  #SPLIT100
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TTWToLNu #SPLIT50
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TTWToQQ #SPLIT21
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TTZToLLNuNu #SPLIT50
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TTZToLLNuNu_m1to10 #SPLIT26
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TTZToQQ #SPLIT50
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TTHnobb #SPLIT50
+#python nanoPostProcessing.py  --overwrite --forceProxy --addDoubleB --btag_WP loose --skim dilep --era UL2017 --processingEra tttt_v5 --sample TTHTobb #SPLIT50

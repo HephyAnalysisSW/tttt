@@ -51,7 +51,11 @@ TTZToQQ              = Sample.nanoAODfromDAS("TTZToQQ"           , "/TTZToQQ_Tun
 TTHnobb              = Sample.nanoAODfromDAS("TTHnobb"           , "/ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2_nano_mc_UL20_private_v2-f7efd77530810e0d3aa782b723e6d6d7/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=0.5085*(1-0.577))
 TTHTobb              = Sample.nanoAODfromDAS("TTHTobb"           , "/ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v2_nano_mc_UL20_private_v2-f7efd77530810e0d3aa782b723e6d6d7/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=0.5085*(0.577))
 TTbb                 = Sample.nanoAODfromDAS( "TTbb"             , "/TTbb_4f_TTTo2L2Nu_TuneCP5-Powheg-Openloops-Pythia8/schoef-crab_RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1_nano_mc_UL20_private_v2-f7efd77530810e0d3aa782b723e6d6d7/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=4.59)
-allSamples = [ TTTT, TTLep_pow_CP5, T_tch_pow, Tbar_tch_pow, T_tWch, TBar_tWch, TTWToLNu, TTWToQQ, TTZToLLNuNu, TTZToLLNuNu_m1to10, TTZToQQ, TTHnobb, TTHTobb, TTbb]
+
+#TTTT_sync miniAOD : https://cmsweb.cern.ch/das/request?instance=prod/global&input=dataset+file%3D%2Fstore%2Fmc%2FRunIISummer20UL18MiniAODv2%2FTTTT_TuneCP5_13TeV-amcatnlo-pythia8%2FMINIAODSIM%2F106X_upgrade2018_realistic_v16_L1v1-v2%2F2520000%2F01CC7B01-9F49-A44F-8B48-D8B913E73DB0.root
+TTTT_sync            = Sample.fromFiles("TTTT_sync", ["/groups/hephy/cms/robert.schoefbeck/tttt/sync/nanoAOD.root"], xSection=1, normalization = 1)
+
+allSamples = [ TTTT, TTLep_pow_CP5, T_tch_pow, Tbar_tch_pow, T_tWch, TBar_tWch, TTWToLNu, TTWToQQ, TTZToLLNuNu, TTZToLLNuNu_m1to10, TTZToQQ, TTHnobb, TTHTobb, TTTT_sync, TTbb]
 
 for s in allSamples:
     s.isData = False
