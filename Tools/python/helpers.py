@@ -348,7 +348,9 @@ def MT2(pt1, eta1, phi1, pt2, eta2, phi2, metphi, metpt, bjets, nonbjets, mt2Cal
     mt2Calculator.setMet(metphi, metpt)
     mt2ll = mt2Calculator.mt2ll()
     #print("mt2ll:" + str(mt2ll))
-    b1, b2 = (bjets + nonbjets)[:2]
+    b = (bjets + nonbjets)[:2]
+    #print(b)
+    b1, b2 = b[0], b[1]
     mt2Calculator.setBJets(b1['pt'], b1['eta'], b1['phi'], b2['pt'], b2['eta'], b2['phi'])
     #Check ".L $CMSSW_BASE/src/Analysis/Tools/scripts/mt2_bisect.cpp+"
     #A weird message appears for mt2bb sometimes

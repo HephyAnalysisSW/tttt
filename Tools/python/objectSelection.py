@@ -47,6 +47,21 @@ def isBJet(j, tagger = 'DeepFlavor', WP='medium', year = 2016):
                 return j['btagDeepFlavB'] > 0.0490
             else:
                 raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+        elif WP == "noWP":
+            if year in [2016, "UL2016_preVFP"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
+                return j['btagDeepFlavB'] < 0.0508
+            elif year in [2016, "UL2016"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
+                return j['btagDeepFlavB'] < 0.0480
+            elif year in [2017, "UL2017"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
+                return j['btagDeepFlavB'] < 0.0532
+            elif year in [2018, "UL2018"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
+                return j['btagDeepFlavB'] < 0.0490
+            else:
+                raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
         else:
             raise (NotImplementedError, "Don't know WP %s"%WP)
     elif tagger == 'CSVv2':
