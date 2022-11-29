@@ -1,14 +1,15 @@
 import os
 import ROOT
 
-dirname = "/groups/hephy/cms/lena.wild/www/tttt/plots/analysisPlots/TMB_4t_p3/RunII/all/dilepL-offZ1-njet9p-btag3p-ht500/"
+dirname = "/groups/hephy/cms/lena.wild/www/tttt/plots/analysisPlots/TMB_4t_p3/RunII/all/dilepL-offZ1-njet6p-btag3p-ht500/"
 njetsel = [
 #"dilepL-offZ1-njet4p-btag3p-ht500/",
-"dilepL-offZ1-njet5p-btag3p-ht500/",
-#"dilepL-offZ1-njet6p-btag3p-ht500/",
-"dilepL-offZ1-njet7p-btag3p-ht500/",
-"dilepL-offZ1-njet8p-btag3p-ht500/",
-"dilepL-offZ1-njet9p-btag3p-ht500/"]
+# "dilepL-offZ1-njet5p-btag3p-ht500/",
+ "dilepL-offZ1-njet6p-btag3p-ht500/",
+# "dilepL-offZ1-njet7p-btag3p-ht500/",
+# "dilepL-offZ1-njet8p-btag3p-ht500/",
+# "dilepL-offZ1-njet9p-btag3p-ht500/"
+]
 
 data_batch = [
 ("2l MVA (batch size: 5000)", os.path.join(dirname, "lenas_MVA_TTTT_model1.root"),ROOT.kRed+4),
@@ -67,12 +68,12 @@ data_compare = [
 ]
 
 data_root = [
-(data_batch, "Variation of batch size", "roc_batch"),
-(data_h1, "Variation of 1st layer hidden size", "roc_h1"),
-(data_h2, "Variation of 2nd layer hidden size", "roc_h2"),
+# (data_batch, "Variation of batch size", "roc_batch"),
+# (data_h1, "Variation of 1st layer hidden size", "roc_h1"),
+# (data_h2, "Variation of 2nd layer hidden size", "roc_h2"),
 (data_lstm, "Variation of number of LSTM layers", "roc_lstm_layers"),
 (data_db, "Variation of number of LSTM layers (+DoubleB)", "roc_lstm+db"),
-(data_hs_lstm, "Variation of LSTM output size", "roc_lstm_hs"),
-(data_hs_lstm_db, "Variation of number of LSTM output size (+DoubleB)", "roc_lstm_hs+db"),
-(data_compare, "Comparison of MVAs (w/o LSTM, w/o DoubleB)", "roc_comp")
+# (data_hs_lstm, "Variation of LSTM output size", "roc_lstm_hs"),
+# (data_hs_lstm_db, "Variation of number of LSTM output size (+DoubleB)", "roc_lstm_hs+db"),
+# (data_compare, "Comparison of MVAs (w/o LSTM, w/o DoubleB)", "roc_comp")
 ]

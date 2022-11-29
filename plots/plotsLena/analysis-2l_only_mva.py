@@ -34,7 +34,7 @@ argParser.add_argument('--small',                             action='store_true
 argParser.add_argument('--noData',         action='store_true', help='Do not plot data.')
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?')
-argParser.add_argument('--plot_directory', action='store', default='TMB_4t_p3')
+argParser.add_argument('--plot_directory', action='store', default='TMB_4t_p3_bin50')
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 argParser.add_argument('--mva',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 args = argParser.parse_args()
@@ -189,8 +189,8 @@ def make_mva_inputs( event, sample ):
 sequence.append( make_mva_inputs ) 
 
 allModels = []
-#Models  = ["model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25_DoubleB" ]
-Models  = ["model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25"]
+Models  = ["model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25_DoubleB" ]
+#Models  = ["model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25"]
 allModels.append(Models[int(args.mva)])
 options = ort.SessionOptions()
 options.intra_op_num_threads = 1
@@ -218,9 +218,12 @@ def torch_predict( event, sample ):
         #print(lis[0])    
         if lis.any()<0 or lis.any()>1:
             raise RuntimeError("Found NAN prediction?")
-        setattr( event, model, lis[0] )
+        setattr( event, model+"_TTTT", lis[0] )
+        setattr( event, model+"_TTB", lis[1] )
+        setattr( event, model+"_TTC", lis[2] )
+        setattr( event, model+"_TTO", lis[3] )
         #print(lis[0])
-        test.append(lis[0])
+        #test.append(lis[0])
 sequence.append( torch_predict )
 
 # Let's make a function that provides string-based lepton selection
@@ -304,11 +307,36 @@ for i_mode, mode in enumerate(allModes):
         plots.append(Plot(
           name = 'lenas_MVA_TTTT_'+str(model),
           texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
-          attribute = lambda event, sample, model_name=model: getattr(event, model_name),
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTTT"),
           #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[500,0,1],
+          binning=[50,0,1],
           addOverFlowBin='upper',
         ))
+        plots.append(Plot(
+          name = 'lenas_MVA_TTLepbb_'+str(model),
+          texX = 'prob acc to lena for TTlepbb', texY = 'Number of Events / 20 GeV',
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTB"),
+          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          binning=[50,0,1],
+          addOverFlowBin='upper',
+        ))
+        plots.append(Plot(
+          name = 'lenas_MVA_TTLepcc_'+str(model),
+          texX = 'prob acc to lena for TTlepcc', texY = 'Number of Events / 20 GeV',
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTC"),
+          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          binning=[50,0,1],
+          addOverFlowBin='upper',
+        ))
+        plots.append(Plot(
+          name = 'lenas_MVA_TTLepOther_'+str(model),
+          texX = 'prob acc to lena for TTlepother', texY = 'Number of Events / 20 GeV',
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTO"),
+          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          binning=[50,0,1],
+          addOverFlowBin='upper',
+        ))
+        
 
     plots.append(Plot(
       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
