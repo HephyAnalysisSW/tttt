@@ -50,8 +50,9 @@ TTZToLLNuNu_m1to10  = Sample.nanoAODfromDAS("TTZToLLNuNu_m1to10" , "/TTZToLL_M-1
 TTZToQQ             = Sample.nanoAODfromDAS("TTZToQQ"            , "/TTZToQQ_TuneCP5_13TeV-amcatnlo-pythia8/schoef-crab_RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1_nano_mc_UL20_private_v2-369a15ee052290d76321a570b109af97/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=0.5297)
 TTHnobb             = Sample.nanoAODfromDAS("TTHnobb"            , "/ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2_nano_mc_UL20_private_v2-369a15ee052290d76321a570b109af97/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=0.5085*(1-0.577))
 TTHTobb             = Sample.nanoAODfromDAS("TTHTobb"            , "/ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v2_nano_mc_UL20_private_v2-369a15ee052290d76321a570b109af97/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=0.5085*(0.577))
+TTbb                = Sample.nanoAODfromDAS("TTbb"               , "/TTbb_4f_TTTo2L2Nu_TuneCP5-Powheg-Openloops-Pythia8/schoef-crab_RunIISummer20UL17MiniAODv2-106X_mc2017_realistic_v9-v1_nano_mc_UL20_private_v2-369a15ee052290d76321a570b109af97/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=4.59)
 
-allSamples = [ TTTT, TTLep_pow_CP5, T_tch_pow, Tbar_tch_pow, T_tWch, TBar_tWch, TTWToLNu, TTWToQQ, TTZToLLNuNu, TTZToLLNuNu_m1to10, TTZToQQ, TTHnobb, TTHTobb]
+allSamples = [ TTTT, TTLep_pow_CP5, T_tch_pow, Tbar_tch_pow, T_tWch, TBar_tWch, TTWToLNu, TTWToQQ, TTZToLLNuNu, TTZToLLNuNu_m1to10, TTZToQQ, TTHnobb, TTHTobb, TTbb]
 
 for s in allSamples:
     s.isData = False
