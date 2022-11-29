@@ -5,9 +5,14 @@ import array
 import config_roc as config
 import Analysis.Tools.syncer
 
-dirname = config.dirname
+import os, shutil
+def copyIndexPHP( results_dir ):
+    index_php = os.path.join( results_dir, 'index.php' )
+    shutil.copyfile( os.path.expandvars( '$CMSSW_BASE/src/RootTools/plot/php/index.php' ), index_php )
 
-results_dir = dirname+"roc/"
+
+dirname = config.dirname
+results_dir = "/groups/hephy/cms/lena.wild/www/tttt/plots/analysisPlots/TMB_4t_p3/RunII/roc/"+config.njetsel[0]
 if not os.path.exists( results_dir ): 
     os.makedirs( results_dir )
 data_root = config.data_root
@@ -68,4 +73,8 @@ for selection, Title, Name in data_root:
     ROOT.gStyle.SetOptStat(0)
     c1.SetTitle("")
     c1.RedrawAxis()
+    copyIndexPHP( results_dir )
     c1.Print(os.path.join(results_dir,Name+".png"))
+    #c1.Print(os.path.join(results_dir,Name+".pdf"))
+    #c1.Print(os.path.join(results_dir,Name+".root"))
+Analysis.Tools.syncer.sync()
