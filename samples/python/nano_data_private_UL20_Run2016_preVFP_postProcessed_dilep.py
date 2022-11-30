@@ -6,11 +6,13 @@ import ROOT
 import logging
 logger = logging.getLogger(__name__)
 
-import tttt.samples.config as config
-directory_ = config.location_data_UL2016_preVFP
+try:
+    directory_ = sys.modules['__main__'].directory_
+except:
+    import tttt.samples.config as config
+    directory_ = config.location_data_UL2016_preVFP
 
 logger.info("Loading data samples from directory %s", directory_)
-
 
 def getSample(pd, runName, lumi):
     runs = ["Run2016Bver1_preVFP", "Run2016Bver2_preVFP", "Run2016C_preVFP", "Run2016D_preVFP", "Run2016E_preVFP", "Run2016F_preVFP"]
