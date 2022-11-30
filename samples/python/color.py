@@ -19,6 +19,7 @@ color.TTW            = ROOT.kGreen+2
 color.TTG            = ROOT.kOrange
 color.Other          = ROOT.kOrange+2 #ROOT.kViolet+5
 color.TT             = ROOT.kRed-7 #ROOT.kRed+1
+color.TTbb           = ROOT.kRed-8 #ROOT.kRed+1
 color.TTTT           = ROOT.kOrange+1
 color.TTWZ           = ROOT.kOrange+1
 color.TTWW           = ROOT.kOrange+2

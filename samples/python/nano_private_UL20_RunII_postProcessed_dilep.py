@@ -16,6 +16,8 @@ import tttt.samples.nano_mc_private_UL20_Fall17_postProcessed_dilep as Fall17
 import tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep as Autumn18
 
 TTLep       = Sample.combine( "TTLep", [Summer16_preVFP.TTLep, Summer16.TTLep, Fall17.TTLep, Autumn18.TTLep], texName = "t#bar{t}")
+TTLepbb       = Sample.combine( "TTLepbb", [Summer16_preVFP.TTLepbb, Summer16.TTLepbb, Fall17.TTLepbb, Autumn18.TTLepbb], texName = "t#bar{t}")
+TTbb        = Sample.combine( "TTbb", [Summer16_preVFP.TTbb, Summer16.TTbb, Fall17.TTbb, Autumn18.TTbb], texName = "t#bar{t}b#bar{b}")
 ST          = Sample.combine( "ST",    [Summer16_preVFP.ST, Summer16.ST, Fall17.ST, Autumn18.ST],             texName = "t/tW")
 TTTT        = Sample.combine( "TTTT",  [Summer16_preVFP.TTTT, Summer16.TTTT, Fall17.TTTT, Autumn18.TTTT],     texName = "t#bar{t}t#bar{t}")
 TTW         = Sample.combine( "TTW",   [Summer16_preVFP.TTW, Summer16.TTW, Fall17.TTW, Autumn18.TTW],         texName = "t#bar{t}W" )

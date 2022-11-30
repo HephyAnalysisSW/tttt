@@ -17,3 +17,4 @@ python nanoPostProcessing.py  --forceProxy --noTriggerSelection --addDoubleB --b
 
 python nanoPostProcessing.py  --forceProxy --noTriggerSelection --addDoubleB --btag_WP loose --skim dilep-ht500 --era UL2016 --processingEra tttt_v5 --sample MuonEG_Run2016F #SPLIT25
 python nanoPostProcessing.py  --forceProxy --noTriggerSelection --addDoubleB --btag_WP loose --skim dilep-ht500 --era UL2016 --processingEra tttt_v5 --sample MuonEG_Run2016G #SPLIT100
+python nanoPostProcessing.py  --forceProxy --noTriggerSelection --addDoubleB --btag_WP loose --skim dilep-ht500 --era UL2016 --processingEra tttt_v5 --sample MuonEG_Run2016H #SPLIT100
