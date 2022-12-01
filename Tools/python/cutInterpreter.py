@@ -13,7 +13,6 @@ special_cuts = {
 
     "example":         "l1_pt>50",
     "singlelep":       "l1_pt>20",
-    "trg":             "triggerDecision",
     "dilep":           "l2_pt>20",
     "dilepVL":         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20",
     "dilepL" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
