@@ -1,4 +1,4 @@
-import os
+import os, sys
 from RootTools.core.Sample import Sample
 import ROOT
 
@@ -8,8 +8,11 @@ logger = logging.getLogger(__name__)
 
 from tttt.samples.color import color
 
-import tttt.samples.config as config
-directory_ = config.location_mc_UL2018
+try:
+    directory_ = sys.modules['__main__'].directory_
+except:
+    import tttt.samples.config as config
+    directory_ = config.location_mc_UL2018
 
 # TTHnobb  TTHTobb  TTLep_pow_CP5  TTTT  TTWToLNu  TTWToQQ  TTZToLLNuNu  TTZToLLNuNu_m1to10  TTZToQQ
 
