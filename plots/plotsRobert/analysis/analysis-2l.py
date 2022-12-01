@@ -53,22 +53,22 @@ from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 
 
 # Split dileptonic TTBar into three different contributions
-sample_TTLep = TTLepbb
+sample_TTLep = TTLep
 # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
 TTLep_bb    = copy.deepcopy( sample_TTLep )
 TTLep_bb.name = "TTLep_bb"
 TTLep_bb.texName = "t#bar{t}b#bar{b}"
 TTLep_bb.color   = ROOT.kRed + 2 
-TTLep_bb.setSelectionString( "genTtbarId%100>=50&&overlapRemoval" )
+TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
 TTLep_cc    = copy.deepcopy( sample_TTLep )
 TTLep_cc.name = "TTLep_cc"
 TTLep_cc.texName = "t#bar{t}c#bar{c}" 
 TTLep_cc.color   = ROOT.kRed - 3 
-TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50&&overlapRemoval" )
+TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
 TTLep_other = copy.deepcopy( sample_TTLep )
 TTLep_other.name = "TTLep_other"
 TTLep_other.texName = "t#bar{t} + light j." 
-TTLep_other.setSelectionString( "genTtbarId%100<40&&overlapRemoval" )
+TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 # group all the simulated backgroundsamples 
 mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT] 
@@ -182,7 +182,7 @@ read_variables += config.read_variables
 def make_mva_inputs( event, sample ):
     for mva_variable, func in config.mva_variables:
         setattr( event, mva_variable, func(event, sample) )
-#sequence.append( make_mva_inputs )
+sequence.append( make_mva_inputs )
 
 # load models
 from keras.models import load_model
@@ -213,7 +213,7 @@ def keras_predict( event, sample ):
         #    print event.nJetGood
         #    raise RuntimeError("Found NAN prediction?")
 
-#sequence.append( keras_predict )
+sequence.append( keras_predict )
 
 # Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
