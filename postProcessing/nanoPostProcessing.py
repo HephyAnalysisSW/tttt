@@ -467,7 +467,7 @@ genLepVarNames  = [x.split('/')[0] for x in genLepVars]
 lepVars         = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTTH/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I','ptCone/F','mvaTOP/F','mvaTOPWP/I','mvaTOPv2/F','mvaTOPv2WP/I','jetRelIso/F','jetBTag/F','jetPtRatio/F','jetNDauCharged/I','isFO/O','isTight/O','mvaFall17V2noIso_WPL/O','jetIdx/I']
 lepVarNames     = [x.split('/')[0] for x in lepVars]
 
-read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I', 'genTtbarId/I'] )
+read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
 if options.era == "2017":
     read_variables += map(TreeVariable.fromString, [ 'METFixEE2017_pt/F', 'METFixEE2017_phi/F', 'METFixEE2017_pt_nom/F', 'METFixEE2017_phi_nom/F'])
     if isMC:
@@ -478,7 +478,7 @@ if options.era == "2017":
     # if isMC:
     #     read_variables += map(TreeVariable.fromString, [ 'MET_pt_jesTotalUp/F', 'MET_pt_jesTotalDown/F', 'MET_pt_jerUp/F', 'MET_pt_jerDown/F', 'MET_pt_unclustEnDown/F', 'MET_pt_unclustEnUp/F', 'MET_phi_jesTotalUp/F', 'MET_phi_jesTotalDown/F', 'MET_phi_jerUp/F', 'MET_phi_jerDown/F', 'MET_phi_unclustEnDown/F', 'MET_phi_unclustEnUp/F', 'MET_pt_jer/F', 'MET_phi_jer/F'])
 if isMC:
-    read_variables += map(TreeVariable.fromString, [ 'GenMET_pt/F', 'GenMET_phi/F' ])
+    read_variables += map(TreeVariable.fromString, [ 'GenMET_pt/F', 'GenMET_phi/F' , 'genTtbarId/I'])
 
 new_variables = [ 'weight/F', 'year/I', 'preVFP/O']
 
