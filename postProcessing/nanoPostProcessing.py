@@ -133,9 +133,6 @@ elif isTrilep:
 elif isSinglelep:
     skimConds.append( "Sum$(Electron_pt>10&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>10&&abs(Muon_eta)<2.5)>=1" )
 
-if 'ht500' in options.skim.lower():
-    skimConds.append("Sum$(Jet_pt*(Jet_pt>20&&abs(Jet_eta)<2.4))>500")
-
 if isInclusive:
     skimConds.append('(1)')
     isSinglelep = True #otherwise no lepton variables?!

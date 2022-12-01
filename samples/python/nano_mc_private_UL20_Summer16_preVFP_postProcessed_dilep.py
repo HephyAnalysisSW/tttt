@@ -1,4 +1,4 @@
-import os, sys
+import os
 from RootTools.core.Sample import Sample
 import ROOT
 
@@ -7,12 +7,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 from tttt.samples.color import color
-
-try:
-    directory_ = sys.modules['__main__'].directory_
-except:
-    import tttt.samples.config as config
-    directory_ = config.location_mc_UL2016_preVFP
+import tttt.samples.config as config
+directory_ = config.location_mc_UL2016_preVFP
+#TTHTobb  TTHnobb  TTWToLNu  TTWToQQ  TTZToLLNuNu  TTZToLLNuNu_m1to10  TTZToQQ
 
 def make_dirs( dirs ):
     return [ os.path.join( directory_, dir_ ) for dir_ in dirs ]
