@@ -1222,7 +1222,7 @@ for logger_ in [logger, logger_rt]:
         handler.close()
         logger_.removeHandler(handler)
 
-if os.path.exists(tmp_output_directory):
+if os.path.exists(tmp_output_directory) and not options.keepNanoAOD:
     shutil.rmtree(tmp_output_directory)
     logger.info( "Cleaned tmp directory %s", tmp_output_directory )
 
