@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# standard imports
+# Standard imports
 import ROOT
 ROOT.PyConfig.IgnoreCommandLineOptions = True
 import sys
@@ -23,17 +23,19 @@ import tttt.Tools.user as user
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
 from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs, isAnalysisJet
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
-from Analysis.Tools.LeptonSF_UL     import LeptonSF
 
-#Analysis
-from Analysis.Tools.mvaTOPreader  import mvaTOPreader
+# Analysis
+from Analysis.Tools.mvaTOPreader             import mvaTOPreader
 from Analysis.Tools.metFiltersUL             import getFilterCut
-from Analysis.Tools.mcTools import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
-genSearch = GenSearch()
+from Analysis.Tools.LeptonSF_UL              import LeptonSF
 from Analysis.Tools.puProfileDirDB           import puProfile
 from Analysis.Tools.LeptonTrackingEfficiency import LeptonTrackingEfficiency
 from Analysis.Tools.helpers                  import checkRootFile, deepCheckRootFile, deepCheckWeight, dRCleaning
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
+from Analysis.Tools.BTagEfficiencyUL         import BTagEfficiency
+from Analysis.Tools.BTagReshapingUL          import BTagReshaping
+from Analysis.Tools.mcTools                  import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
+genSearch = GenSearch()
 
 def get_parser():
     ''' Argument parser for post-processing module.
@@ -95,12 +97,9 @@ elif "UL2018" == options.era:
 import tttt.Tools.logger as _logger
 logFile = '/tmp/%s_%s_%s_njob%s.txt'%(options.skim, '_'.join(options.samples), os.environ['USER'], str(0 if options.nJobs==1 else options.job))
 logger  = _logger.get_logger(options.logLevel, logFile = logFile)
-
-#import Analysis.Tools.logger as _logger_an
-#logger_an = _logger_an.get_logger(options.logLevel, logFile = logFile )
-
 import RootTools.core.logger as _logger_rt
 logger_rt = _logger_rt.get_logger(options.logLevel, logFile = logFile )
+
 
 def fill_vector_collection( event, collection_name, collection_varnames, objects, maxN = 100):
     setattr( event, "n"+collection_name, len(objects) )
@@ -185,16 +184,16 @@ assert isMC or len(samples)==1, "Don't concatenate data samples"
 
 xSection = samples[0].xSection if isMC else None
 
-#LeptonSF
+# LeptonSF
 leptonSF = LeptonSF(options.era, muID='medium', elID='tight')
 
-# apply MET filter
+# Apply MET filter
 skimConds.append( getFilterCut(options.era, isData=isData, ignoreJSON=True, skipWeight=True, skipECalFilter=True) )
 
 triggerEff          = triggerEfficiency(year)
 
 ################################################################################
-#Samples: combine if more than one
+# Samples: combine if more than one
 if len(samples)>1:
     sample_name =  samples[0].name+"_comb"
     logger.info( "Combining samples %s to %s.", ",".join(s.name for s in samples), sample_name )
@@ -231,7 +230,7 @@ if options.LHEHTCut>0:
     skimConds.append( "LHE_HTIncoming<%f"%options.LHEHTCut )
 
 ################################################################################
-# final output directory
+# Final output directory
 storage_directory = os.path.join( options.targetDir, options.processingEra, options.era, options.skim, sample.name )
 try:    #Avoid trouble with race conditions in multithreading
     os.makedirs(storage_directory)
@@ -273,14 +272,14 @@ if hasattr( sample, "reweight_pkl" ):
     logger.info("Adding reweights. Expect to read %i base point weights.", weightInfo.nid)
 
 ################################################################################
-## sort the list of files?
+## Sort the list of files?
 len_orig = len(sample.files)
 sample = sample.split( n=options.nJobs, nSub=options.job)
 logger.info( "fileBasedSplitting: Run over %i/%i files for job %i/%i."%(len(sample.files), len_orig, options.job, options.nJobs))
 logger.debug("fileBasedSplitting: Files to be run over:\n%s", "\n".join(sample.files) )
 
 ################################################################################
-# systematic variations
+# Systematic variations
 addSystematicVariations = (not isData) and (not options.skipSystematicVariations)
 
 ################################################################################
@@ -288,9 +287,8 @@ addSystematicVariations = (not isData) and (not options.skipSystematicVariations
 
 # B tagging SF
 b_tagger = "DeepJet"
-from Analysis.Tools.BTagEfficiencyUL import BTagEfficiency
 btagEff = BTagEfficiency( fastSim = False, year=options.era, tagger=b_tagger )
-
+btagRes = BTagReshaping( fastSim = False, year=options.era, tagger=b_tagger)
 ################################################################################
 # tmp_output_directory
 tmp_output_directory  = os.path.join( user.postprocessing_tmp_directory, "%s_%s_%s_%s_%s"%(options.processingEra, options.era, options.skim, sample.name, str(uuid.uuid3(uuid.NAMESPACE_OID, sample.name))))
@@ -1093,6 +1091,7 @@ def filler( event ):
     if isMC:
         for j in jets:
             btagEff.addBTagEffToJet(j)
+            btagRes.getbtagSF(j)
         for var in btagEff.btagWeightNames:
             if var!='MC':
                 setattr(event, 'reweightBTag_'+var, btagEff.getBTagSF_1a( var, bJets, filter( lambda j: abs(j['eta'])<2.4, nonBJets ) ) )
