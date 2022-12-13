@@ -1,11 +1,12 @@
 import os
 import ROOT
 
-dirname = "/groups/hephy/cms/lena.wild/www/tttt/plots/analysisPlots/TMB_4t_p3/RunII/all/dilepL-offZ1-njet6p-btag3p-ht500/"
+dirname = "/groups/hephy/cms/lena.wild/www/tttt/plots/analysisPlots/new_training_noData/RunII/all/dilepL-offZ1-njet4p-btag3p-ht500/"
+results_dir = "/groups/hephy/cms/lena.wild/www/tttt/plots/analysisPlots/new_training_noData/RunII/roc/"
 njetsel = [
-#"dilepL-offZ1-njet4p-btag3p-ht500/",
+"dilepL-offZ1-njet4p-btag3p-ht500/",
 # "dilepL-offZ1-njet5p-btag3p-ht500/",
- "dilepL-offZ1-njet6p-btag3p-ht500/",
+# "dilepL-offZ1-njet6p-btag3p-ht500/",
 # "dilepL-offZ1-njet7p-btag3p-ht500/",
 # "dilepL-offZ1-njet8p-btag3p-ht500/",
 # "dilepL-offZ1-njet9p-btag3p-ht500/"
@@ -44,9 +45,9 @@ data_lstm = [
 data_db = [
 ("2l MVA including 1 LSTM layer and doubleB", os.path.join(dirname, "lenas_MVA_TTTT_model1_db_lstm.root"),ROOT.kCyan+4),
 ("2l MVA including 2 LSTM layers and doubleB", os.path.join(dirname, "lenas_MVA_TTTT_model2_db_lstm.root"),ROOT.kCyan+3),
-("2l MVA including 4 LSTM layers and doubleB", os.path.join(dirname, "lenas_MVA_TTTT_model4_db_lstm.root"),ROOT.kCyan+2),
-("2l MVA including 6 LSTM layers and doubleB", os.path.join(dirname, "lenas_MVA_TTTT_model6_db_lstm.root"),ROOT.kCyan+1),
-("2l MVA including 8 LSTM layers and doubleB", os.path.join(dirname, "lenas_MVA_TTTT_model8_db_lstm.root"),ROOT.kCyan+0)
+ ("2l MVA including 4 LSTM layers and doubleB", os.path.join(dirname, "lenas_MVA_TTTT_model4_db_lstm.root"),ROOT.kCyan+2),
+ ("2l MVA including 6 LSTM layers and doubleB", os.path.join(dirname, "lenas_MVA_TTTT_model6_db_lstm.root"),ROOT.kCyan+1),
+ ("2l MVA including 8 LSTM layers and doubleB", os.path.join(dirname, "lenas_MVA_TTTT_model8_db_lstm.root"),ROOT.kCyan+0)
 ]
 
 data_hs_lstm = [
@@ -68,12 +69,12 @@ data_compare = [
 ]
 
 data_root = [
-# (data_batch, "Variation of batch size", "roc_batch"),
-# (data_h1, "Variation of 1st layer hidden size", "roc_h1"),
-# (data_h2, "Variation of 2nd layer hidden size", "roc_h2"),
+(data_batch, "Variation of batch size", "roc_batch"),
+(data_h1, "Variation of 1st layer hidden size", "roc_h1"),
+(data_h2, "Variation of 2nd layer hidden size", "roc_h2"),
 (data_lstm, "Variation of number of LSTM layers", "roc_lstm_layers"),
 (data_db, "Variation of number of LSTM layers (+DoubleB)", "roc_lstm+db"),
-# (data_hs_lstm, "Variation of LSTM output size", "roc_lstm_hs"),
-# (data_hs_lstm_db, "Variation of number of LSTM output size (+DoubleB)", "roc_lstm_hs+db"),
-# (data_compare, "Comparison of MVAs (w/o LSTM, w/o DoubleB)", "roc_comp")
+(data_hs_lstm, "Variation of LSTM output size", "roc_lstm_hs"),
+(data_hs_lstm_db, "Variation of number of LSTM output size (+DoubleB)", "roc_lstm_hs+db"),
+(data_compare, "Comparison of MVAs (w/o LSTM, w/o DoubleB)", "roc_comp")
 ]
