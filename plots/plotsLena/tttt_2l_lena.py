@@ -33,12 +33,11 @@ jetVarNames      = [x.split('/')[0] for x in jetVars]
 lstm_jets_maxN   = 10
 #lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
 #lstm_jetVars_lena = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavC/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
-lstm_jetVars_lena     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
-lstm_jetVars_lena_db  = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F', 'muEF/F', 'puId/F', 'qgl/F']
+lstm_jetVars_lena     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'puId/F', 'qgl/F']
+lstm_jetVars_lena_db  = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'puId/F', 'qgl/F']
 #lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 lstm_jetVarNames_lena = [x.split('/')[0] for x in lstm_jetVars_lena]
 lstm_jetVarNames_lena_db = [x.split('/')[0] for x in lstm_jetVars_lena_db]
-
 
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
 lepVarNames      = [x.split('/')[0] for x in lepVars]
@@ -190,3 +189,41 @@ assert len(training_samples)==len(set([s.name for s in training_samples])), "tra
 selection = 'dilepL-offZ1-njet4p-btag3p-ht500'
 from tttt.Tools.cutInterpreter import cutInterpreter
 selectionString = cutInterpreter.cutString( selection )
+
+Models = ["model_b-5000_e-500_hs1-70_hs2-40", 
+"model_b-10000_e-500_hs1-70_hs2-40",
+"model_b-20000_e-500_hs1-70_hs2-40",
+"model_b-50000_e-500_hs1-70_hs2-40",
+"model_b-100000_e-500_hs1-70_hs2-40",
+"model_b-20000_e-500_hs1-35_hs2-40", 
+"model_b-20000_e-500_hs1-105_hs2-40",
+"model_b-20000_e-500_hs1-140_hs2-40", 
+"model_b-20000_e-500_hs1-70_hs2-20", 
+"model_b-20000_e-500_hs1-70_hs2-30",
+"model_b-20000_e-500_hs1-70_hs2-35",
+"model_b-20000_e-500_hs1-70_hs2-50",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-1_hs-lstm-10",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-1_hs-lstm-10_DoubleB",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-2_hs-lstm-10",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-2_hs-lstm-10_DoubleB",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-4_hs-lstm-10",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-4_hs-lstm-10_DoubleB",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-4_hs-lstm-15",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-4_hs-lstm-15_DoubleB",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-4_hs-lstm-25",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-4_hs-lstm-25_DoubleB",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-4_hs-lstm-5",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-4_hs-lstm-5_DoubleB",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-6_hs-lstm-10",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-6_hs-lstm-10_DoubleB",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-8_hs-lstm-10",
+"model_b-20000_e-500_hs1-70_hs2-40_lstm-8_hs-lstm-10_DoubleB",
+"model_b-20000_e-750_hs1-70_hs2-40_lstm-1_hs-lstm-25",
+"model_b-20000_e-750_hs1-70_hs2-40_lstm-1_hs-lstm-25_DoubleB",
+"model_b-20000_e-750_hs1-70_hs2-40_lstm-2_hs-lstm-25",
+"model_b-20000_e-750_hs1-70_hs2-40_lstm-2_hs-lstm-25_DoubleB",
+"model_b-20000_e-750_hs1-70_hs2-40_lstm-4_hs-lstm-25",
+"model_b-20000_e-750_hs1-70_hs2-40_lstm-4_hs-lstm-25_DoubleB",
+"model_b-20000_e-2000_hs1-70_hs2-40_lstm-4_hs-lstm-25",
+"model_b-20000_e-2000_hs1-70_hs2-40_lstm-4_hs-lstm-25_DoubleB",
+]

@@ -72,7 +72,7 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 # group all the simulated backgroundsamples 
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, TTTT] 
+mc = [ TTLep_bb, TTLep_cc, TTLep_other,TTTT] 
 #mc = [  TTTT] 
 # Now we add the data
 if not args.noData:
@@ -116,6 +116,7 @@ def drawObjects( dataMCScale, lumi_scale ):
 def drawPlots(plots, mode, dataMCScale):
   for log in [False, True]:
     plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), args.selection)
+    # plot_directory_cut_ = os.path.join(plot_directory,'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), '_cut_y', args.selection)
     for plot in plots:
       if not max(l.GetMaximum() for l in sum(plot.histos,[])): continue # Empty plot
 
@@ -132,6 +133,17 @@ def drawPlots(plots, mode, dataMCScale):
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
             copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
+      # if isinstance( plot, Plot):
+          # plotting.draw(plot,
+            # plot_directory = plot_directory_cut_,
+            # ratio =  {'yRange':(0.1,1.9)} if not args.noData else None,
+            # logX = False, logY = log, sorting = True,
+            # yRange = (0.001, 6) if log else (0.001, "auto"),
+            # scaling = {0:1} if args.dataMCScaling else {},
+            # legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
+            # drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
+            # copyIndexPHP = True, extensions = ["png", "pdf", "root"],
+          # )           
 
 read_variables = []
 
@@ -189,13 +201,12 @@ def make_mva_inputs( event, sample ):
 sequence.append( make_mva_inputs ) 
 
 allModels = []
-Models  = ["model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25_DoubleB" ]
+#Models  = ["model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25_DoubleB" ]
 #Models  = ["model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25"]
-allModels.append(Models[int(args.mva)])
+allModels.append(config.Models[int(args.mva)])
 options = ort.SessionOptions()
 options.intra_op_num_threads = 1
 options.inter_op_num_threads = 1
-
 def torch_predict( event, sample ):
     flat_variables, lstm_jets_nodb = config.predict_inputs( event, sample, db = False, jet_lstm = True)
     _, lstm_jets_db = config.predict_inputs( event, sample, db = True, jet_lstm = True)
@@ -210,19 +221,17 @@ def torch_predict( event, sample ):
         if (str(model).find('db')!=-1 or str(model).find('DoubleB')!=-1): db = True
         if (LSTM):
             if (db):
-                lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets_db.astype(np.float32)})[0][0] 
+                lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets_db.astype(np.float32)})[0][0]     
             else:
                 lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets_nodb.astype(np.float32)})[0][0] 
         else:
-            lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32)})[0][0] 
-        #print(lis[0])    
+            lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32)})[0][0]           
         if lis.any()<0 or lis.any()>1:
             raise RuntimeError("Found NAN prediction?")
         setattr( event, model+"_TTTT", lis[0] )
         setattr( event, model+"_TTB", lis[1] )
         setattr( event, model+"_TTC", lis[2] )
         setattr( event, model+"_TTO", lis[3] )
-        #print(lis[0])
         #test.append(lis[0])
 sequence.append( torch_predict )
 
@@ -289,11 +298,11 @@ for i_mode, mode in enumerate(allModes):
       sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
 
     # Define what we want to see.
-    stack = Stack(mc, [data_sample])
+    stack = Stack(mc, [data_sample]) if not args.noData else Stack(mc)
 
     # Define everything we want to have common to all plots
     Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
-
+    
     plots = []
 
     # A special plot that holds the yields of all modes
@@ -305,35 +314,35 @@ for i_mode, mode in enumerate(allModes):
 
     for model in allModels:
         plots.append(Plot(
-          name = 'lenas_MVA_TTTT_'+str(model),
-          texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
+          name = 'MVA_TTTT_'+str(model),
+          texX = 'prob for TTTT', texY = 'Number of Events / 20 GeV',
           attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTTT"),
           #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[50,0,1],
+          binning=[500,0,1],
           addOverFlowBin='upper',
         ))
         plots.append(Plot(
-          name = 'lenas_MVA_TTLepbb_'+str(model),
-          texX = 'prob acc to lena for TTlepbb', texY = 'Number of Events / 20 GeV',
+          name = 'MVA_TTLepbb_'+str(model),
+          texX = 'prob for TTlepbb', texY = 'Number of Events / 20 GeV',
           attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTB"),
           #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[50,0,1],
+          binning=[500,0,1],
           addOverFlowBin='upper',
         ))
         plots.append(Plot(
-          name = 'lenas_MVA_TTLepcc_'+str(model),
-          texX = 'prob acc to lena for TTlepcc', texY = 'Number of Events / 20 GeV',
+          name = 'MVA_TTLepcc_'+str(model),
+          texX = 'prob for TTlepcc', texY = 'Number of Events / 20 GeV',
           attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTC"),
           #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[50,0,1],
+          binning=[500,0,1],
           addOverFlowBin='upper',
         ))
         plots.append(Plot(
-          name = 'lenas_MVA_TTLepOther_'+str(model),
-          texX = 'prob acc to lena for TTlepother', texY = 'Number of Events / 20 GeV',
+          name = 'MVA_TTLepOther_'+str(model),
+          texX = 'prob for TTlepother', texY = 'Number of Events / 20 GeV',
           attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTO"),
           #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[50,0,1],
+          binning=[500,0,1],
           addOverFlowBin='upper',
         ))
         
@@ -353,7 +362,7 @@ for i_mode, mode in enumerate(allModes):
         addOverFlowBin='upper',
     ))
 
-    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
+    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas, max_events=100 if args.small else -1)
 
     # Get normalization yields from yield histogram
     for plot in plots:
@@ -384,7 +393,7 @@ for i_mode, mode in enumerate(allModes):
     drawPlots(plots, mode, dataMCScale)
     allPlots[mode] = plots
 
-# Add the different channels into SF and all
+#Add the different channels into SF and all
 for mode in ["SF","all"]:
     yields[mode] = {}
     for y in yields[allModes[0]]:
@@ -399,6 +408,7 @@ for mode in ["SF","all"]:
             for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
                 for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
                     if i==k: j.Add(l)
+
 
     drawPlots(allPlots['mumu'], mode, dataMCScale)
 

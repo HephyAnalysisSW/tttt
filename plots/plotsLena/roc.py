@@ -12,7 +12,7 @@ def copyIndexPHP( results_dir ):
 
 
 dirname = config.dirname
-results_dir = "/groups/hephy/cms/lena.wild/www/tttt/plots/analysisPlots/TMB_4t_p3/RunII/roc/"+config.njetsel[0]
+results_dir = config.results_dir+config.njetsel[0]
 if not os.path.exists( results_dir ): 
     os.makedirs( results_dir )
 data_root = config.data_root
