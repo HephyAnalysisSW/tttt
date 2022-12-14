@@ -586,9 +586,12 @@ if not options.skipNanoTools:
 
     logger.info("Using JERs for MET significance")
 
+    # Import MET/JEC/JER Tools
     from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
+    #from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jecUncertainties import *
     METBranchName = 'MET' if not options.era == "2017" else 'METFixEE2017'
 
+    jesUncertanties = "AbsoluteMPFBias,AbsoluteScale,AbsoluteStat,RelativeBal,RelativeFSR,RelativeJEREC1,RelativeJEREC2,RelativeJERHF,RelativePtBB,RelativePtEC1,RelativePtEC2,RelativePtHF,RelativeStatEC,RelativeStatFSR,RelativeStatHF,PileUpDataMC,PileUpPtBB,PileUpPtEC1,PileUpPtEC2,PileUpPtHF,PileUpPtRef,FlavorQCD,Fragmentation,SinglePionECAL,SinglePionHCAL,TimePtEta"
     # check if files are available (e.g. if dpm is broken this should result in an error)
     for f in sample.files:
         if not checkRootFile(f):
@@ -614,7 +617,7 @@ if not options.skipNanoTools:
             isMC        = (not sample.isData),
             dataYear    = options.era,
             runPeriod   = runPeriod,
-            jesUncert   = "Total",
+            jesUncert   = jesUncertanties,
             jetType     = "AK4PFchs",
             metBranchName = METBranchName,
             isFastSim   = False,
