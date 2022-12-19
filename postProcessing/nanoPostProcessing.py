@@ -28,8 +28,7 @@ from Analysis.Tools.LeptonSF_UL     import LeptonSF
 #Analysis
 from Analysis.Tools.mvaTOPreader  import mvaTOPreader
 from Analysis.Tools.metFiltersUL             import getFilterCut
-from Analysis.Tools.mcTools import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
-genSearch = GenSearch()
+from Analysis.Tools.mcTools import pdgToName, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
 from Analysis.Tools.puProfileDirDB           import puProfile
 from Analysis.Tools.LeptonTrackingEfficiency import LeptonTrackingEfficiency
 from Analysis.Tools.helpers                  import checkRootFile, deepCheckRootFile, deepCheckWeight, dRCleaning
