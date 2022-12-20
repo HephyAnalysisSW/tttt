@@ -23,3 +23,10 @@ elif os.environ["USER"] in ["robert.schoefbeck"]:
     cache_dir                       = "/groups/hephy/cms/robert.schoefbeck/tttt/caches"
     gridpack_directory              = "/eos/vbc/user/robert.schoefbeck/gridpacks/4top/"
 
+elif os.environ["USER"] in ["lena.wild"]:
+    postprocessing_output_directory = "/scratch-cbe/users/lena.wild/tttt/nanoTuples"
+    postprocessing_tmp_directory    = "/scratch/hephy/cms/lena.wild/tttt/tmp/"
+    plot_directory                  = "/groups/hephy/cms/lena.wild/www/tttt/plots"
+    cache_dir                       = "/groups/hephy/cms/lena.wild/tttt/caches"
+    #gridpack_directory              = "/eos/vbc/user/robert.schoefbeck/gridpacks/4top/"
+    gridpack_directory              = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top"
