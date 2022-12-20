@@ -204,12 +204,13 @@ TTLep_other.name = "TTLep_other"
 TTLep_other.texName = samples.TTLep.name+" (other)"
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
-training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, TTLep_other ]
+training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, samples.TTLepbb, samples.TTbb ]
+
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
 # training selection
 
-selection = 'dilepL-offZ1-njet4p-btag3p-ht500'
+selection = 'trg-dilepVL-minDLmass20-offZ1-njet4p-btag2p'
 from tttt.Tools.cutInterpreter import cutInterpreter
 selectionString = cutInterpreter.cutString( selection )
