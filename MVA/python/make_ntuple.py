@@ -63,7 +63,7 @@ if args.small:
 if hasattr( config, "selectionString"):
     sample.addSelectionString( config.selectionString )
     logger.info( "Add selectionstring %s", config.selectionString )
-    subDir += "_attempt"
+    subDir += "_"+config.selection
 else:
     logger.info( "Do not use selectionstring" )
 

@@ -23,12 +23,12 @@ if args.add_LSTM:   args.name+="_LSTM"
 if args.small:      args.name+="_small"
 
 # TTTT stuff
-import tttt.Tools.user as user 
+import tttt.Tools.user as user
 #Logger
 import tttt.Tools.logger as logger
 logger = logger.get_logger("INFO", logFile = None )
 # MVA configuration
-import tttt.MVA.configs  as configs 
+import tttt.MVA.configs  as configs
 
 #config
 config = getattr( configs, args.config)
@@ -43,7 +43,7 @@ import pandas as pd
 
 # directories
 plot_directory   = os.path.join( user. plot_directory, 'MVA', args.name, args.config )
-output_directory = os.path.join( args.output_directory, args.name, args.config) 
+output_directory = os.path.join( args.output_directory, args.name, args.config)
 
 # fix random seed for reproducibility
 np.random.seed(1)
@@ -61,7 +61,7 @@ df_file = {}
 for i_training_sample, training_sample in enumerate(config.training_samples):
     upfile_name = os.path.join(os.path.expandvars(args.input_directory), subDir, training_sample.name, training_sample.name+'.root')
     logger.info( "Loading upfile %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
-    # with uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')) as upfile: # 
+    # with uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')) as upfile: #
     upfile = uproot.open(os.path.join(os.path.expandvars(args.input_directory), subDir, training_sample.name, training_sample.name+'.root'))
     df_file[training_sample.name]  = upfile["Events"].pandas.df(branches = mva_variables )
     # enumerate
@@ -84,7 +84,7 @@ if args.small:
 X  = dataset[:,0:n_var_flat]
 
 # regress FI
-Y = dataset[:, n_var_flat] 
+Y = dataset[:, n_var_flat]
 
 from sklearn.preprocessing import label_binarize
 classes = range(len(config.training_samples))
@@ -166,10 +166,10 @@ callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3) # patien
 
 # train the model
 batch_size = 1024*6
-history = model.fit(training_data, 
-                    Y_train, 
+history = model.fit(training_data,
+                    Y_train,
                     sample_weight = None,
-                    epochs=500, 
+                    epochs=500,
                     batch_size=batch_size,
                     #verbose=0, # switch to 1 for more verbosity, 'silences' the output
                     #validation_split=0.1

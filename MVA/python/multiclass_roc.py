@@ -10,10 +10,11 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--config',             action='store', type=str,   default='tttt_3l', help="Name of the config file")
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
 argParser.add_argument('--variable_set',       action='store', type=str,   default='mva_variables', help="List of variables for training")
-argParser.add_argument('--output_directory',   action='store', type=str,   default='/mnt/hephy/cms/rosmarie.schoefbeck/TMB/models/')
+argParser.add_argument('--output_directory',   action='store', type=str,   default='/groups/hephy/cms/cristina.giordano/www/tttt/plots')
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/user/rosmarie.schoefbeck/TMB/training-ntuples-tttt-v1/MVA-training") )
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--add_LSTM',           action='store_true', help="add LSTM?")
+argParser.add_argument('--selectionString',    action='store', type=str,   default='dilepVL-offZ1-njet4p-btag3p')
 
 args = argParser.parse_args()
 
@@ -25,7 +26,7 @@ import TMB.Tools.logger as logger
 logger = logger.get_logger("INFO", logFile = None )
 
 # MVA configuration
-import TMB.MVA.configs  as configs 
+import tttt.MVA.configs  as configs
 
 #config
 config = getattr( configs, args.config)
@@ -39,11 +40,11 @@ import pandas as pd
 #########################################################################################
 # variable definitions
 
-import TMB.Tools.user as user 
+import tttt.Tools.user as user
 
 # directories
-plot_directory   = os.path.join( user. plot_directory, 'MVA', args.name, args.config )
-output_directory = os.path.join( args.output_directory, args.name, args.config) 
+plot_directory   = os.path.join( user.plot_directory, 'MVA', args.name, args.config, args.selectionString)
+output_directory = os.path.join( args.output_directory, args.name, args.config)
 
 # fix random seed for reproducibility
 np.random.seed(1)
@@ -55,9 +56,9 @@ n_var_flat   = len(mva_variables)
 
 df_file = {}
 for i_training_sample, training_sample in enumerate(config.training_samples):
-    upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
+    upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config+"_"+args.selectionString, training_sample.name, training_sample.name+'.root')
     logger.info( "Loading upfile %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
-    upfile = uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root'))
+    upfile = uproot.open(os.path.join(os.path.expandvars(args.input_directory), args.config+"_"+args.selectionString, training_sample.name, training_sample.name+'.root'))
     df_file[training_sample.name]  = upfile["Events"].pandas.df(branches = mva_variables )
     # enumerate
     df_file[training_sample.name]['signal_type'] =  np.ones(len(df_file[training_sample.name])) * i_training_sample
@@ -79,7 +80,7 @@ if args.small:
 X  = dataset[:,0:n_var_flat]
 
 # regress FI
-Y = dataset[:, n_var_flat] 
+Y = dataset[:, n_var_flat]
 
 from sklearn.preprocessing import label_binarize
 classes = range(len(config.training_samples))
@@ -87,13 +88,13 @@ Y = label_binarize(Y, classes=classes)
 
 # loading vector branches for LSTM
 if args.add_LSTM:
-    vector_branches = ["mva_JetGood_%s" % varname for varname in config.jetVarNames]
+    vector_branches = ["mva_Jet_%s" % varname for varname in config.jetVarNames]
     max_timestep = 10 # for LSTM
 
     vec_br_f  = {}
 
     for i_training_sample, training_sample in enumerate(config.training_samples):
-        upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config, training_sample.name, training_sample.name+'.root')
+        upfile_name = os.path.join(os.path.expandvars(args.input_directory), args.config+"_"+args.selectionString, training_sample.name, training_sample.name+'.root')
         logger.info( "Loading vector branches %i: %s from %s", i_training_sample, training_sample.name, upfile_name)
         with uproot.open(upfile_name) as upfile:
             vec_br_f[i_training_sample]   = {}
@@ -168,10 +169,10 @@ callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3) # patien
 
 # train the model
 batch_size = 1024*6
-history = model.fit(training_data, 
-                    Y_train, 
+history = model.fit(training_data,
+                    Y_train,
                     sample_weight = None,
-                    epochs=100, 
+                    epochs=100,
                     batch_size=batch_size,
                     #verbose=0, # switch to 1 for more verbosity, 'silences' the output
                     callbacks=[callback],
@@ -188,7 +189,7 @@ output_file = os.path.join(output_directory, 'regression_model.h5')
 model.save(output_file)
 logger.info("Written model to: %s", output_file)
 
-#plot roc curves 
+#plot roc curves
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 
@@ -226,7 +227,7 @@ plt.title('ROC_curve')
 plt.legend(loc="lower right")
 plt.savefig(plot_directory + 'ROC_curve.png')
 
-#signal vs all 
+#signal vs all
 Y_predict_s = np.zeros((len(Y_predict), 2))
 Y_predict_s[:,0] = Y_predict[:,0]
 Y_predict_s[:,1] = Y_predict[:,1] + Y_predict[:,2] + Y_predict[:,3]
