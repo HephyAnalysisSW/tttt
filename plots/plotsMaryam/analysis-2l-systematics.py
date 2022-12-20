@@ -427,18 +427,6 @@ for i_mode, mode in enumerate(allModes):
     ))
 
     plots.append(Plot(
-        name = 'Z1_pt_coarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events / 50 GeV',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[16,0,800],
-    ))
-
-    plots.append(Plot(
-        name = 'Z1_pt_superCoarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[3,0,600],
-    ))
-
-    plots.append(Plot(
       texX = 'p_{T}(leading l) (GeV)', texY = 'Number of Events / 20 GeV',
       name = 'lep1_pt', attribute = lambda event, sample: event.lep_pt[0],
       binning=[400/20,0,400],
