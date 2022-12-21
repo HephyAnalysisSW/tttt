@@ -10,14 +10,11 @@ import itertools
 from RootTools.core.standard     import *
 
 #From Tools
-from tttt.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict, MT2
+from tttt.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict#, MT2 # FIXME with changes from tttt_2l
 from tttt.Tools.objectSelection import isBJet, isAnalysisJet
 #From Analysis
 from Analysis.Tools.WeightInfo       import WeightInfo
 from Analysis.Tools.mt2Calculator import mt2Calculator
-
-
-
 
 import logging
 logger = logging.getLogger(__name__)

@@ -17,7 +17,22 @@ def isAnalysisJet(j, ptCut=25, absEtaCut=2.4, ptVar='pt', idVar='jetId', corrFac
 
 def isBJet(j, tagger = 'DeepFlavor', WP='loose', year = 2016):
     if tagger == 'DeepFlavor' or tagger == 'DeepJet':
-        if WP == 'medium':
+        if WP == 'tight':
+            if year in [2016, "UL2016_preVFP"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
+                return j['btagDeepFlavB'] > 0.6502 
+            elif year in [2016, "UL2016"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
+                return j['btagDeepFlavB'] > 0.6377
+            elif year in [2017, "UL2017"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL17
+                return j['btagDeepFlavB'] > 0.7476
+            elif year in [2018, "UL2018"]:
+                #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL18
+                return j['btagDeepFlavB'] > 0.7100
+            else:
+                raise (NotImplementedError, "Don't know what cut to use for year %s"%year)
+        elif WP == 'medium':
             if year in [2016, "UL2016_preVFP"]:
                 #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
                 return j['btagDeepFlavB'] > 0.2598
