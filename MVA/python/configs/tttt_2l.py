@@ -191,26 +191,30 @@ def predict_inputs( event, sample, jet_lstm = False):
 import tttt.samples.nano_private_UL20_RunII_postProcessed_dilep as samples
 
 # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
-TTLep_bb    = copy.deepcopy( samples.TTLep )
+sample_TTLep = samples.TTLepbb
+# ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
+TTLep_bb    = copy.deepcopy( sample_TTLep )
 TTLep_bb.name = "TTLep_bb"
-TTLep_bb.texName = samples.TTLep.name+" (b#overline{b})"
-TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
-TTLep_cc    = copy.deepcopy( samples.TTLep )
+TTLep_bb.texName = "t#bar{t}b#bar{b}"
+TTLep_bb.color   = ROOT.kRed + 2 
+TTLep_bb.setSelectionString( "genTtbarId%100>=50&&overlapRemoval" )
+TTLep_cc    = copy.deepcopy( sample_TTLep )
 TTLep_cc.name = "TTLep_cc"
-TTLep_cc.texName = samples.TTLep.name+" (c#overline{c})"
-TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
-TTLep_other = copy.deepcopy( samples.TTLep )
+TTLep_cc.texName = "t#bar{t}c#bar{c}" 
+TTLep_cc.color   = ROOT.kRed - 3 
+TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50&&overlapRemoval" )
+TTLep_other = copy.deepcopy( sample_TTLep )
 TTLep_other.name = "TTLep_other"
-TTLep_other.texName = samples.TTLep.name+" (other)"
-TTLep_other.setSelectionString( "genTtbarId%100<40" )
+TTLep_other.texName = "t#bar{t} + light j." 
+TTLep_other.setSelectionString( "genTtbarId%100<40&&overlapRemoval" )
 
-training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, samples.TTLepbb, samples.TTbb ]
+training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, TTLep_other ]
 
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
 # training selection
 
-selection = 'trg-dilepVL-minDLmass20-offZ1-njet4p-btag2p'
+selection = 'trg-dilepVL-minDLmass20-offZ1-njet4p-btag2p-ht500'
 from tttt.Tools.cutInterpreter import cutInterpreter
 selectionString = cutInterpreter.cutString( selection )

@@ -19,6 +19,7 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel', action='store', nargs='?',  choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],   default='INFO', help="Log level for logging" )
 argParser.add_argument('--sample',             action='store', type=str)
 argParser.add_argument('--config',             action='store', type=str)
+argParser.add_argument('--selection',          action='store', type=str, default=None,  help="Additional training selection?")
 argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
 argParser.add_argument('--small',              action='store_true')
 
@@ -59,8 +60,13 @@ if args.small:
     sample.reduceFiles(to=1)
     subDir += '_small'
 
-# selection
-if hasattr( config, "selectionString"):
+if args.selection is not None:
+    from tttt.Tools.cutInterpreter import cutInterpreter
+    custom_sel = cutInterpreter.cutString( args.selection)
+    sample.addSelectionString( custom_sel )
+    logger.info( "Add selectionstring %s", custom_sel )
+    subDir += "_"+args.selection
+elif hasattr( config, "selectionString"):
     sample.addSelectionString( config.selectionString )
     logger.info( "Add selectionstring %s", config.selectionString )
     subDir += "_"+config.selection
