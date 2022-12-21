@@ -201,17 +201,20 @@ def make_mva_inputs( event, sample ):
 sequence.append( make_mva_inputs ) 
 
 allModels = []
-#Models  = ["model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15_DoubleB","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25_DoubleB" ]
-#Models  = ["model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm", "model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-5","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-15","model_b-20000_hs1-70_hs2-40_lstm-4_hs-lstm-25"]
 allModels.append(config.Models[int(args.mva)])
 options = ort.SessionOptions()
 options.intra_op_num_threads = 1
 options.inter_op_num_threads = 1
+
 def torch_predict( event, sample ):
     flat_variables, lstm_jets_nodb = config.predict_inputs( event, sample, db = False, jet_lstm = True)
     _, lstm_jets_db = config.predict_inputs( event, sample, db = True, jet_lstm = True)
     lstm_jets_nodb = np.nan_to_num(lstm_jets_nodb)
     lstm_jets_db = np.nan_to_num(lstm_jets_db)
+    #print(lstm_jets_db[:, 1, 6],lstm_jets_nodb[:, 1, 6])
+    #print(np.sum(lstm_jets_db[:, :, :])-np.sum(lstm_jets_nodb[:, :, :]))
+    # print(lstm_jets_nodb[:, 0])
+    #assert False
     #print('\n',flat_variables.shape, '\n',lstm_jets_db.shape, '\n',lstm_jets_nodb.shape, '\n')
     for model in allModels:
         ort_sess = ort.InferenceSession("models/"+model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
@@ -232,6 +235,7 @@ def torch_predict( event, sample ):
         setattr( event, model+"_TTB", lis[1] )
         setattr( event, model+"_TTC", lis[2] )
         setattr( event, model+"_TTO", lis[3] )
+        
         #test.append(lis[0])
 sequence.append( torch_predict )
 
@@ -312,43 +316,44 @@ for i_mode, mode in enumerate(allModes):
       binning=[3, 0, 3],
     ))
 
-    for model in allModels:
-        plots.append(Plot(
-          name = 'MVA_TTTT_'+str(model),
-          texX = 'prob for TTTT', texY = 'Number of Events / 20 GeV',
-          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTTT"),
-          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[500,0,1],
-          addOverFlowBin='upper',
-        ))
-        plots.append(Plot(
-          name = 'MVA_TTLepbb_'+str(model),
-          texX = 'prob for TTlepbb', texY = 'Number of Events / 20 GeV',
-          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTB"),
-          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[500,0,1],
-          addOverFlowBin='upper',
-        ))
-        plots.append(Plot(
-          name = 'MVA_TTLepcc_'+str(model),
-          texX = 'prob for TTlepcc', texY = 'Number of Events / 20 GeV',
-          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTC"),
-          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[500,0,1],
-          addOverFlowBin='upper',
-        ))
-        plots.append(Plot(
-          name = 'MVA_TTLepOther_'+str(model),
-          texX = 'prob for TTlepother', texY = 'Number of Events / 20 GeV',
-          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTO"),
-          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[500,0,1],
-          addOverFlowBin='upper',
-        ))
+    # for model in allModels:
+        # plots.append(Plot(
+          # name = 'MVA_TTTT_'+str(model),
+          # texX = 'prob for TTTT', texY = 'Number of Events / 20 GeV',
+          # attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTTT"),
+          ##binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          # binning=[500,0,1],
+          # addOverFlowBin='upper',
+        # ))
+        # plots.append(Plot(
+          # name = 'MVA_TTLepbb_'+str(model),
+          # texX = 'prob for TTlepbb', texY = 'Number of Events / 20 GeV',
+          # attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTB"),
+          ##binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          # binning=[500,0,1],
+          # addOverFlowBin='upper',
+        # ))
+        # plots.append(Plot(
+          # name = 'MVA_TTLepcc_'+str(model),
+          # texX = 'prob for TTlepcc', texY = 'Number of Events / 20 GeV',
+          # attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTC"),
+          ##binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          # binning=[500,0,1],
+          # addOverFlowBin='upper',
+        # ))
+        # plots.append(Plot(
+          # name = 'MVA_TTLepOther_'+str(model),
+          # texX = 'prob for TTlepother', texY = 'Number of Events / 20 GeV',
+          # attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTO"),
+          ##binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          # binning=[500,0,1],
+          # addOverFlowBin='upper',
+        # ))
         
 
     plots.append(Plot(
-      name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
+      name = 'nVtxs', 
+      texX = 'vertex multiplicity', texY = 'Number of Events',
       attribute = TreeVariable.fromString( "PV_npvsGood/I" ),
       binning=[50,0,50],
       addOverFlowBin='upper',
@@ -362,6 +367,287 @@ for i_mode, mode in enumerate(allModes):
         addOverFlowBin='upper',
     ))
 
+    # plots.append(Plot(
+        # name = "2mva_nBTag",
+        # texX = 'N_{b}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_nBTag"],
+        # binning=[2,3,5],
+        # addOverFlowBin='upper',
+    # ))
+
+    # plots.append(Plot(
+        # name = "1mva_nJetGood",
+        # texX = 'N_{jet}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_nJetGood"],
+        # binning=[6,4,10],
+        # addOverFlowBin='upper',
+    # ))
+    
+    # plots.append(Plot(
+        # name = "3mva_nlep",
+        # texX = 'N_{\ell}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_nlep"],
+        # binning=[30,2,3],
+        # addOverFlowBin='upper',
+    # ))
+    
+    plots.append(Plot(
+        name = "4mva_mT_l1",
+        texX = 'm_{T, \ell 1}', texY = 'Number of Events / 20 GeV',
+        attribute = config.all_mva_variables["mva_mT_l1"],
+        binning=[15,-20,300],
+        addOverFlowBin='upper',
+    ))
+    
+    plots.append(Plot(
+        name = "5mva_mT_l2",
+        texX = 'm_{T, \ell 2}', texY = 'Number of Events / 20 GeV',
+        attribute = config.all_mva_variables["mva_mT_l2"],
+        binning=[20,-20,300],
+        addOverFlowBin='upper',
+    ))
+      
+    # plots.append(Plot(
+        # name = "35mva_ml_12",
+        # texX = 'm_{T, 12}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_ml_12"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))
+
+    # plots.append(Plot(
+        # name = "6mva_met_pt"  ,
+        # texX = 'E_{t}^{miss}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_met_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))  
+
+    # plots.append(Plot(
+        # name = "7mva_l1_pt"   ,
+        # texX = 'p_{T,\ell 1} (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_l1_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))    
+    
+    # plots.append(Plot(
+        # name = "8mva_l1_eta" ,
+        # texX = '\eta_{\ell 1}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_l1_eta"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))    
+    
+    # plots.append(Plot(
+        # name = "9mva_l2_pt"  ,
+        # texX = 'p_{T,\ell 2}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_l2_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))   
+
+    # plots.append(Plot(
+        # name = "10mva_l2_eta"  ,
+        # texX = '\eta_{\ell 2}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_l2_eta"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))   
+    
+    # plots.append(Plot(
+        # name = "11mva_mj_12"  ,
+        # texX = 'm_{jet, 12}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_mj_12"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "12mva_mlj_11"  ,
+        # texX = 'm_{T, jet 1}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_mlj_11"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+       
+    # plots.append(Plot(
+        # name = "13mva_mlj_12"  ,
+        # texX = 'm_{T, jet 2}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_mlj_12"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))   
+    
+    # plots.append(Plot(
+        # name = "14mva_dPhil_12"  ,
+        # texX = '\Delta\phi_{\ell}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_dPhil_12"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "15mva_dPhij_12"  ,
+        # texX = '\Delta\phi_{jet}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_dPhij_12"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "16mva_dEtal_12"  ,
+        # texX = '\Delta\eta_{\ell}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_dEtal_12"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "17mva_dEtaj_12"  ,
+        # texX = '\Delta\eta_{jet}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_dEtaj_12"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+    
+    # plots.append(Plot(
+        # name = "18mva_ht"  ,
+        # texX = 'H_{T}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_ht"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "19mva_htb"  ,
+        # texX = 'H_{T,b}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_htb"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+    
+    # plots.append(Plot(
+        # name = "20mva_ht_ratio"  ,
+        # texX = '\Delta H_{T}', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_ht_ratio"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "21mva_jet0_pt"  ,
+        # texX = 'p_{T}(j_{0}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet0_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+    
+    # plots.append(Plot(
+        # name = "22mva_jet0_eta"  ,
+        # texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet0_eta"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+       
+    # plots.append(Plot(
+        # name = "23mva_jet0_btagDeepFlavB"  ,
+        # texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet0_btagDeepFlavB"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))   
+    
+    # plots.append(Plot(
+        # name = "24mva_jet1_pt"  ,
+        # texX = 'p_{T}(j_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet1_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "25mva_jet1_eta"  ,
+        # texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet1_eta"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "26mva_jet1_btagDeepFlavB"  ,
+        # texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet1_btagDeepFlavB"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "27mva_jet2_pt"  ,
+        # texX = 'p_{T}(j_{2}) (GeV) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet2_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+    
+    # plots.append(Plot(
+        # name = "28mva_jet2_eta"  ,
+        # texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet2_eta"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "29mva_jet2_btagDeepFlavB"  ,
+        # texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet2_btagDeepFlavB"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+    
+    # plots.append(Plot(
+        # name = "30mva_jet3_pt"  ,
+        # texX = 'p_{T}(j_{3}) (GeV) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet3_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+
+    # plots.append(Plot(
+        # name = "31mva_jet4_pt"  ,
+        # texX = 'p_{T}(j_{4}) (GeV) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet4_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # )) 
+    
+    # plots.append(Plot(
+        # name = "32mva_jet5_pt"  ,
+        # texX = 'p_{T}(j_{5}) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet5_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))
+    
+    # plots.append(Plot(
+        # name = "33mva_jet6_pt"  ,
+        # texX = 'p_{T}(j_{6}) (GeV) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet6_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))
+    
+    # plots.append(Plot(
+        # name = "34mva_jet7_pt"  ,
+        # texX = 'p_{T}(j_{7}) (GeV) (GeV)', texY = 'Number of Events / 20 GeV',
+        # attribute = config.all_mva_variables["mva_jet7_pt"],
+        # binning=[15,0,300],
+        # addOverFlowBin='upper',
+    # ))
+    
+    
     plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas, max_events=100 if args.small else -1)
 
     # Get normalization yields from yield histogram
