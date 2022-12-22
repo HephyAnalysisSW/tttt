@@ -33,7 +33,7 @@ from Analysis.Tools.LeptonTrackingEfficiency import LeptonTrackingEfficiency
 from Analysis.Tools.helpers                  import checkRootFile, deepCheckRootFile, deepCheckWeight, dRCleaning
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 from Analysis.Tools.BTagEfficiencyUL         import BTagEfficiency
-from Analysis.Tools.BTagReshapingUL          import BTagReshaping
+from Analysis.Tools.BTagReshapingUL          import BTagReshaping, flavourSys
 from Analysis.Tools.mcTools                  import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
 genSearch = GenSearch()
 
@@ -564,6 +564,19 @@ if addSystematicVariations:
         # new_variables.extend( ['met_pt_'+var+'/F', 'met_phi_'+var+'/F'] ) # MET variations are calculated with JMECorrector
 
 
+scenarios = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
+             'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
+             'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
+             'up_cferr1':1., 'down_cferr2':1., 'up_cferr1':1.,
+             'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
+             'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
+             }
+
+if isMC:
+    for k in scenarios.keys():
+        new_variables.append('weightBTagSF_'+k+'/F')
+
+
 # Btag weights Method 1a
 for var in btagEff.btagWeightNames:
     if var!='MC':
@@ -1091,13 +1104,25 @@ def filler( event ):
 
     #if addSystematicVariations:
     # B tagging weights method 1a
+    scenarios = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
+                 'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
+                 'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
+                 'up_cferr1':1., 'down_cferr2':1., 'up_cferr1':1.,
+                 'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
+                 'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
+                 }
+
     if isMC:
-        for j in jets:
-            btagEff.addBTagEffToJet(j)
-            btagRes.getbtagSF(j)
-        for var in btagEff.btagWeightNames:
-            if var!='MC':
-                setattr(event, 'reweightBTag_'+var, btagEff.getBTagSF_1a( var, bJets, filter( lambda j: abs(j['eta'])<2.4, nonBJets ) ) )
+        for k in scenarios.keys():
+            for j in jets:
+                btagEff.addBTagEffToJet(j)
+                btagRes.getbtagSF(j)
+                if k in list(flavourSys[abs(j['hadronFlavour'])]):
+                    scenarios[k] *= j['jetSF'][k]
+            setattr(event, 'weightBTagSF_'+k, scenarios[k])
+            for var in btagEff.btagWeightNames:
+                if var!='MC':
+                    setattr(event, 'reweightBTag_'+var, btagEff.getBTagSF_1a( var, bJets, filter( lambda j: abs(j['eta'])<2.4, nonBJets ) ) )
 
 
 # Create a maker. Maker class will be compiled. This instance will be used as a parent in the loop
