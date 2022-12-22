@@ -125,7 +125,7 @@ def drawPlots(plots, mode, dataMCScale):
             plot_directory = plot_directory_,
             ratio =  {'yRange':(0.1,1.9)} if not args.noData else None,
             logX = False, logY = log, sorting = True,
-            yRange = (0.9, "auto") if log else (0.000, "auto"),
+            yRange = (0.9, "auto") if log else (0.001, "auto"),
             scaling = {0:1} if args.dataMCScaling else {},
             legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
@@ -217,7 +217,7 @@ def make_mva_inputs( event, sample ):
        setattr( event, mva_variable, func(event, sample) )
 sequence.append( make_mva_inputs ) 
 
-allModels  = ["model1_db_lstm"]#[ "model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
+allModels  = ["model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
 options = ort.SessionOptions()
 options.intra_op_num_threads = 1
 options.inter_op_num_threads = 1
@@ -229,7 +229,7 @@ def torch_predict( event, sample ):
     lstm_jets_db = np.nan_to_num(lstm_jets_db)
     #print('\n',flat_variables.shape, '\n',lstm_jets_db.shape, '\n',lstm_jets_nodb.shape, '\n')
     for model in allModels:
-        ort_sess = ort.InferenceSession(model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
+        ort_sess = ort.InferenceSession("models/"+model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
         LSTM = False
         db = False
         if (str(model).find('lstm')!=-1): LSTM = True
@@ -332,7 +332,7 @@ for i_mode, mode in enumerate(allModes):
           texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
           attribute = lambda event, sample, model_name=model: getattr(event, model_name),
           #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          binning=[50,0,1],
+          binning=[500,0,1],
           addOverFlowBin='upper',
         ))
 
