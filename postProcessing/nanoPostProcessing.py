@@ -564,16 +564,16 @@ if addSystematicVariations:
         # new_variables.extend( ['met_pt_'+var+'/F', 'met_phi_'+var+'/F'] ) # MET variations are calculated with JMECorrector
 
 
-scenarios = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
-             'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
-             'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
-             'up_cferr1':1., 'down_cferr2':1., 'up_cferr1':1.,
-             'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
-             'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
-             }
+scenarios = ['central', 'up_jes', 'down_jes', 'up_lf',
+             'down_lf', 'up_hfstats1', 'down_hfstats1',
+             'up_hfstats2', 'up_hfstats2', 'down_hfstats2',
+             'up_cferr1', 'down_cferr2', 'up_cferr1',
+             'down_cferr2', 'up_hf', 'down_hf', 'up_lfstats1',
+             'down_lfstats1', 'up_lfstats2', 'down_lfstats2'
+             ]
 
 if isMC:
-    for k in scenarios.keys():
+    for k in scenarios:
         new_variables.append('weightBTagSF_'+k+'/F')
 
 
