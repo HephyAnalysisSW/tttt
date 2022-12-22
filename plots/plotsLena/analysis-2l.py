@@ -131,38 +131,8 @@ def drawPlots(plots, mode, dataMCScale):
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
             copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
-            
-# Read variables and sequences
-sequence       = []
 
-from tttt.Tools.objectSelection import isBJet
-from tttt.Tools.helpers import getObjDict
-jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepB/F', 'btagDeepFlavB/F']
-jetVarNames      = [x.split('/')[0] for x in jetVars]
-def make_jets( event, sample ):
-    event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
-    event.bJets    = [j for j in event.jets if isBJet(j, year=event.year) and abs(j['eta'])<=2.4]
-sequence.append( make_jets )
-
-#MVA
-import tttt.MVA.configs as configs
-config = configs.tttt_2l
-read_variables = config.read_variables
-
-# Add sequence that computes the MVA inputs
-
-# ONNX load
-# onnx_model = ... 
-def make_mva( event, sample ):
-    mva_inputs = []
-    for mva_variable, func in config.mva_variables:
-        val = func(event, sample)
-        setattr( event, mva_variable, val )
-        mva_inputs.append( val )
-
-    #print (mva_inputs)
-    #event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = onnx_model.predict( mva_inputs )
-    event.lenas_MVA_TTTT, event.lenas_MVA_TTbb, event.lenas_MVA_TTcc, event.lenas_MVA_TTother  = 0.25, 0.25, 0.25, 0.25 
+read_variables = []
 
 #jetVars         = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F']#, 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F']
 #jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F','index/I']
