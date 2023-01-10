@@ -6,8 +6,11 @@ import ROOT
 import logging
 logger = logging.getLogger(__name__)
 
-import tttt.samples.config as config
-directory_ = config.location_data_UL2018
+try:
+    directory_ = sys.modules['__main__'].directory_
+except:
+    import tttt.samples.config as config
+    directory_ = config.location_data_UL2018
 
 logger.info("Loading data samples from directory %s", directory_)
 
@@ -33,3 +36,4 @@ allSamples.append( Run2018 )
 for s in allSamples:
   s.color   = ROOT.kBlack
   s.isData  = True
+    
