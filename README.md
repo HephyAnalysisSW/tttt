@@ -46,3 +46,19 @@ cd delphes
 ./configure
 sed -i -e 's/c++0x/c++17/g' Makefile
 make -j 4 
+
+# Recipe for gen production
+```
+cmsrel CMSSW_10_6_27
+cd CMSSW_10_6_27/src
+cmsenv
+git cms-init
+git clone git@github.com:HephyAnalysisSW/tttt.git
+cp $CMSSW_BASE/src/tttt/sparse-checkout $CMSSW_BASE/src/.git/info/.
+git remote add hephy git@github.com:HephyAnalysisSW/cmssw.git
+git pull hephy private-UL-10_6_27
+git read-tree -mu HEAD
+git clone git@github.com:HephyAnalysisSW/Samples
+git clone git@github.com:HephyAnalysisSW/RootTools
+cd $CMSSW_BASE
+scram b -j40
