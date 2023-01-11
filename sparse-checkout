@@ -1,0 +1,5 @@
+/.clang-format
+/.clang-tidy
+/.gitignore
+/PhysicsTools/NanoAOD/
+/GeneratorInterface/LHEInterface
