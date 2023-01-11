@@ -26,16 +26,18 @@ from Analysis.Tools.puReweighting        import getReweightingFunction
 import Analysis.Tools.syncer
 import numpy as np
 
+
 # Arguments
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?')
 argParser.add_argument('--noData',         action='store_true', help='Do not plot data.')
-#argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
+argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?')
-argParser.add_argument('--plot_directory', action='store', default='TMB_4t_p3')
+argParser.add_argument('--plot_directory', action='store', default='TMB_4t_p3_bin50')
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
+argParser.add_argument('--mva',            action='store', default='no MVA')
 args = argParser.parse_args()
 
 # Logger
@@ -47,31 +49,33 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 if args.small: args.plot_directory += "_small"
 if args.noData:args.plot_directory += "_noData"
 
+
 # Simulated samples
 from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 #from TMB.Samples.nanoTuples_RunII_nanoAODv6_dilep_pp import *
 
-
 # Split dileptonic TTBar into three different contributions
-sample_TTLep = TTLep
+
+sample_TTLep = TTLepbb
 # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
 TTLep_bb    = copy.deepcopy( sample_TTLep )
 TTLep_bb.name = "TTLep_bb"
 TTLep_bb.texName = "t#bar{t}b#bar{b}"
 TTLep_bb.color   = ROOT.kRed + 2 
-TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
+TTLep_bb.setSelectionString( "genTtbarId%100>=50&&overlapRemoval" )
 TTLep_cc    = copy.deepcopy( sample_TTLep )
 TTLep_cc.name = "TTLep_cc"
 TTLep_cc.texName = "t#bar{t}c#bar{c}" 
 TTLep_cc.color   = ROOT.kRed - 3 
-TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
+TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50&&overlapRemoval" )
 TTLep_other = copy.deepcopy( sample_TTLep )
 TTLep_other.name = "TTLep_other"
 TTLep_other.texName = "t#bar{t} + light j." 
-TTLep_other.setSelectionString( "genTtbarId%100<40" )
+TTLep_other.setSelectionString( "genTtbarId%100<40&&overlapRemoval" )
+
 
 # group all the simulated backgroundsamples 
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, TTTT] 
+mc = [ TTLep_bb, TTLep_cc, TTLep_other,TTTT] 
 #mc = [  TTTT] 
 # Now we add the data
 if not args.noData:
@@ -115,6 +119,8 @@ def drawObjects( dataMCScale, lumi_scale ):
 def drawPlots(plots, mode, dataMCScale):
   for log in [False, True]:
     plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), args.selection)
+    plot_directory_cut_ = os.path.join(plot_directory,'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), '_cut_y', args.selection)
+    plot_directory_cut__ = os.path.join(plot_directory,'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), '_cut_yy', args.selection)
     for plot in plots:
       if not max(l.GetMaximum() for l in sum(plot.histos,[])): continue # Empty plot
 
@@ -131,6 +137,29 @@ def drawPlots(plots, mode, dataMCScale):
             drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
             copyIndexPHP = True, extensions = ["png", "pdf", "root"],
           )
+      if isinstance( plot, Plot):
+          plotting.draw(plot,
+            plot_directory = plot_directory_cut_,
+            ratio =  {'yRange':(0.1,1.9)} if not args.noData else None,
+            logX = False, logY = log, sorting = True,
+            yRange = (0.1, "auto") if log else (0.001, "auto"),
+            scaling = {0:1} if args.dataMCScaling else {},
+            legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
+            drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
+            copyIndexPHP = True, extensions = ["png", "pdf", "root"],
+          ) 
+
+    if isinstance( plot, Plot):
+          plotting.draw(plot,
+            plot_directory = plot_directory_cut__,
+            ratio =  {'yRange':(0.1,1.9)} if not args.noData else None,
+            logX = False, logY = log, sorting = True,
+            yRange = (0.01, "auto") if log else (0.001, "auto"),
+            scaling = {0:1} if args.dataMCScaling else {},
+            legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
+            drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
+            copyIndexPHP = True, extensions = ["png", "pdf", "root"],
+          )           
 
 read_variables = []
 
@@ -159,7 +188,8 @@ read_variables_MC = [
     'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
-            
+         
+         
 # Read variables and sequences
 sequence       = []
 
@@ -167,57 +197,127 @@ from tttt.Tools.objectSelection import isBJet
 from tttt.Tools.helpers import getObjDict
 
 
-def make_jets( event, sample ):
-    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
-    event.bJets = [j for j in event.jets if isBJet(j, year=event.year) and abs(j['eta'])<=2.4]
-
-sequence.append( make_jets )
+#def make_jets( event, sample ):
+#    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
+#    event.bJets = [j for j in event.jets if isBJet(j, year=event.year) and abs(j['eta'])<=2.4]
+#sequence.append( make_jets )
 
 #MVA
-import tttt_2l_lena as config
+import configs_main.tttt_2l2pbb as config
 import onnxruntime as ort
 read_variables += config.read_variables
 test = []
 
-# Add sequence that computes the MVA inputs
 
 # Add sequence that computes the MVA inputs
 def make_mva_inputs( event, sample ):
    for mva_variable, func in config.mva_variables:
        setattr( event, mva_variable, func(event, sample) )
+sequence += config.sequence
 sequence.append( make_mva_inputs ) 
 
-allModels  = ["model1","model2","model3","model4","model5","model6","model7","model8","model9","model10","model11","model1_lstm","model2_lstm","model4_lstm","model6_lstm", "model8_lstm", "model1_db_lstm","model2_db_lstm","model4_db_lstm","model6_db_lstm","model8_db_lstm" ]
+Models = [
+"btag2p_b-100000_e-500_hs1-96_hs2-53",
+"btag2p_b-10000_e-500_hs1-96_hs2-53",
+"btag2p_b-20000_e-500_hs1-144_hs2-53",
+"btag2p_b-20000_e-500_hs1-192_hs2-53",
+"btag2p_b-20000_e-500_hs1-48_hs2-53",
+"btag2p_b-20000_e-500_hs1-96_hs2-33",
+"btag2p_b-20000_e-500_hs1-96_hs2-43",
+"btag2p_b-20000_e-500_hs1-96_hs2-48",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-1_hs-lstm-10_DoubleB",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-1_hs-lstm-10",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-2_hs-lstm-10_DoubleB",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-2_hs-lstm-10",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-10",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-15_DoubleB",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-15",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-25_DoubleB",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-25",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-5_DoubleB",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-5",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-6_hs-lstm-10_DoubleB",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-6_hs-lstm-10",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-8_hs-lstm-10_DoubleB",
+"btag2p_b-20000_e-500_hs1-96_hs2-53_lstm-8_hs-lstm-10",
+"btag2p_b-20000_e-500_hs1-96_hs2-53",
+"btag2p_b-20000_e-500_hs1-96_hs2-63",
+"btag2p_b-20000_e-750_hs1-96_hs2-53_lstm-4_hs-lstm-25_DoubleB",
+"btag2p_b-20000_e-750_hs1-96_hs2-53_lstm-4_hs-lstm-25",
+"btag2p_b-50000_e-500_hs1-96_hs2-53",
+"btag2p_b-5000_e-500_hs1-96_hs2-53",
+]
+
+Models2 = [
+"btag3p_b-100000_e-500_hs1-96_hs2-53",
+"btag3p_b-10000_e-500_hs1-96_hs2-53",
+"btag3p_b-20000_e-500_hs1-144_hs2-53",
+"btag3p_b-20000_e-500_hs1-192_hs2-53",
+"btag3p_b-20000_e-500_hs1-48_hs2-53",
+"btag3p_b-20000_e-500_hs1-96_hs2-33",
+"btag3p_b-20000_e-500_hs1-96_hs2-43",
+"btag3p_b-20000_e-500_hs1-96_hs2-48",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-1_hs-lstm-10_DoubleB",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-1_hs-lstm-10",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-2_hs-lstm-10_DoubleB",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-2_hs-lstm-10",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-10_DoubleB",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-10",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-15_DoubleB",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-15",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-25_DoubleB",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-25",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-4_hs-lstm-5",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-6_hs-lstm-10_DoubleB",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-6_hs-lstm-10",
+"btag3p_b-20000_e-500_hs1-96_hs2-53_lstm-8_hs-lstm-10",
+"btag3p_b-20000_e-500_hs1-96_hs2-53",
+"btag3p_b-20000_e-500_hs1-96_hs2-63",
+"btag3p_b-20000_e-750_hs1-96_hs2-53_lstm-4_hs-lstm-25_DoubleB",
+"btag3p_b-20000_e-750_hs1-96_hs2-53_lstm-4_hs-lstm-25",
+"btag3p_b-50000_e-500_hs1-96_hs2-53",
+"btag3p_b-5000_e-500_hs1-96_hs2-53"
+]
+
+if (args.mva == "no MVA"):
+    allModels = []
+else:
+    allModels = []
+    if(args.selection == 'dilepL-offZ1-njet4p-btag2p-ht500'):
+        allModels.append(Models[int(args.mva)])
+    if(args.selection == 'dilepL-offZ1-njet4p-btag3p-ht500'):
+        allModels.append(Models2[int(args.mva)])   
+        
 options = ort.SessionOptions()
 options.intra_op_num_threads = 1
 options.inter_op_num_threads = 1
 
 def torch_predict( event, sample ):
-    flat_variables, lstm_jets_nodb = config.predict_inputs( event, sample, db = False, jet_lstm = True)
-    _, lstm_jets_db = config.predict_inputs( event, sample, db = True, jet_lstm = True)
-    lstm_jets_nodb = np.nan_to_num(lstm_jets_nodb)
+    flat_variables, lstm_jets_db = config.predict_inputs( event, sample, jet_lstm = True)    
+    lstm_jets_nodb = np.delete(lstm_jets_db, obj = [6,7,8], axis = 2) #remove doubleB info
     lstm_jets_db = np.nan_to_num(lstm_jets_db)
-    #print('\n',flat_variables.shape, '\n',lstm_jets_db.shape, '\n',lstm_jets_nodb.shape, '\n')
     for model in allModels:
         ort_sess = ort.InferenceSession("models/"+model+".onnx", providers = ['CPUExecutionProvider'],sess_options=options)
         LSTM = False
         db = False
         if (str(model).find('lstm')!=-1): LSTM = True
-        if (str(model).find('db')!=-1): db = True
+        if (str(model).find('db')!=-1 or str(model).find('DoubleB')!=-1): db = True
         if (LSTM):
             if (db):
-                lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets_db.astype(np.float32)})[0][0] 
+                lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets_db.astype(np.float32)})[0][0]     
             else:
                 lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32),"input2": lstm_jets_nodb.astype(np.float32)})[0][0] 
         else:
-            lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32)})[0][0] 
-        #print(lis[0])    
+            lis = ort_sess.run(["output1"], {"input1": flat_variables.astype(np.float32)})[0][0]           
         if lis.any()<0 or lis.any()>1:
             raise RuntimeError("Found NAN prediction?")
-        setattr( event, model, lis[0] )
-        #print(lis[0])
-        test.append(lis[0])
-#sequence.append( torch_predict )
+        setattr( event, model+"_TTTT", lis[0] )
+        setattr( event, model+"_TTB", lis[1] )
+        setattr( event, model+"_TTC", lis[2] )
+        setattr( event, model+"_TTO", lis[3] )
+        
+        #test.append(lis[0])
+sequence.append( torch_predict )
 
 # Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
@@ -286,7 +386,7 @@ for i_mode, mode in enumerate(allModes):
 
     # Define everything we want to have common to all plots
     Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
-
+    
     plots = []
 
     # A special plot that holds the yields of all modes
@@ -296,16 +396,41 @@ for i_mode, mode in enumerate(allModes):
       binning=[3, 0, 3],
     ))
 
-    # for model in allModels:
-        # plots.append(Plot(
-          # name = 'lenas_MVA_'+str(model),
-          # texX = 'prob acc to lena for TTTT', texY = 'Number of Events / 20 GeV',
-          # attribute = lambda event, sample, model_name=model: getattr(event, model_name),
-          ##binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-          # binning=[50,0,1],
-          # addOverFlowBin='upper',
-        # ))
-
+    for model in allModels:
+        plots.append(Plot(
+          name = 'MVA_TTTT_'+str(model),
+          texX = 'prob for TTTT', texY = 'Number of Events / 20 GeV',
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTTT"),
+          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          binning=[500,0,1],
+          addOverFlowBin='upper',
+        ))
+        plots.append(Plot(
+          name = 'MVA_TTLepbb_'+str(model),
+          texX = 'prob for TTlepbb', texY = 'Number of Events / 20 GeV',
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTB"),
+          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          binning=[500,0,1],
+          addOverFlowBin='upper',
+        ))
+        plots.append(Plot(
+          name = 'MVA_TTLepcc_'+str(model),
+          texX = 'prob for TTlepcc', texY = 'Number of Events / 20 GeV',
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTC"),
+          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          binning=[500,0,1],
+          addOverFlowBin='upper',
+        ))
+        plots.append(Plot(
+          name = 'MVA_TTLepOther_'+str(model),
+          texX = 'prob for TTlepother', texY = 'Number of Events / 20 GeV',
+          attribute = lambda event, sample, model_name=model: getattr(event, model_name+"_TTO"),
+          #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+          binning=[500,0,1],
+          addOverFlowBin='upper',
+        ))
+    
+    
     plots.append(Plot(
       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
       attribute = TreeVariable.fromString( "PV_npvsGood/I" ),
@@ -314,299 +439,95 @@ for i_mode, mode in enumerate(allModes):
     ))
 
     plots.append(Plot(
-        name = 'l1_pt',
-        texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
-        attribute = lambda event, sample:event.l1_pt,
-        binning=[15,0,300],
-        addOverFlowBin='upper',
+      name = 'l1_pt',
+      texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample:event.l1_pt,
+      binning=[15,0,300],
+      addOverFlowBin='upper',
     ))
 
-    plots.append(Plot(
-        name = 'l1_eta',
-        texX = '#eta(l_{1})', texY = 'Number of Events',
-        attribute = lambda event, sample: event.l1_eta,
-        binning=[20,-3,3],
-    ))
+    # plots.append(Plot(
+      # name = 'l1_eta',
+      # texX = '#eta(l_{1})', texY = 'Number of Events',
+      # attribute = lambda event, sample: event.l1_eta,
+      # binning=[20,-3,3],
+    # ))
 
-    plots.append(Plot(
-        name = 'l1_mvaTOP',
-        texX = 'MVA_{TOP}(l_{1})', texY = 'Number of Events',
-        attribute = lambda event, sample: event.l1_mvaTOP,
-        binning=[20,-1,1],
-    ))
+    # plots.append(Plot(
+      # name = 'l2_pt',
+      # texX = 'p_{T}(l_{2}) (GeV)', texY = 'Number of Events / 20 GeV',
+      # attribute = lambda event, sample:event.l2_pt,
+      # binning=[15,0,300],
+      # addOverFlowBin='upper',
+    # ))
 
-    plots.append(Plot(
-        name = 'l1_mvaTOPWP',
-        texX = 'MVA_{TOP}(l_{1}) WP', texY = 'Number of Events',
-        attribute = lambda event, sample: event.l1_mvaTOPWP,
-        binning=[5,0,5],
-    ))
+    # plots.append(Plot(
+      # name = 'l2_eta',
+      # texX = '#eta(l_{2})', texY = 'Number of Events',
+      # attribute = lambda event, sample: event.l2_eta,
+      # binning=[20,-3,3],
+    # ))
+  
+    # plots.append(Plot(
+      # texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
+      # attribute = TreeVariable.fromString( "met_pt/F" ),
+      # binning=[20,0,400],
+      # addOverFlowBin='upper',
+    # ))
 
-    plots.append(Plot(
-        name = 'l2_pt',
-        texX = 'p_{T}(l_{2}) (GeV)', texY = 'Number of Events / 20 GeV',
-        attribute = lambda event, sample:event.l2_pt,
-        binning=[15,0,300],
-        addOverFlowBin='upper',
-    ))
 
-    plots.append(Plot(
-        name = 'l2_eta',
-        texX = '#eta(l_{2})', texY = 'Number of Events',
-        attribute = lambda event, sample: event.l2_eta,
-        binning=[20,-3,3],
-    ))
+    # plots.append(Plot(
+      # texX = 'p_{T}(leading l) (GeV)', texY = 'Number of Events / 20 GeV',
+      # name = 'lep1_pt', attribute = lambda event, sample: event.lep_pt[0],
+      # binning=[20,0,400],
+    # ))
 
-    plots.append(Plot(
-        name = 'l2_mvaTOP',
-        texX = 'MVA_{TOP}(l_{2})', texY = 'Number of Events',
-        attribute = lambda event, sample: event.l2_mvaTOP,
-        binning=[20,-1,1],
-    ))
+    # plots.append(Plot(
+      # texX = 'p_{T}(subleading l) (GeV)', texY = 'Number of Events / 10 GeV',
+      # name = 'lep2_pt', attribute = lambda event, sample: event.lep_pt[1],
+      # binning=[20,0,200],
+    # ))
 
-    plots.append(Plot(
-        name = 'l2_mvaTOPWP',
-        texX = 'MVA_{TOP}(l_{1}) WP', texY = 'Number of Events',
-        attribute = lambda event, sample: event.l2_mvaTOPWP,
-        binning=[5,0,5],
-    ))
+    # plots.append(Plot(
+      # texX = 'p_{T}(trailing l) (GeV)', texY = 'Number of Events / 10 GeV',
+      # name = 'lep3_pt', attribute = lambda event, sample: event.lep_pt[2],
+      # binning=[150,0,150],
+    # ))
 
-    plots.append(Plot(
-        texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
-        attribute = TreeVariable.fromString( "met_pt/F" ),
-        binning=[400//20,0,400],
-        addOverFlowBin='upper',
-    ))
+    # plots.append(Plot(
+      # texX = 'N_{jets}', texY = 'Number of Events',
+      # attribute = TreeVariable.fromString( "nJetGood/I" ), #nJetSelected
+      # binning=[8,3.5,11.5],
+    # ))
 
-    plots.append(Plot(
-        texX = '#phi(E_{T}^{miss})', texY = 'Number of Events / 20 GeV',
-        attribute = TreeVariable.fromString( "met_phi/F" ),
-        binning=[10,-pi,pi],
-    ))
+    # plots.append(Plot(
+      # texX = 'N_{b-tag}', texY = 'Number of Events',
+      # attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
+      # binning=[5, 1.5,6.5],
+    # ))
 
-    plots.append(Plot(
-        name = "Z1_pt",
-        texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events / 20 GeV',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[20,0,400],
-        addOverFlowBin='upper',
-    ))
+    # plots.append(Plot(
+      # texX = 'H_{T} (GeV)', texY = 'Number of Events / 30 GeV',
+      # name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
+      # binning=[30,0,1500],
+    # ))
 
-    plots.append(Plot(
-        name = 'Z1_pt_coarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events / 50 GeV',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[16,0,800],
-        addOverFlowBin='upper',
-    ))
+    # plots.append(Plot(
+      # texX = 'p_{T}(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',
+      # name = 'jet0_pt', attribute = lambda event, sample: event.JetGood_pt[0],
+      # binning=[20,0,600],
+    # ))
 
-    plots.append(Plot(
-        name = 'Z1_pt_superCoarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[3,0,600],
-        addOverFlowBin='upper',
-    ))
+    # plots.append(Plot(
+      # texX = 'p_{T}(subleading jet) (GeV)', texY = 'Number of Events / 30 GeV',
+      # name = 'jet1_pt', attribute = lambda event, sample: event.JetGood_pt[1],
+      # binning=[20,0,600],
+    # ))
 
-    plots.append(Plot(
-        name = 'Z1_pt_coarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events / 50 GeV',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[16,0,800],
-    ))
-
-    plots.append(Plot(
-        name = 'Z1_pt_superCoarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[3,0,600],
-    ))
-
-    plots.append(Plot(
-      texX = 'p_{T}(leading l) (GeV)', texY = 'Number of Events / 20 GeV',
-      name = 'lep1_pt', attribute = lambda event, sample: event.lep_pt[0],
-      binning=[400//20,0,400],
-    ))
-
-    plots.append(Plot(
-      texX = 'p_{T}(subleading l) (GeV)', texY = 'Number of Events / 10 GeV',
-      name = 'lep2_pt', attribute = lambda event, sample: event.lep_pt[1],
-      binning=[200//10,0,200],
-    ))
-
-    plots.append(Plot(
-      texX = 'p_{T}(trailing l) (GeV)', texY = 'Number of Events / 10 GeV',
-      name = 'lep3_pt', attribute = lambda event, sample: event.lep_pt[2],
-      binning=[150//10,0,150],
-    ))
-    plots.append(Plot(
-        texX = 'M(ll) (GeV)', texY = 'Number of Events / 20 GeV',
-        attribute = TreeVariable.fromString( "Z1_mass/F" ),
-        binning=[10,81,101],
-        addOverFlowBin='upper',
-    ))
-
-    plots.append(Plot(
-        name = "Z1_mass_wide",
-        texX = 'M(ll) (GeV)', texY = 'Number of Events / 2 GeV',
-        attribute = TreeVariable.fromString( "Z1_mass/F" ),
-        binning=[50,20,120],
-        addOverFlowBin='upper',
-    )) 
-
-    plots.append(Plot(
-        name = "Z1_cosThetaStar", texX = 'cos#theta(l-)', texY = 'Number of Events / 0.2',
-        attribute = lambda event, sample:event.Z1_cosThetaStar,
-        binning=[10,-1,1],
-    ))
-
-    plots.append(Plot(
-        name = "Z2_mass_wide",
-        texX = 'M(ll) of 2nd OSDL pair', texY = 'Number of Events / 2 GeV',
-        attribute = TreeVariable.fromString( "Z2_mass/F" ),
-        binning=[60,0,120],
-        addOverFlowBin='upper',
-    )) 
-
-    plots.append(Plot(
-        name = "minDLmass",
-        texX = 'min mass of all DL pairs', texY = 'Number of Events / 2 GeV',
-        attribute = TreeVariable.fromString( "minDLmass/F" ),
-        binning=[60,0,120],
-        addOverFlowBin='upper',
-    )) 
-
-    plots.append(Plot(
-        texX = '#Delta#phi(Z_{1}(ll))', texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "Z1_lldPhi/F" ),
-        binning=[10,0,pi],
-    ))
-
-    plots.append(Plot(
-        texX = '#Delta R(Z_{1}(ll))', texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "Z1_lldR/F" ),
-        binning=[10,0,6],
-    ))
-
-    plots.append(Plot(
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = TreeVariable.fromString( "nJetGood/I" ), #nJetSelected
-      binning=[8,3.5,11.5],
-    ))
-
-    plots.append(Plot(
-      texX = 'N_{b-tag}', texY = 'Number of Events',
-      attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
-      binning=[5, 1.5,6.5],
-    ))
-
-    plots.append(Plot(
-      texX = 'H_{T} (GeV)', texY = 'Number of Events / 30 GeV',
-      name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
-      binning=[1500//50,0,1500],
-    ))
-
-    plots.append(Plot(
-      texX = 'p_{T}(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',
-      name = 'jet0_pt', attribute = lambda event, sample: event.JetGood_pt[0],
-      binning=[600//30,0,600],
-    ))
-
-    plots.append(Plot(
-      texX = 'p_{T}(subleading jet) (GeV)', texY = 'Number of Events / 30 GeV',
-      name = 'jet1_pt', attribute = lambda event, sample: event.JetGood_pt[1],
-      binning=[600//30,0,600],
-    ))
-
-    for index in range(2):
-        for abs_pdg in [11, 13]:
-            lep_name = "mu" if abs_pdg==13 else "ele"
-            plots.append(Plot(
-              texX = 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_pt'%(lep_name, index), attribute = lep_getter("pt", index, abs_pdg),
-              binning=[400//20,0,400],
-            ))
-            plots.append(Plot(
-              texX = '#eta(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_eta'%(lep_name, index), attribute = lep_getter("eta", index, abs_pdg),
-              binning=[30,-3,3],
-            ))
-            plots.append(Plot(
-              texX = '#phi(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_phi'%(lep_name, index), attribute = lep_getter("phi", index, abs_pdg),
-              binning=[30,-pi,pi],
-            ))
-            plots.append(Plot(
-              texX = 'dxy(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_dxy'%(lep_name, index), attribute = lep_getter("dxy", index, abs_pdg, functor = lambda x: abs(x)),
-              binning=[50,0,0.05],
-            ))
-            plots.append(Plot(
-              texX = 'dz(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_dz'%(lep_name, index), attribute = lep_getter("dz", index, abs_pdg, functor = lambda x: abs(x)),
-              binning=[50,0,0.05],
-            ))
-            plots.append(Plot(
-              texX = 'IP_{3D}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_ip3d'%(lep_name, index), attribute = lep_getter("ip3d", index, abs_pdg, functor = lambda x: abs(x)),
-              binning=[50,0,0.05],
-            ))
-            plots.append(Plot(
-              texX = '#sigma(IP)_{3D}(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_sip3d'%(lep_name, index), attribute = lep_getter("sip3d", index, abs_pdg, functor = lambda x: abs(x)),
-              binning=[40,0,8],
-            ))
-            plots.append(Plot(
-              texX = 'jetRelIso(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_jetRelIso'%(lep_name, index), attribute = lep_getter("jetRelIso", index, abs_pdg),
-              binning=[50,-.15,0.5],
-            ))
-            plots.append(Plot(
-              texX = 'miniPFRelIso_all(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_miniPFRelIso_all'%(lep_name, index), attribute = lep_getter("miniPFRelIso_all", index, abs_pdg),
-              binning=[50,0,.5],
-            ))
-            plots.append(Plot(
-              texX = 'pfRelIso03_all(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_pfRelIso03_all'%(lep_name, index), attribute = lep_getter("pfRelIso03_all", index, abs_pdg),
-              binning=[50,0,.5],
-            ))
-            plots.append(Plot(
-              texX = 'mvaTTH(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_mvaTTH'%(lep_name, index), attribute = lep_getter("mvaTTH", index, abs_pdg),
-              binning=[24,-1.2,1.2],
-            ))
-#            plots.append(Plot(
-#              texX = 'mvaTOP(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-#              name = '%s%i_mvaTOP'%(lep_name, index), attribute = lep_getter("mvaTOP", index, abs_pdg),
-#              binning=[24,-1.2,1.2],
-#            ))
-            plots.append(Plot(
-              texX = 'charge(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-              name = '%s%i_charge'%(lep_name, index), attribute = lep_getter("pdgId", index, abs_pdg, functor = charge),
-              binning=[3,-1,2],
-            ))
-            if lep_name == "mu":
-                plots.append(Plot(
-                  texX = 'segmentComp(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-                  name = '%s%i_segmentComp'%(lep_name, index), attribute = lep_getter("segmentComp", index, abs_pdg),
-                  binning=[50,0,1],
-                ))
-                plots.append(Plot(
-                  texX = 'nStations(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-                  name = '%s%i_nStations'%(lep_name, index), attribute = lep_getter("nStations", index, abs_pdg),
-                  binning=[10,0,10],
-                ))
-                plots.append(Plot(
-                  texX = 'nTrackerLayers(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
-                  name = '%s%i_nTrackerLayers'%(lep_name, index), attribute = lep_getter("nTrackerLayers", index, abs_pdg),
-                  binning=[20,0,20],
-                ))
-            if lep_name == "ele":
-                for cbIdFlag in vidNestedWPBitMapNamingList:
-                    plots.append(Plot(
-                      texX = '%s(%s_{%i}) (GeV)'%(cbIdFlag, lep_name, index), texY = 'Number of Events',
-                      name = '%s%i_%s_Flag'%(lep_name, index, cbIdFlag), attribute = lep_getter("vidNestedWPBitmap", index, abs_pdg, functor = cbEleIdFlagGetter(cbIdFlag)),
-                      binning=[5,0,5],
-                    ))
-
-    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
+    
+    
+    
+    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas, max_events=100 if args.small else -1)
 
     # Get normalization yields from yield histogram
     for plot in plots:
@@ -637,7 +558,7 @@ for i_mode, mode in enumerate(allModes):
     drawPlots(plots, mode, dataMCScale)
     allPlots[mode] = plots
 
-# Add the different channels into SF and all
+#Add the different channels into SF and all
 for mode in ["SF","all"]:
     yields[mode] = {}
     for y in yields[allModes[0]]:
@@ -653,7 +574,7 @@ for mode in ["SF","all"]:
                 for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
                     if i==k: j.Add(l)
 
+
     drawPlots(allPlots['mumu'], mode, dataMCScale)
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
-
