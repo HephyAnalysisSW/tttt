@@ -18,7 +18,9 @@ cd $CMSSW_BASE
 scram b -j40
 
 ```
+
 # Recipe for CMSSW_12 (python 3) 
+
 ```
 cmsrel CMSSW_12_0_0
 cd CMSSW_12_0_0/src
@@ -46,8 +48,10 @@ cd delphes
 ./configure
 sed -i -e 's/c++0x/c++17/g' Makefile
 make -j 4 
+```
 
 ## Recipe for gen production
+
 ```
 cmsrel CMSSW_10_6_27
 cd CMSSW_10_6_27/src
