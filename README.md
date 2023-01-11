@@ -47,7 +47,7 @@ cd delphes
 sed -i -e 's/c++0x/c++17/g' Makefile
 make -j 4 
 
-# Recipe for gen production
+## Recipe for gen production
 ```
 cmsrel CMSSW_10_6_27
 cd CMSSW_10_6_27/src
@@ -62,3 +62,4 @@ git clone git@github.com:HephyAnalysisSW/Samples
 git clone git@github.com:HephyAnalysisSW/RootTools
 cd $CMSSW_BASE
 scram b -j40
+```
