@@ -36,4 +36,3 @@ allSamples.append( Run2018 )
 for s in allSamples:
   s.color   = ROOT.kBlack
   s.isData  = True
-    

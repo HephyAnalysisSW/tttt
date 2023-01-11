@@ -1,6 +1,5 @@
 import ROOT
 
-#from TMB.Samples.helpers import singleton as singleton
 from tttt.samples.helpers import singleton as singleton
 @singleton
 class color():
