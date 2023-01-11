@@ -66,4 +66,6 @@ git clone git@github.com:HephyAnalysisSW/Samples
 git clone git@github.com:HephyAnalysisSW/RootTools
 cd $CMSSW_BASE
 scram b -j40
+
+source /cvmfs/cms.cern.ch/crab3/crab.sh
 ```
