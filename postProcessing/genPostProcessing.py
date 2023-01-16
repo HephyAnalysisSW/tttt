@@ -364,7 +364,7 @@ def filler( event ):
             weight_id = weight.id.rstrip('_nlo')
             if weight_id in ['rwgt_1','dummy']: 
                 event.rw_nominal = weight.wgt
-            print "Hello weight", weight_id, ( weight_id.lower() in weightInfo_data_lower.keys()) 
+            #print "Hello weight", weight_id, ( weight_id.lower() in weightInfo_data_lower.keys()) 
             if not weight_id.lower() in weightInfo_data_lower.keys(): 
                 continue
             pos = weightInfo_data_lower[weight_id]
@@ -383,10 +383,10 @@ def filler( event ):
         # Initialize with Reference Point
 
         if not hyperPoly.initialized: 
-            print "evt,run,lumi", event.run, event.lumi, event.evt
-            print "ref point", ref_point_coordinates, "param_points", param_points
-            for i_p, p in enumerate(param_points):
-                print "weight", i_p, weights[i_p], " ".join([ "%s=%3.2f"%( weightInfo.variables[i], p[i]) for i in range(len(p)) if p[i]!=0])
+            #print "evt,run,lumi", event.run, event.lumi, event.evt
+            #print "ref point", ref_point_coordinates, "param_points", param_points
+            #for i_p, p in enumerate(param_points):
+            #    print "weight", i_p, weights[i_p], " ".join([ "%s=%3.2f"%( weightInfo.variables[i], p[i]) for i in range(len(p)) if p[i]!=0])
             hyperPoly.initialize( param_points, ref_point_coordinates )
 
         coeff = hyperPoly.get_parametrization( weights )
