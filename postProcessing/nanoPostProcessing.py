@@ -34,8 +34,8 @@ from Analysis.Tools.helpers                  import checkRootFile, deepCheckRoot
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 from Analysis.Tools.BTagEfficiencyUL         import BTagEfficiency
 from Analysis.Tools.BTagReshapingUL          import BTagReshaping, flavourSys
-from Analysis.Tools.mcTools                  import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
-genSearch = GenSearch()
+#from Analysis.Tools.mcTools                  import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
+#genSearch = GenSearch()
 
 def get_parser():
     ''' Argument parser for post-processing module.
