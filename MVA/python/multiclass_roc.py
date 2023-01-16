@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import ROOT, os
 from RootTools.core.standard import *
 import Analysis.Tools.syncer as syncer
@@ -10,8 +12,8 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--config',             action='store', type=str,   default='tttt_3l', help="Name of the config file")
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
 argParser.add_argument('--variable_set',       action='store', type=str,   default='mva_variables', help="List of variables for training")
-argParser.add_argument('--output_directory',   action='store', type=str,   default='/groups/hephy/cms/cristina.giordano/www/tttt/plots')
-argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/user/rosmarie.schoefbeck/TMB/training-ntuples-tttt-v1/MVA-training") )
+argParser.add_argument('--output_directory',   action='store', type=str,   default='/groups/hephy/cms/$USER/www/tttt/plots')
+argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/user/cms/$USER/tttt/training-ntuples-tttt/MVA-training") )
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--add_LSTM',           action='store_true', help="add LSTM?")
 argParser.add_argument('--selectionString',    action='store', type=str,   default='dilepVL-offZ1-njet4p-btag3p')

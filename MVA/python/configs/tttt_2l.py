@@ -114,18 +114,20 @@ sequence.append( MT2 )
 
 all_mva_variables = {
 
-# global event properties
+     #Global Event Properties
      "mva_nJetGood"              :(lambda event, sample: event.nJetGood),
-     #"mva_nBTag"                 :(lambda event, sample: event.nBTag),
 
+     #Lep Vars
      "mva_mT_l1"                 :(lambda event, sample: sqrt(2*event.l1_pt*event.met_pt*(1-cos(event.l1_phi-event.met_phi)))),
      "mva_mT_l2"                 :(lambda event, sample: sqrt(2*event.l2_pt*event.met_pt*(1-cos(event.l2_phi-event.met_phi)))),
      "mva_ml_12"                 :(lambda event, sample: sqrt(2*event.l1_pt*event.l2_pt*(cosh(event.l1_eta-event.l2_eta)-cos(event.l1_phi-event.l2_phi)))),
-     "mva_met_pt"                :(lambda event, sample: event.met_pt),
      "mva_l1_pt"                 :(lambda event, sample: event.l1_pt),
      "mva_l1_eta"                :(lambda event, sample: event.l1_eta),
      "mva_l2_pt"                 :(lambda event, sample: event.l2_pt),
      "mva_l2_eta"                :(lambda event, sample: event.l2_eta),
+
+     #MET
+     "mva_met_pt"                :(lambda event, sample: event.met_pt),
 
      "mva_mj_12"                 :(lambda event, sample: sqrt(2*event.jets[0]['pt']*event.jets[1]['pt']*(cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))) if event.nJetGood >=2 else 0),
      "mva_mlj_11"                :(lambda event, sample: sqrt(2*event.l1_pt*event.jets[0]['pt']*(cosh(event.l1_eta-event.jets[0]['eta'])-cos(event.l1_phi-event.jets[0]['phi']))) if event.nJetGood >=1 else 0),
@@ -166,7 +168,7 @@ all_mva_variables = {
      "mva_nBTagJetL"             :(lambda event, sample: len(filter( lambda j:isBJet(j, WP="loose"),  event.jets ))),
      "mva_nBTagJetM"             :(lambda event, sample: len(filter( lambda j:isBJet(j, WP="medium"), event.jets ))),
      "mva_nBTagJetT"             :(lambda event, sample: len(filter( lambda j:isBJet(j, WP="tight"),  event.jets ))),
-     "mva_dR_min0"               :(lambda event, sample: event.dR_min0), 
+     "mva_dR_min0"               :(lambda event, sample: event.dR_min0),
      "mva_dR_min1"               :(lambda event, sample: event.dR_min1),
      #Smallest dR between two b-tagged jets
      "mva_min_dR_bb"             :(lambda event, sample: event.min_dR_bb),
@@ -227,16 +229,16 @@ sample_TTLep = samples.TTLepbb
 TTLep_bb    = copy.deepcopy( sample_TTLep )
 TTLep_bb.name = "TTLep_bb"
 TTLep_bb.texName = "t#bar{t}b#bar{b}"
-TTLep_bb.color   = ROOT.kRed + 2 
+TTLep_bb.color   = ROOT.kRed + 2
 TTLep_bb.setSelectionString( "genTtbarId%100>=50&&overlapRemoval" )
 TTLep_cc    = copy.deepcopy( sample_TTLep )
 TTLep_cc.name = "TTLep_cc"
-TTLep_cc.texName = "t#bar{t}c#bar{c}" 
-TTLep_cc.color   = ROOT.kRed - 3 
+TTLep_cc.texName = "t#bar{t}c#bar{c}"
+TTLep_cc.color   = ROOT.kRed - 3
 TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50&&overlapRemoval" )
 TTLep_other = copy.deepcopy( sample_TTLep )
 TTLep_other.name = "TTLep_other"
-TTLep_other.texName = "t#bar{t} + light j." 
+TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40&&overlapRemoval" )
 
 training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, TTLep_other ]
