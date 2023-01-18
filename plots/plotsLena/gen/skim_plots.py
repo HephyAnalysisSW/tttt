@@ -9,7 +9,7 @@ import copy
 from math                           import sqrt, cos, sin, pi, isnan, sinh, cosh, log
 
 # Analysis
-#import Analysis.Tools.syncer        as syncer
+import Analysis.Tools.syncer        as syncer
 from   Analysis.Tools.WeightInfo    import WeightInfo
 
 # RootTools
@@ -28,7 +28,7 @@ argParser.add_argument('--logLevel',           action='store',      default='INF
 argParser.add_argument('--plot_directory',     action='store',      default='gen')
 argParser.add_argument('--selection',          action='store',      default=None)
 argParser.add_argument('--sample',             action='store',      default='TTTT_MS')
-argParser.add_argument('--WC',                 action='store',      default='ctt')
+argParser.add_argument('--WC',                 action='store',      nargs = '*',             default=['ctt'], type=str)
 argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    default=[1.0],  help='Values of the Wilson coefficient')
 argParser.add_argument('--WCval_FI',           action='store',      nargs = '*',             type=float,    default=[],  help='Values of the Wilson coefficient to show FI for.')
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
@@ -52,20 +52,21 @@ objects = sample.objects if hasattr( sample, "objects") else []
 w = WeightInfo(sample.reweight_pkl)
 w.set_order(2)
 
+colors = [ROOT.kOrange, ROOT.kPink-7, ROOT.kBlue, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta]
 # define which Wilson coefficients to plot
 FIs = []
-params =  [ {'legendText':'SM',  'color':ROOT.kBlue, 'WC':{}} ] 
-params += [ {'legendText':'%s %3.2f'%(args.WC, wc), 'color':ROOT.kOrange+i_wc,  'WC':{args.WC:wc} } for i_wc, wc in enumerate(args.WCval)]
-
+params =  [ {'legendText':'SM',  'color':ROOT.kBlack, 'WC':{}} ] 
+for i in range (len(args.WC)):
+    params += [ {'legendText':'%s %3.2f'%(args.WC[i], wc), 'color':colors[i]+(i_wc),  'WC':{args.WC[i]:wc} } for i_wc, wc in enumerate(args.WCval)]
 for i_param, param in enumerate(params):
-    param['sample'] = sample
-    param['style']  = styles.lineStyle( param['color'] )
-
+    params[i_param]['sample'] = sample
+    params[i_param]['style']  = styles.lineStyle( params[i_param]['color'] )
+params[0]['style']  = styles.lineStyle( params[0]['color'], 2 )
 stack = Stack(*[ [ param['sample'] ] for param in params ] )
 weight= [ [ w.get_weight_func(**param['WC']) ] for param in params ]
-FIs.append( ( ROOT.kGray+1, "WC@SM",   w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:0})) )
-for i_WCval, WCval in enumerate(args.WCval_FI):
-    FIs.append( ( ROOT.kGray+i_WCval,   "WC@WC=%3.2f"%WCval, w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:WCval})) )
+# FIs.append( ( ROOT.kGray+1, "WC@SM",   w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:0})) )
+# for i_WCval, WCval in enumerate(args.WCval_FI):
+    # FIs.append( ( ROOT.kGray+i_WCval,   "WC@WC=%3.2f"%WCval, w.get_fisher_weight_string(args.WC,args.WC, **{args.WC:WCval})) )
 
 # Read variables and sequences
 read_variables = [
@@ -233,7 +234,8 @@ Plot.setDefaults(stack = stack, weight = weight, addOverFlowBin=None)
 plots        = []
 fisher_plots = []
 
-postfix = '_'+args.WC
+l = ''.join(args.WC)
+postfix = '_'+l
 
 if 'g' in objects:
     plots.append(Plot( name = "Photon0_pt"+postfix,
@@ -313,7 +315,7 @@ if 't' in objects:
     plots.append(Plot( name = "top2_eta"+postfix,
       texX = '#eta(top_{2}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genTop_eta[3] if event.ngenTop>0 else float('nan'),
-      binning=[30,-3,3],
+      binning=[30,-5,5],
     ))
 
 plots.append(Plot( name = "j0_pt"+postfix,
@@ -490,7 +492,7 @@ def drawPlots(plots, subDirectory=''):
 	    plot_directory = plot_directory_,
 	    ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)},
 	    logX = False, logY = log, sorting = False,
-	    yRange = (0.03, "auto") if log else "auto",
+	    yRange = (1e-05,"auto") if log else "auto",
 	    scaling = {},
 	    legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2),
 	    drawObjects = drawObjects( ),
@@ -500,10 +502,12 @@ def drawPlots(plots, subDirectory=''):
 plotting.fill(plots+fisher_plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
 for plot in plots:
-    for i_h, hl in enumerate(plot.histos[0]):
+    for i in range (len(plot.histos)):
         # dress up
-        hl.legendText = params[i_h]['legendText'] 
-        hl.style = params[i_h]['style']
+        #print i
+        plot.histos[i][0].legendText = params[i]['legendText'] 
+        #print params[i]['legendText'] 
+        plot.histos[i][0].style = params[i]['style']
 
     # calculate & add FI histo
     if hasattr(plot, "fisher_plots" ):
