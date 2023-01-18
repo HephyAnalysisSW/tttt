@@ -195,9 +195,12 @@ logger.info("Written model to: %s", output_file)
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 
-Y_predict = model.predict(X_test)
-#if args.add_LSTM:
-#    Y_predict = model.predict( [X_test,  V_test] )
+#Y_predict = model.predict(X_test)
+if args.add_LSTM:
+   Y_predict = model.predict( [X_test,  V_test] )
+else:
+    Y_predict = model.predict(X_test)
+
 fpr = dict()
 tpr = dict()
 roc_auc = dict()
