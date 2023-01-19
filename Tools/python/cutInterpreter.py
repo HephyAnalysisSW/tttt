@@ -26,9 +26,10 @@ special_cuts = {
     #"trilepM" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
     "trilepT":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
     #"trilepT" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
-    "onZ1"   : "abs(Z1_mass-91.2)<10",
-    "offZ1"  : "(!(abs(Z1_mass-91.2)<15))",
-    "offZ2"  : "(!(abs(Z2_mass-91.2)<15))",
+    "OS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&Sum$(lep_pdgId*lep_isTight)==0)",
+    "onZ1"   :         "abs(Z1_mass-91.2)<10",
+    "offZ1"  :         "(!(abs(Z1_mass-91.2)<15))",
+    "offZ2"  :         "(!(abs(Z2_mass-91.2)<15))",
   }
 
 continous_variables = [ ('ht','Sum$(JetGood_pt*(JetGood_pt>25&&abs(JetGood_eta)<2.4))'), ("met", "met_pt"), ("Z2mass", "Z2_mass"), ("Z1pt", "Z1_pt"), ("Z2pt", "Z2_pt"), ("Z1mass", "Z1_mass"), ("minDLmass", "minDLmass"), ("mT", "mT"), ("ptG", "photon_pt")]
