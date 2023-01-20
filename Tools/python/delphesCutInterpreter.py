@@ -7,33 +7,12 @@ logger = logging.getLogger(__name__)
 jetSelection    = "nJetGood"
 bJetSelectionM  = "nBTag"
 
-mIsoWP = { "VT":5, "T":4, "M":3 , "L":2 , "VL":1, 0:"None" }
-
 special_cuts = {
-
-    "example":         "l1_pt>50",
-    "singlelep":       "l1_pt>20",
-    "trg":             "triggerDecision",
-    "dilep":           "l2_pt>20",
-    "dilepVL":         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20",
-    "dilepL" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
-    "dilepM" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
-    "dilepT" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
-    "trilepVL":        "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10",
-    "trilepL":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
-    #"trilepL" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
-    "trilepM":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
-    #"trilepM" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
-    "trilepT":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
-    #"trilepT" :        "l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
-    "OS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&Sum$(lep_pdgId*lep_isTight)==0)",
-    "onZ1"   :         "abs(Z1_mass-91.2)<10",
-    "offZ1"  :         "(!(abs(Z1_mass-91.2)<15))",
-    "offZ2"  :         "(!(abs(Z2_mass-91.2)<15))",
+    #"photon" :   "(recoPhoton_pt[0]>20)",
   }
 
-continous_variables = [ ('ht','Sum$(JetGood_pt*(JetGood_pt>25&&abs(JetGood_eta)<2.4))'), ("met", "met_pt"), ("Z2mass", "Z2_mass"), ("Z1pt", "Z1_pt"), ("Z2pt", "Z2_pt"), ("Z1mass", "Z1_mass"), ("minDLmass", "minDLmass"), ("mT", "mT"), ("ptG", "photon_pt")]
-discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag")]
+continous_variables = [ ("ptG", "recoPhoton_pt[0]"), ("met", "recoMet_pt"), ("ptZ", "recoZ_pt"), ("ptW", "WH_W_pt")]
+discrete_variables  = [ ("njet", "nrecoJet"), ("btag", "nBTag") ]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.
@@ -42,16 +21,6 @@ class cutInterpreter:
     @staticmethod
     def translate_cut_to_string( string ):
 
-        if string.startswith("multiIso"):
-            str_ = mIsoWP[ string.replace('multiIso','') ]
-            return "l1_mIsoWP>%i&&l2_mIsoWP>%i" % (str_, str_)
-        elif string.startswith("relIso"):
-           iso = float( string.replace('relIso','') )
-           raise ValueError("We do not want to use relIso for our analysis anymore!")
-           return "l1_relIso03<%3.2f&&l2_relIso03<%3.2f"%( iso, iso )
-        elif string.startswith("miniIso"):
-           iso = float( string.replace('miniIso','') )
-           return "l1_miniRelIso<%3.2f&&l2_miniRelIso<%3.2f"%( iso, iso )
         # special cuts
         if string in special_cuts.keys(): return special_cuts[string]
 
@@ -118,7 +87,7 @@ class cutInterpreter:
         cutString = "&&".join( map( cutInterpreter.translate_cut_to_string, cuts ) )
 
         return cutString
-
+    
     @staticmethod
     def cutList ( cut, select = [""], ignore = []):
         ''' Cutstring syntax: cut1-cut2-cut3
@@ -128,7 +97,7 @@ class cutInterpreter:
         cuts = filter( lambda c: any( sel in c for sel in select ), cuts )
         # ignore
         cuts = filter( lambda c: not any( ign in c for ign in ignore ), cuts )
-        return [ cutInterpreter.translate_cut_to_string(cut) for cut in cuts ]
+        return [ cutInterpreter.translate_cut_to_string(cut) for cut in cuts ] 
         #return  "&&".join( map( cutInterpreter.translate_cut_to_string, cuts ) )
 
 if __name__ == "__main__":

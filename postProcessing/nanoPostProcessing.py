@@ -34,8 +34,8 @@ from Analysis.Tools.helpers                  import checkRootFile, deepCheckRoot
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 from Analysis.Tools.BTagEfficiencyUL         import BTagEfficiency
 from Analysis.Tools.BTagReshapingUL          import BTagReshaping, flavourSys
-from Analysis.Tools.mcTools                  import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
-genSearch = GenSearch()
+#from Analysis.Tools.mcTools                  import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
+#genSearch = GenSearch()
 
 def get_parser():
     ''' Argument parser for post-processing module.
@@ -118,6 +118,7 @@ isTrilep        = options.skim.lower().count('trilep') > 0
 isSinglelep     = options.skim.lower().count('singlelep') > 0
 isSmall         = options.skim.lower().count('small') > 0
 isInclusive     = options.skim.lower().count('inclusive') > 0
+isOS            = options.skim.lower().count('OS') > 0
 
 # Skim condition
 skimConds = []
@@ -135,11 +136,15 @@ elif isSinglelep:
 if 'ht500' in options.skim.lower():
     skimConds.append("Sum$(Jet_pt*(Jet_pt>20&&abs(Jet_eta)<2.4))>500")
 
+if isOS:
+    skimConds.append("Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&Sum$(lep_pdgId*lep_isTight)==0)")
+
 if isInclusive:
     skimConds.append('(1)')
     isSinglelep = True #otherwise no lepton variables?!
     isDilep     = True
     isTrilep    = True
+    isOS        = True
 
 ################################################################################
 #Samples: Load samples
