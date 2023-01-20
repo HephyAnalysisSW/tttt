@@ -36,15 +36,15 @@ import Analysis.Tools.syncer
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--small',          action='store_true',                      help='Run only on a small subset of the data?')
+argParser.add_argument('--small',          action='store_true', default=False,       help='Run only on a small subset of the data?')
 argParser.add_argument('--noData',         action='store_true', default=False,       help='Do not plot data.')
 argParser.add_argument('--dataMCScaling',  action='store_true',                      help='Data MC scaling?')
 argParser.add_argument('--plot_directory', action='store',      default='4t')
-argParser.add_argument('--selection',      action='store',      default='dilepL-offZ1-njet4p-btag2p-ht500')
+argParser.add_argument('--selection',      action='store',      default='trg-dilepL-minDLmass20-offZ1-njet4p-btag2p-ht500')
 argParser.add_argument('--sys',            action='store',      default='central')
 args = argParser.parse_args()
 
-#DIrectory naming parser options
+#Directory naming parser options
 
 if args.noData: args.plot_directory += "_noData"
 if args.small: args.plot_directory += "_small"
@@ -85,7 +85,7 @@ from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 # Split dileptonic TTBar into three different contributions
 sample_TTLep = TTLep
 # genTtbarId classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
-TTLep_bb    = copy.deepcopy( sample_TTLep )
+TTLep_bb    = copy.deepcopy( TTbb )
 TTLep_bb.name = "TTLep_bb"
 TTLep_bb.texName = "t#bar{t}b#bar{b}"
 TTLep_bb.color   = ROOT.kRed + 2
@@ -126,40 +126,6 @@ if args.small:
         sample.reduceFiles( to = 1 )
         sample.scale /= sample.normalization
 
-#Helpers for putting text on the plots
-
-tex = ROOT.TLatex()
-tex.SetNDC()
-tex.SetTextSize(0.04)
-tex.SetTextAlign(11) # align right
-
-
-def drawObjects( dataMCScale, lumi_scale ):
-    lines = [
-      (0.15, 0.95, 'CMS Simulation'),
-      (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale),
-    ]
-    return [tex.DrawLatex(*l) for l in lines]
-
-def drawPlots(plots, mode, dataMCScale):
-  for log in [False, True]:
-    plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), args.selection)
-    for plot in plots:
-      if not max(l.GetMaximum() for l in sum(plot.histos,[])): continue # Empty plot
-
-      _drawObjects = []
-
-      if isinstance( plot, Plot):
-          plotting.draw(plot,
-            plot_directory = plot_directory_,
-            ratio =  {'yRange':(0.1,1.9)} if not args.noData else None,
-            logX = False, logY = log, sorting = True,
-            yRange = (0.9, "auto") if log else (0.001, "auto"),
-            scaling = {0:1} if args.dataMCScaling else {},
-            legend = ( (0.18,0.88-0.03*sum(map(len, plot.histos)),0.9,0.88), 2),
-            drawObjects = drawObjects( dataMCScale , lumi_scale ) + _drawObjects,
-            copyIndexPHP = True, extensions = ["png", "pdf", "root"],
-          )
 
 read_variables = []
 
@@ -248,32 +214,37 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 ttreeFormulas = { #"bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))"
 #                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection),
     }
+
+#list all the reweights
+weightnames = ['reweightLeptonSF', 'reweightBTag_SF', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
+sys_weights = {
+        'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
+        'LeptonSFUp'    : ('reweightLeptonSF','reweightLeptonSFUp'),
+    }
+
+if args.sys in sys_weights:
+    oldname, newname = sys_weights[args.sys]
+    for i, weight in enumerate(weightnames):
+        if weight == oldname:
+          weightnames[i] = newname
+          read_variables_MC += ['%s/F'%(newname)]
+
+
+
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
 for i_mode, mode in enumerate(allModes):
     yields[mode] = {}
 
-    weightnames = ['weight', 'reweightLeptonSF', 'reweightBTag_SF', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
-    sys_weights = {
-        'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
-        'LeptonSFUp'    : ('reweightLeptonSF','reweightLeptonSFUp'),
-    }
-
-    if args.sys in sys_weights:
-        oldname, newname = sys_weights[args.sys]
-        for i, weight in enumerate(weightnames):
-            if weight == oldname:
-                weightnames[i] = newname
-                read_variables_MC += ['%s/F'%(newname)]
-
+    #Calculate the reweight
     getters = map( operator.attrgetter, weightnames)
     def weight_function( event, sample):
         # Calculate weight, this becomes: w = event.weightnames[0]*event.weightnames[1]*...
         w = reduce(operator.mul, [g(event) for g in getters], 1)
         return w
 
-    # This weight goes to the plot.
+    # This weight goes to the plot - do not reweight the sample with it
     weight_ = lambda event, sample: event.weight if sample.isData else event.weight
 
     #Plot styling
