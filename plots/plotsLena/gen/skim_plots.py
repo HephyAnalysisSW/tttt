@@ -6,7 +6,7 @@
 import ROOT, os, itertools
 #ROOT.gROOT.SetBatch(True)
 import copy
-from math                           import sqrt, cos, sin, pi, isnan, sinh, cosh, log
+from math                           import sqrt, cos, sin, pi, isnan, sinh, cosh, log, acos
 
 # Analysis
 import Analysis.Tools.syncer        as syncer
@@ -73,7 +73,8 @@ read_variables = [
     "genMet_pt/F", "genMet_phi/F", 
     "ngenJet/I", "genJet[pt/F,eta/F,phi/F,matchBParton/I]", 
     "ngenLep/I", "genLep[pt/F,eta/F,phi/F,pdgId/I,mother_pdgId/I]", 
-    "ngenTop/I", "genTop[pt/F,eta/F,phi/F]", 
+    "ngenTop/I", "genTop[pt/F,eta/F,phi/F]",
+    "ngenB/I", "genB[pt/F,eta/F,phi/F]",
     "ngenZ/I", "genZ[pt/F,phi/F,eta/F,daughter_pdgId/I,l1_index/I,l2_index/I]",
     "ngenW/I", "genW[pt/F,phi/F,eta/F,daughter_pdgId/I,l1_index/I,l2_index/I]",
     "ngenPhoton/I", "genPhoton[pt/F,phi/F,eta/F]",
@@ -108,10 +109,33 @@ def addTLorentzVector( p_dict ):
     ''' add a TLorentz 4D Vector for further calculations
     '''
     p_dict['vec4D'] = ROOT.TLorentzVector( p_dict['pt']*cos(p_dict['phi']), p_dict['pt']*sin(p_dict['phi']),  p_dict['pt']*sinh(p_dict['eta']), 0 )
-
+    
+def addTLorentzVectortop( p_dict ):
+    ''' add a TLorentz 4D Vector for further calculations
+    '''
+    p_dict['vec4D'] = ROOT.TLorentzVector( p_dict['pt']*cos(p_dict['phi']), p_dict['pt']*sin(p_dict['phi']),  p_dict['pt']*sinh(p_dict['eta']), p_dict['pt']*cosh(p_dict['eta']) )
+    
 #sequence functions
 sequence = []
 
+def addLorentzTopB ( event, sample ):
+    event.tops = getCollection( event, 'genTop', ['pt', 'eta', 'phi'], 'ngenTop' )
+    event.bs   = getCollection( event, 'genB', ['pt', 'eta', 'phi'], 'ngenB' )
+    # sort
+    event.tops = sorted( event.tops, key=lambda k: -k['pt'] )
+    event.bs = sorted( event.bs, key=lambda k: -k['pt'] )
+    
+    for p in event.tops:
+        addTLorentzVectortop( p )
+    for p in event.bs:
+        addTLorentzVectortop( p )
+    
+    #print (event.tops[0]['vec4D']+event.tops[1]['vec4D']+event.tops[2]['vec4D']+event.tops[3]['vec4D']).M() 
+    
+sequence.append( addLorentzTopB )
+
+
+        
 def makeJets( event, sample ):
     ''' Add a list of filtered all jets to the event
     '''
@@ -129,22 +153,32 @@ def makeJets( event, sample ):
 
     # True B's
     event.trueBjets    = list( filter( lambda j: j['matchBParton'], event.jets ) )
-    event.trueNonBjets = list( filter( lambda j: not j['matchBParton'], event.jets ) )
-
-    # Mimick b reconstruction ( if the trailing b fails acceptance, we supplement with the leading non-b jet ) 
-    # event.bj0, event.bj1 = (event.trueBjets + event.trueNonBjets + [None, None])[:2]
-    # minDR of all btag combinations
-    if len(list(event.trueBjets))>=2:
-        event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.trueBjets, 2)] )
-    else:
-        event.min_dR_bb = -1 
-        
-    if len(list(event.trueBjets))>=2:
-        event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.trueBjets, 2)] )
-    else:
-        event.min_dR_bb = -1     
+    event.trueNonBjets = list( filter( lambda j: not j['matchBParton'], event.jets ) )    
         
 sequence.append( makeJets )
+
+def calculatedeltaR (event, sample ):
+    if len(list(event.trueBjets))>=2:
+        event.min_dR_bjbj = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.trueBjets, 2)] )
+    else:
+        event.min_dR_bjbj = -1 
+        
+    if len(list(event.jets))>=2:
+        event.min_dR_jj = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.jets, 2)] )
+    else:
+        event.min_dR_jj = -1    
+        
+    if event.ngenTop>=2:
+        event.min_dR_tt = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.tops, 2)] )
+    else:
+        event.min_dR_tt = -1   
+
+    if event.ngenB>=2:
+        event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.bs, 2)] )
+    else:
+        event.min_dR_bb = -1  
+
+sequence.append ( calculatedeltaR ) 
 
 def makeMET( event, sample ):
     ''' Make a MET vector to facilitate further calculations
@@ -287,37 +321,147 @@ if 't' in objects:
     plots.append(Plot( name = "top0_pt"+postfix,
       texX = 'p_{T}(top_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genTop_pt[0] if event.ngenTop>0 else float('nan'),
-      binning=[600/20,0,600],
+      binning=[600/20,0,800],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+    # for color, legendText, fisher_string in FIs:
+        # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "top0_eta"+postfix,
       texX = '#eta(top_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genTop_eta[0] if event.ngenTop>0 else float('nan'),
-      binning=[30,-3,3],
+      binning=[30,-5,5],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+    # for color, legendText, fisher_string in FIs:
+        # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "top1_pt"+postfix,
       texX = 'p_{T}(top_{1}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genTop_pt[1] if event.ngenTop>1 else float('nan'),
-      binning=[600/20,0,600],
+      binning=[600/20,0,800],
     ))
 
     plots.append(Plot( name = "top1_eta"+postfix,
       texX = '#eta(top_{1}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genTop_eta[1] if event.ngenTop>1 else float('nan'),
+      binning=[30,-5,5],
+    ))
+    
+    plots.append(Plot( name = "top2_pt"+postfix,
+      texX = 'p_{T}(top_{2}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genTop_pt[2] if event.ngenTop>2 else float('nan'),
+      binning=[600/20,0,800],
+    ))
+
+    plots.append(Plot( name = "top2_eta"+postfix,
+      texX = '#eta(top_{2}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genTop_eta[2] if event.ngenTop>2 else float('nan'),
+      binning=[30,-5,5],
+    ))
+    
+    plots.append(Plot( name = "top3_pt"+postfix,
+      texX = 'p_{T}(top_{3}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genTop_pt[3] if event.ngenTop>3 else float('nan'),
+      binning=[600/20,0,800],
+    ))
+
+    plots.append(Plot( name = "top3_eta"+postfix,
+      texX = '#eta(top_{3}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genTop_eta[3] if event.ngenTop>3 else float('nan'),
+      binning=[30,-5,5],
+    ))
+    
+    plots.append(Plot( name = 'dEtat_12'+postfix,
+      texX = '\Delta\eta_{top}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: abs(event.genTop_eta[0] - event.genTop_eta[1]) if event.ngenTop>=2 else -10,
+      binning=[40,0,6],
+    ))
+
+    plots.append(Plot( name = 'dPhit_12'+postfix,
+      texX = '\Delta\phi_{top}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: acos(cos(event.genTop_phi[0]-event.genTop_phi[1])) if event.ngenTop>=2 else 0,
+      binning=[40,0,3.5],
+    ))
+    
+    plots.append(Plot( name = 'mt_t_12'+postfix,
+      texX = 'm_{t, top12}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: sqrt(2*event.genTop_pt[0]*event.genTop_pt[1]*(cosh(event.genTop_eta[0]-event.genTop_eta[1])-cos(event.genTop_phi[0]-event.genTop_phi[1]))) if len(event.genTop_eta)>=2 else 0,
+      binning=[40,0,2500],
+    ))
+    
+    plots.append(Plot( name = 'm_tttt'+postfix,
+      texX = 'm_{tttt}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: abs((event.tops[0]['vec4D']+event.tops[1]['vec4D']+event.tops[2]['vec4D']+event.tops[3]['vec4D']).M()) if event.ngenTop>=2 else 0,
+      binning=[12,500,5000],
+    ))
+    
+    plots.append(Plot( name = 'm_ttbb'+postfix,
+      texX = 'm_{ttbb}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: abs((event.tops[0]['vec4D']+event.tops[1]['vec4D']+event.bs[1]['vec4D']+event.bs[2]['vec4D']).M()) if (event.ngenTop>=2 and event.ngenB>=2) else 0,
+      binning=[12,300,5000],
+    ))
+    
+    plots.append(Plot( name = 'min_dR_tt'+postfix,
+      texX = '\Delta R_{t,t}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: event.min_dR_tt,
+      binning=[40,0,3.5],
+    ))
+    
+    
+if 'b' in objects:
+    plots.append(Plot( name = "b0_pt"+postfix,
+      texX = 'p_{T}(b_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genB_pt[0] if event.ngenB>0 else float('nan'),
+      binning=[600/20,0,600],
+    ))
+    # for color, legendText, fisher_string in FIs:
+        # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+
+    plots.append(Plot( name = "b0_eta"+postfix,
+      texX = '#eta(b_{0}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genB_eta[0] if event.ngenB>0 else float('nan'),
+      binning=[30,-3,3],
+    ))
+    # for color, legendText, fisher_string in FIs:
+        # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+
+    plots.append(Plot( name = "b1_pt"+postfix,
+      texX = 'p_{T}(b_{1}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genB_pt[1] if event.ngenB>1 else float('nan'),
+      binning=[600/20,0,600],
+    ))
+
+    plots.append(Plot( name = "b1_eta"+postfix,
+      texX = '#eta(b_{1}) (GeV)', texY = 'Number of Events',
+      attribute = lambda event, sample: event.genB_eta[1] if event.ngenB>1 else float('nan'),
       binning=[30,-3,3],
     ))
     
-    plots.append(Plot( name = "top2_eta"+postfix,
-      texX = '#eta(top_{2}) (GeV)', texY = 'Number of Events',
-      attribute = lambda event, sample: event.genTop_eta[3] if event.ngenTop>0 else float('nan'),
-      binning=[30,-5,5],
+    plots.append(Plot( name = 'dEtab_12'+postfix,
+      texX = '\Delta\eta_{b}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: abs(event.genB_eta[0] - event.genB_eta[1]) if event.ngenB>=2 else -10,
+      binning=[40,0,6],
     ))
 
+    plots.append(Plot( name = 'dPhib_12'+postfix,
+      texX = '\Delta\phi_{b}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: acos(cos(event.genB_phi[0]-event.genB_phi[1])) if event.ngenB>=2 else 0,
+      binning=[40,0,3.5],
+    ))
+
+    plots.append(Plot( name = 'mt_b_12'+postfix,
+      texX = 'm_{t, b12}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: sqrt(2*event.genB_pt[0]*event.genB_pt[1]*(cosh(event.genB_eta[0]-event.genB_eta[1])-cos(event.genB_phi[0]-event.genB_phi[1]))) if len(event.genB_eta)>=2 else 0,
+      binning=[40,0,2500],
+    ))
+    
+    plots.append(Plot( name = 'min_dR_bb'+postfix,
+      texX = '\Delta R_{b,b}', texY = 'Number of Events / 20 GeV',
+      attribute = lambda event, sample: event.min_dR_bb,
+      binning=[40,0,3.5],
+    ))
+    
+    
+    
 plots.append(Plot( name = "j0_pt"+postfix,
   texX = 'p_{T}(j_{0}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jets[0]['pt'] if len(event.jets)>0 else float('nan'),
@@ -354,26 +498,26 @@ plots.append(Plot( name = "j2_eta"+postfix,
   binning=[30,-3,3],
 ))
 
-plots.append(Plot( name = "b0_pt"+postfix,
-  texX = 'p_{T}(b_{0}) (GeV)', texY = 'Number of Events',
+plots.append(Plot( name = "bj0_pt"+postfix,
+  texX = 'p_{T}(b-jet_{0}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.trueBjets[0]['pt'] if len(event.trueBjets)>0 else float('nan'),
   binning=[600/20,0,600],
 ))
 
-plots.append(Plot( name = "b1_pt"+postfix,
-  texX = 'p_{T}(b_{1}) (GeV)', texY = 'Number of Events',
+plots.append(Plot( name = "bj1_pt"+postfix,
+  texX = 'p_{T}(b-jet_{1}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.trueBjets[1]['pt'] if len(event.trueBjets)>1 else float('nan'),
   binning=[600/20,0,600],
 ))
 
-plots.append(Plot( name = "b0_eta"+postfix,
-  texX = '#eta(b_{0}) (GeV)', texY = 'Number of Events',
+plots.append(Plot( name = "bj0_eta"+postfix,
+  texX = '#eta(b-jet_{0}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.trueBjets[0]['eta'] if len(event.trueBjets)>0 else float('nan'),
   binning=[30,-3,3],
 ))
 
-plots.append(Plot( name = "b1_eta"+postfix,
-  texX = '#eta(b_{1}) (GeV)', texY = 'Number of Events',
+plots.append(Plot( name = "bj1_eta"+postfix,
+  texX = '#eta(b-jet_{1}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.trueBjets[1]['eta'] if len(event.trueBjets)>1 else float('nan'),
   binning=[30,-3,3],
 ))
@@ -390,8 +534,6 @@ plots.append(Plot( name = 'nJet'+postfix,
   binning=[8,0,8],
 ))
 
-# LENA
-import numpy as np
 plots.append(Plot( name = 'ht'+postfix,
   texX = 'H_{T}', texY = 'Number of Events / 20 GeV',
   attribute = lambda event, sample: sum( [j['pt'] for j in event.jets]),
@@ -399,7 +541,7 @@ plots.append(Plot( name = 'ht'+postfix,
 ))
 
 plots.append(Plot( name = 'htb'+postfix,
-  texX = 'H_{T,b}', texY = 'Number of Events / 20 GeV',
+  texX = 'H_{T,b-jets}', texY = 'Number of Events / 20 GeV',
   attribute = lambda event, sample: sum( [j['pt'] for j in event.trueBjets]),
   binning=[40,0,2500],
 ))
@@ -418,53 +560,36 @@ plots.append(Plot( name = 'dEtaj_12'+postfix,
 
 plots.append(Plot( name = 'dPhij_12'+postfix,
   texX = '\Delta\phi_{j}', texY = 'Number of Events / 20 GeV',
-  attribute = lambda event, sample: np.arccos(cos(event.jets[0]['phi']-event.jets[1]['phi'])) if len(event.jets)>=2 else 0,
+  attribute = lambda event, sample: acos(cos(event.jets[0]['phi']-event.jets[1]['phi'])) if len(event.jets)>=2 else 0,
   binning=[40,0,3.5],
 ))
 
-plots.append(Plot( name = 'dPhij_12'+postfix,
-  texX = '\Delta\phi_{j}', texY = 'Number of Events / 20 GeV',
-  attribute = lambda event, sample: np.arccos(cos(event.jets[0]['phi']-event.jets[1]['phi'])) if len(event.jets)>=2 else 0,
+plots.append(Plot( name = 'min_dR_jj'+postfix,
+  texX = '\Delta R_{j,j}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.min_dR_jj,
   binning=[40,0,3.5],
 ))
 
-plots.append(Plot( name = 'min_dR_bb'+postfix,
-  texX = '\Delta R_{bb}', texY = 'Number of Events / 20 GeV',
-  attribute = lambda event, sample: event.min_dR_bb,
+plots.append(Plot( name = 'min_dR_bjbj'+postfix,
+  texX = '\Delta R_{b-jet,b-jet}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.min_dR_bjbj,
   binning=[40,0,3.5],
 ))
 
-plots.append(Plot( name = 'mj_12'+postfix,
-  texX = 'm_{j, 12}', texY = 'Number of Events / 20 GeV',
+plots.append(Plot( name = 'mt_j_12'+postfix,
+  texX = 'm_{t, j12}', texY = 'Number of Events / 20 GeV',
   attribute = lambda event, sample: sqrt(2*event.jets[0]['pt']*event.jets[1]['pt']*(cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))) if len(event.jets)>=2 else 0,
   binning=[40,0,2500],
 ))
 
-plots.append(Plot( name = 'mbj_12'+postfix,
-  texX = 'm_{bj, 12}', texY = 'Number of Events / 20 GeV',
+plots.append(Plot( name = 'mt_bj_12'+postfix,
+  texX = 'm_{t, b-jet12}', texY = 'Number of Events / 20 GeV',
   attribute = lambda event, sample: sqrt(2*event.trueBjets[0]['pt']*event.trueBjets[1]['pt']*(cosh(event.trueBjets[0]['eta']-event.trueBjets[1]['eta'])-cos(event.trueBjets[0]['phi']-event.trueBjets[1]['phi']))) if len(event.trueBjets)>=2 else 0,
   binning=[40,0,2500],
 ))
 
-if 't' in objects:
-    plots.append(Plot( name = 'mt_12'+postfix,
-      texX = 'm_{t, 12}', texY = 'Number of Events / 20 GeV',
-      attribute = lambda event, sample: sqrt(2*event.genTop_pt[0]*event.genTop_pt[1]*(cosh(event.genTop_eta[0]-event.genTop_eta[1])-cos(event.genTop_phi[0]-event.genTop_phi[1]))) if len(event.genTop_eta)>=2 else 0,
-      binning=[40,0,2500],
-    ))
-    
-    plots.append(Plot( name = 'dPhit_12'+postfix,
-      texX = '\Delta\phi_{top}', texY = 'Number of Events / 20 GeV',
-      attribute = lambda event, sample: np.arccos(cos(event.genTop_phi[0]-event.genTop_phi[1])) if len(event.genTop_phi)>=2 else 0,
-      binning=[40,0,3.5],
-    ))
-    
-    plots.append(Plot( name = 'dEtat_12'+postfix,
-      texX = '\Delta\eta_{top}', texY = 'Number of Events / 20 GeV',
-      attribute = lambda event, sample: abs(event.genTop_eta[0] - event.genTop_eta[1]) if len(event.genTop_eta)>=2 else -10,
-      binning=[40,0,6],
-    ))
 
+    
 
 
 # Text on the plots
@@ -492,7 +617,7 @@ def drawPlots(plots, subDirectory=''):
 	    plot_directory = plot_directory_,
 	    ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)},
 	    logX = False, logY = log, sorting = False,
-	    yRange = (1e-05,"auto") if log else "auto",
+	    yRange = (1e-06,"auto") if log else "auto",
 	    scaling = {},
 	    legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2),
 	    drawObjects = drawObjects( ),
