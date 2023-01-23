@@ -52,7 +52,7 @@ objects = sample.objects if hasattr( sample, "objects") else []
 w = WeightInfo(sample.reweight_pkl)
 w.set_order(2)
 
-colors = [ROOT.kOrange, ROOT.kPink-7, ROOT.kBlue, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta]
+colors = [ROOT.kBlue, ROOT.kPink-7, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta,ROOT.kOrange-2, ROOT.kPink-9, ROOT.kBlue-2, ROOT.kRed-2, ROOT.kGreen-2, ROOT.kCyan-2, ROOT.kMagenta-2, ROOT.kCyan+3]
 # define which Wilson coefficients to plot
 FIs = []
 params =  [ {'legendText':'SM',  'color':ROOT.kBlack, 'WC':{}} ] 
@@ -121,6 +121,8 @@ sequence = []
 def addLorentzTopB ( event, sample ):
     event.tops = getCollection( event, 'genTop', ['pt', 'eta', 'phi'], 'ngenTop' )
     event.bs   = getCollection( event, 'genB', ['pt', 'eta', 'phi'], 'ngenB' )
+    event.tops = list(filter( lambda j:isGoodGenJet( j ), event.tops)) ###?
+    event.bs   = list(filter( lambda j:isGoodGenJet( j ), event.bs  ))
     # sort
     event.tops = sorted( event.tops, key=lambda k: -k['pt'] )
     event.bs = sorted( event.bs, key=lambda k: -k['pt'] )
@@ -168,12 +170,12 @@ def calculatedeltaR (event, sample ):
     else:
         event.min_dR_jj = -1    
         
-    if event.ngenTop>=2:
+    if len(list(event.tops))>=2:
         event.min_dR_tt = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.tops, 2)] )
     else:
         event.min_dR_tt = -1   
 
-    if event.ngenB>=2:
+    if len(list(event.bs))>=2:
         event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.bs, 2)] )
     else:
         event.min_dR_bb = -1  
@@ -269,6 +271,7 @@ plots        = []
 fisher_plots = []
 
 l = ''.join(args.WC)
+if (len(args.WC)>4): l = 'multi'
 postfix = '_'+l
 
 if 'g' in objects:
@@ -277,33 +280,33 @@ if 'g' in objects:
       attribute = lambda event, sample: event.genPhoton_pt[0] if event.ngenPhoton>0 else float('nan'),
       binning=[600/20,0,600],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+    # for color, legendText, fisher_string in FIs:
+        # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "Photon0_eta"+postfix,
       texX = '#eta(#gamma_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genPhoton_eta[0] if event.ngenPhoton>0 else float('nan'),
       binning=[30,-3,3],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+    # for color, legendText, fisher_string in FIs:
+        # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
-if 'W' in objects:
+if 't' in objects:
     plots.append(Plot( name = "W0_pt"+postfix,
       texX = 'p_{T}(W_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genW_pt[0] if event.ngenW>0 else float('nan'),
       binning=[600/20,0,600],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+    # for color, legendText, fisher_string in FIs:
+        # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "W0_eta"+postfix,
       texX = '#eta(W_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genW_eta[0] if event.ngenW>0 else float('nan'),
       binning=[30,-3,3],
     ))
-    for color, legendText, fisher_string in FIs:
-        fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
+    # for color, legendText, fisher_string in FIs:
+        # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
 
     plots.append(Plot( name = "W1_pt"+postfix,
       texX = 'p_{T}(W_{1}) (GeV)', texY = 'Number of Events',
@@ -390,13 +393,13 @@ if 't' in objects:
     
     plots.append(Plot( name = 'm_tttt'+postfix,
       texX = 'm_{tttt}', texY = 'Number of Events / 20 GeV',
-      attribute = lambda event, sample: abs((event.tops[0]['vec4D']+event.tops[1]['vec4D']+event.tops[2]['vec4D']+event.tops[3]['vec4D']).M()) if event.ngenTop>=2 else 0,
+      attribute = lambda event, sample: abs((event.tops[0]['vec4D']+event.tops[1]['vec4D']+event.tops[2]['vec4D']+event.tops[3]['vec4D']).M()) if len(list(event.tops))>=4 else 0,
       binning=[12,500,5000],
     ))
     
     plots.append(Plot( name = 'm_ttbb'+postfix,
       texX = 'm_{ttbb}', texY = 'Number of Events / 20 GeV',
-      attribute = lambda event, sample: abs((event.tops[0]['vec4D']+event.tops[1]['vec4D']+event.bs[1]['vec4D']+event.bs[2]['vec4D']).M()) if (event.ngenTop>=2 and event.ngenB>=2) else 0,
+      attribute = lambda event, sample: abs((event.tops[0]['vec4D']+event.tops[1]['vec4D']+event.bs[0]['vec4D']+event.bs[1]['vec4D']).M()) if (len(list(event.tops))>=2 and len(list(event.bs))>=2) else 0,
       binning=[12,300,5000],
     ))
     
@@ -407,7 +410,7 @@ if 't' in objects:
     ))
     
     
-if 'b' in objects:
+#if 'b' in objects:
     plots.append(Plot( name = "b0_pt"+postfix,
       texX = 'p_{T}(b_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genB_pt[0] if event.ngenB>0 else float('nan'),
@@ -419,7 +422,7 @@ if 'b' in objects:
     plots.append(Plot( name = "b0_eta"+postfix,
       texX = '#eta(b_{0}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genB_eta[0] if event.ngenB>0 else float('nan'),
-      binning=[30,-3,3],
+      binning=[30,-5,5],
     ))
     # for color, legendText, fisher_string in FIs:
         # fisher_plots.append( add_fisher_plot( plots[-1], fisher_string, color, legendText ) )
@@ -433,7 +436,7 @@ if 'b' in objects:
     plots.append(Plot( name = "b1_eta"+postfix,
       texX = '#eta(b_{1}) (GeV)', texY = 'Number of Events',
       attribute = lambda event, sample: event.genB_eta[1] if event.ngenB>1 else float('nan'),
-      binning=[30,-3,3],
+      binning=[30,-5,5],
     ))
     
     plots.append(Plot( name = 'dEtab_12'+postfix,
@@ -617,10 +620,10 @@ def drawPlots(plots, subDirectory=''):
 	    plot_directory = plot_directory_,
 	    ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)},
 	    logX = False, logY = log, sorting = False,
-	    yRange = (1e-06,"auto") if log else "auto",
+	    yRange = (1.0e-03,"auto") if log else "auto",
 	    scaling = {},
-	    legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2),
-	    drawObjects = drawObjects( ),
+        legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2), 
+        drawObjects = drawObjects( ),
         copyIndexPHP = True,
       )
 
