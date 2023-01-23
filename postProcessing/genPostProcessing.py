@@ -199,6 +199,7 @@ b_vars       =  "pt/F,eta/F,phi/F,pdgId/I,mass/F"
 b_varnames   =  varnames( b_vars ) 
 variables     += ["genB[%s]"%b_vars]
 
+
 # to be stored for each boson
 boson_varnames = [ 'pt', 'phi', 'eta', 'mass', 'status']
 # Z vector from gen collection
@@ -426,8 +427,9 @@ def filler( event ):
     genTops.sort( key = lambda p:-p['pt'] )
     fill_vector_collection( event, "genTop", top_varnames, genTops ) 
 
-    #fing b originating from tops
-    genBs    = map( lambda t:{var: getattr(t, var)() for var in b_varnames}, filter( lambda p:abs(p.pdgId()) ==5 and p.numberOfMothers()==1 and abs(p.mother(0).pdgId())==6 and search.isFirst(p), gp))
+    #fing b 
+    #genBs    = map( lambda t:{var: getattr(t, var)() for var in b_varnames}, filter( lambda p:abs(p.pdgId()) ==5 and p.numberOfMothers()==1 and abs(p.mother(0).pdgId())==6 and search.isFirst(p), gp))
+    genBs    = map( lambda t:{var: getattr(t, var)() for var in b_varnames}, filter( lambda p:abs(p.pdgId()) ==5 and search.isFirst(p), gp))
     genBs.sort( key = lambda p:-p['pt'] )
     fill_vector_collection( event, "genB", b_varnames, genBs )
 
@@ -537,8 +539,7 @@ def filler( event ):
         genWs_dict[i_genW]['cosThetaStar'] = cosThetaStar(last.mass(), last.pt(), last.eta(), last.phi(), l.pt(), l.eta(), l.phi())
     fill_vector_collection( event, "genW", boson_all_varnames, genWs_dict ) 
     
-#
-#
+
 ### this def should only be called in debug mode
 ##        def printTopMothers():
 ##                genTopCheck = [ (search.ascend(l), l, search.ancestry( search.ascend(l) )) for l in filter( lambda p:abs(p.pdgId())==6,  gp) ]
@@ -573,38 +574,40 @@ def filler( event ):
 ##                        except Exception as val:
 ##                            print val
 ##                            break
-#       def printbMothers():
-        # genbCheck = [ (search.ascend(l), l, search.ancestry( search.ascend(l) )) for l in filter( lambda p:abs(p.pdgId())==5,  gp) ]
-        # genbCheck.sort( key = lambda p: -p[1].pt() )
-        # if len(genbCheck) > 0:
-            # bPdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in genbCheck[0][2]])
-            # print 'B 1'
-            # print bPdg_ids
-            # previous = genbCheck[0][0].mother(0)
-            # print 'first', genbCheck[0][0].pdgId()
-            # for i, pdg in enumerate(bPdg_ids):
-                # try:
-                    # print 'mother', i, previous.pdgId()
-                    # print 'mothers', i, [p.pdgId() for p in search.ancestry( previous )]
-                    # previous = previous.mother(0)
-                # except Exception as val:
-                    # print val
-                    # break
-        # if len(genbCheck) > 1:
-            # bPdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in genbCheck[1][2]])
-            # print 'B 2'
-            # print bPdg_ids
-            # previous = genbCheck[1][0].mother(0)
-            # print 'first', genbCheck[1][0].pdgId()
-            # for i, pdg in enumerate(bPdg_ids):
-                # try:
-                    # print 'mother', i, previous.pdgId()
-                    # print 'mothers', i, [p.pdgId() for p in search.ancestry( previous )]
-                    # previous = previous.mother(0)
-                # except Exception as val:
-                    # print val
-                    # break
-#
+##    def printbMothers():
+##        genbCheck = [ (search.ascend(l), l, search.ancestry( search.ascend(l) )) for l in filter( lambda p:abs(p.pdgId())==5,  gp) ]
+##        genbCheck.sort( key = lambda p: -p[1].pt() )
+##        if len(genbCheck) > 0:
+##            bPdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in genbCheck[0][2]])
+##            print 'B 1'
+##            print bPdg_ids
+##            previous = genbCheck[0][0].mother(0)
+##            print 'first', genbCheck[0][0].pdgId()
+##            for i, pdg in enumerate(bPdg_ids):
+##                try:
+##                    print 'mother', i, previous.pdgId()
+##                    print 'mothers', i, [p.pdgId() for p in search.ancestry( previous )]
+##                    previous = previous.mother(0)
+##                except Exception as val:
+##                    print val
+##                    break
+##        if len(genbCheck) > 1:
+##            bPdg_ids = filter( lambda p:p!=2212, [abs(particle.pdgId()) for particle in genbCheck[1][2]])
+##            print 'B 2'
+##            print bPdg_ids
+##            previous = genbCheck[1][0].mother(0)
+##            print 'first', genbCheck[1][0].pdgId()
+##            for i, pdg in enumerate(bPdg_ids):
+##                try:
+##                    print 'mother', i, previous.pdgId()
+##                    print 'mothers', i, [p.pdgId() for p in search.ancestry( previous )]
+##                    previous = previous.mother(0)
+##                except Exception as val:
+##                    print val
+##                    break
+##    printbMothers()
+    
+    
  # Gen photons: particle-level isolated gen photons
     genPhotons = [ ( search.ascend(l), l ) for l in filter( lambda p: abs( p.pdgId() ) == 22 and p.pt() > 20 and search.isLast(p) and p.status()==1, gp ) ]
     genPhotons.sort( key = lambda p: -p[1].pt() )
