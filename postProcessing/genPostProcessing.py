@@ -196,8 +196,10 @@ top_varnames   =  varnames( top_vars )
 variables     += ["genTop[%s]"%top_vars]
 # b vector 
 b_vars       =  "pt/F,eta/F,phi/F,pdgId/I,mass/F"
+b_extra_vars =  "fromTop/I"
 b_varnames   =  varnames( b_vars ) 
-variables     += ["genB[%s]"%b_vars]
+b_all_varnames = b_varnames + varnames(b_extra_vars)
+variables     += ["genB[%s]"%(','.join([b_vars, b_extra_vars]))]
 
 
 # to be stored for each boson
@@ -429,10 +431,19 @@ def filler( event ):
 
     #fing b 
     #genBs    = map( lambda t:{var: getattr(t, var)() for var in b_varnames}, filter( lambda p:abs(p.pdgId()) ==5 and p.numberOfMothers()==1 and abs(p.mother(0).pdgId())==6 and search.isFirst(p), gp))
-    genBs    = map( lambda t:{var: getattr(t, var)() for var in b_varnames}, filter( lambda p:abs(p.pdgId()) ==5 and search.isFirst(p), gp))
-    genBs.sort( key = lambda p:-p['pt'] )
-    fill_vector_collection( event, "genB", b_varnames, genBs )
-
+    #genBs    = map( lambda t:{var: getattr(t, var)() for var in b_varnames}, filter( lambda p:abs(p.pdgId()) ==5 and search.isFirst(p), gp))
+    genBs    = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId())==5  and search.isFirst(p), gp)]
+    genBs.sort( key = lambda p: -p[1].pt() )
+    genBs_dict = [ {var: getattr(last, var)() for var in b_varnames} for first, last in genBs ]
+    addIndex( genBs_dict )
+    for i_genB, (first, last) in enumerate(genBs):
+        mother = first.mother(0).pdgId() 
+        if (abs(mother) == 6):
+            genBs_dict[i_genB]['fromTop'] = 1
+        else:
+            genBs_dict[i_genB]['fromTop'] = 0 
+    fill_vector_collection( event, "genB", b_all_varnames, genBs_dict )
+    
     # generated leptons from SM bosons
     genLeps    = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId()) in [11, 12, 13, 14, 15, 16]  and abs(p.mother(0).pdgId()) in [22, 23, 24, 25], gp)]
     genLeps.sort( key = lambda p: -p[1].pt() )
