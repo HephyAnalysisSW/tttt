@@ -59,30 +59,119 @@ signal.weightInfo = WeightInfo(signal.reweight_pkl)
 signal.weightInfo.set_order(2)
 signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
-eft_configs = [
-    {'color':ROOT.kBlack,       'param':{}, 'tex':"SM"},
-    {'color':ROOT.kMagenta-4,   'param':{'ctt':-1},  'tex':"c_{tt}=-1",  'binning':[20,0,1.5]},
-    {'color':ROOT.kMagenta+2,   'param':{'ctt': 1},  'tex':"c_{tt}=1",   'binning':[20,0,1.5]},
-#    {'color':ROOT.kGreen-4,     'param':{'cHW':-1},     'tex':"c_{HW}=-1",          'binning':[20,0,1.5]},
-#    {'color':ROOT.kGreen+2,     'param':{'cHW':1},      'tex':"c_{HW}=1",           'binning':[20,0,1.5]},
-#    {'color':ROOT.kBlue-4,      'param':{'cHj3':-.1},   'tex':"c_{HQ}^{(3)}=-0.1",  'binning':[20,0,50]},
-#    {'color':ROOT.kBlue+2,      'param':{'cHj3':.1},    'tex':"c_{HQ}^{(3)}=0.1",   'binning':[20,0,50]},
+if (args.signal =='TTTT_MS'):
+    eft_configs = [
+        {'color':ROOT.kBlack,       'param':{},              'tex':"SM"},
+        {'color':ROOT.kBlue+2,      'param':{'ctt': 1},      'tex':"c_{tt}=1",        'binning':[20,0,1.5]},
+        {'color':ROOT.kPink-7+2,    'param':{'cQQ1': 1},     'tex':"c_{QQ1}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kOrange+2,    'param':{'cQQ8': 1},     'tex':"c_{QQ8}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kRed+2,       'param':{'cQt1': 1},     'tex':"c_{Qt1}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kGreen+2,     'param':{'cQt8': 1},     'tex':"c_{Qt8}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kCyan+2,      'param':{'ctHRe': 1},    'tex':"c_{tHRe}=1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kMagenta+2,   'param':{'ctHIm': 1},    'tex':"c_{tHIm}=1",      'binning':[20,0,1.5]},
+        # {'color':ROOT.kBlue-4,      'param':{'ctt':-1},      'tex':"c_{tt}=-1",       'binning':[20,0,1.5]},
+        # {'color':ROOT.kPink-7-4,    'param':{'cQQ1':-1},     'tex':"c_{QQ1}=-1",      'binning':[20,0,1.5]},
+        # {'color':ROOT.kOrange-4,    'param':{'cQQ8':-1},     'tex':"c_{QQ8}=-1",      'binning':[20,0,1.5]},
+        # {'color':ROOT.kRed-4,       'param':{'cQt1':-1},     'tex':"c_{Qt1}=-1",      'binning':[20,0,1.5]},
+        # {'color':ROOT.kGreen-4,     'param':{'cQt8':-1},     'tex':"c_{Qt8}=-1",      'binning':[20,0,1.5]},
+        # {'color':ROOT.kCyan-4,      'param':{'ctHRe':-1},    'tex':"c_{tHRe}=-1",     'binning':[20,0,1.5]},
+        # {'color':ROOT.kMagenta-4,   'param':{'ctHIm':-1},    'tex':"c_{tHIm}=-1",     'binning':[20,0,1.5]},
+    ]
+    
+    if args.show_derivatives:
+        eft_derivatives = [   
+            {'der':('ctt',),                  'color':ROOT.kBlue-4,         'tex':"c_{tt}"},     
+            {'der':('ctt','ctt'),             'color':ROOT.kBlue+2,         'tex':"c_{tt}^2"},      
+            {'der':('cQQ1',),                 'color':ROOT.kPink-7-4,       'tex':"c_{QQ1}"},    
+            {'der':('cQQ1','cQQ1'),           'color':ROOT.kPink-7+2,       'tex':"c_{QQ1}^2"},     
+            {'der':('cQQ8',),                 'color':ROOT.kOrange-4,       'tex':"c_{QQ8}"},    
+            {'der':('cQQ8','cQQ8'),           'color':ROOT.kOrange+2,       'tex':"c_{QQ8}^2"},     
+            {'der':('cQt1',),                 'color':ROOT.kRed-4,          'tex':"c_{Qt1}"},    
+            {'der':('cQt1','cQt1'),           'color':ROOT.kRed+2,          'tex':"c_{Qt1}^2"},     
+            {'der':('cQt8',),                 'color':ROOT.kGreen-4,        'tex':"c_{Qt8}"},    
+            {'der':('cQt8','cQt8'),           'color':ROOT.kGreen+2,        'tex':"c_{Qt8}^2"},     
+            {'der':('ctHRe',),                'color':ROOT.kCyan-4,         'tex':"c_{tHRe}"},   
+            {'der':('ctHRe','ctHRe'),         'color':ROOT.kCyan+2,         'tex':"c_{tHRe}^2"},    
+            {'der':('ctHIm',),                'color':ROOT.kMagenta-4,      'tex':"c_{tHIm}"},   
+            {'der':('ctHIm','ctHIm'),         'color':ROOT.kMagenta+2,      'tex':"c_{tHIm}^2"}, 
+        ]    
+    
+if (args.signal=='TTbb_MS'):  
+    eft_configs = [
+        {'color':ROOT.kBlack,       'param':{},              'tex':"SM"},
+        {'color':ROOT.kBlue+2,      'param':{'ctt': 10},      'tex':"c_{tt}=1",        'binning':[20,0,1.5]},
+        {'color':ROOT.kPink-7+2,    'param':{'cQQ1': 10},     'tex':"c_{QQ1}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kOrange+2,    'param':{'cQQ8': 10},     'tex':"c_{QQ8}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kRed+2,       'param':{'cQt1': 10},     'tex':"c_{Qt1}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kGreen+2,     'param':{'cQt8': 10},     'tex':"c_{Qt8}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kCyan+2,      'param':{'ctHRe': 10},    'tex':"c_{tHRe}=1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kMagenta+2,   'param':{'ctHIm': 10},    'tex':"c_{tHIm}=1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kOrange-2+2,  'param':{'ctb1': 10},     'tex':"c_{tb1}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kPink-9+2,    'param':{'ctb8': 10},     'tex':"c_{tb8}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kBlue-2+2,    'param':{'cQb1': 10},     'tex':"c_{Qb1}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kRed-2+2,     'param':{'cQb8': 10},     'tex':"c_{Qb8}=1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kGreen-2+2,   'param':{'cQtQb1Re': 10}, 'tex':"c_{QtQb1Re}=1",   'binning':[20,0,1.5]},
+        {'color':ROOT.kCyan-2+2,    'param':{'cQtQb8Re': 10}, 'tex':"c_{QtQb8Re}=1",   'binning':[20,0,1.5]},
+        {'color':ROOT.kMagenta-2+2, 'param':{'cQtQb1Im': 10}, 'tex':"c_{QtQb1Im}=1",   'binning':[20,0,1.5]},
+        {'color':ROOT.kCyan+3+2,    'param':{'cQtQb8Im': 10}, 'tex':"c_{QtQb8Im}=1",   'binning':[20,0,1.5]},
+        {'color':ROOT.kBlue-4,      'param':{'ctt':-10},      'tex':"c_{tt}=-1",       'binning':[20,0,1.5]},
+        {'color':ROOT.kPink-7-4,    'param':{'cQQ1':-10},     'tex':"c_{QQ1}=-1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kOrange-4,    'param':{'cQQ8':-10},     'tex':"c_{QQ8}=-1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kRed-4,       'param':{'cQt1':-10},     'tex':"c_{Qt1}=-1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kGreen-4,     'param':{'cQt8':-10},     'tex':"c_{Qt8}=-1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kCyan-4,      'param':{'ctHRe':-10},    'tex':"c_{tHRe}=-1",     'binning':[20,0,1.5]},
+        {'color':ROOT.kMagenta-4,   'param':{'ctHIm':-10},    'tex':"c_{tHIm}=-1",     'binning':[20,0,1.5]},
+        {'color':ROOT.kOrange-2-4,  'param':{'ctb1':-10},     'tex':"c_{tb1}=-1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kPink-9-4,    'param':{'ctb8':-10},     'tex':"c_{tb8}=-1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kBlue-2-4,    'param':{'cQb1':-10},     'tex':"c_{Qb1}=-1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kRed-2-4,     'param':{'cQb8':-10},     'tex':"c_{Qb8}=-1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kGreen-2-4,   'param':{'cQtQb1Re':-10}, 'tex':"c_{QtQb1Re}=-1",  'binning':[20,0,1.5]},
+        {'color':ROOT.kCyan-2-4,    'param':{'cQtQb8Re':-10}, 'tex':"c_{QtQb8Re}=-1",  'binning':[20,0,1.5]},
+        {'color':ROOT.kMagenta-2-4, 'param':{'cQtQb1Im':-10}, 'tex':"c_{QtQb1Im}=-1",  'binning':[20,0,1.5]},
+        {'color':ROOT.kCyan+3-4,    'param':{'cQtQb8Im':-10}, 'tex':"c_{QtQb8Im}=-1",  'binning':[20,0,1.5]},
     ]
 
+
+
+    if args.show_derivatives:
+        eft_derivatives = [   
+            {'der':('ctt',),                  'color':ROOT.kBlue-4,         'tex':"c_{tt}"},     
+            {'der':('ctt','ctt'),             'color':ROOT.kBlue+2,         'tex':"c_{tt}^2"},      
+            {'der':('cQQ1',),                 'color':ROOT.kPink-7-4,       'tex':"c_{QQ1}"},    
+            {'der':('cQQ1','cQQ1'),           'color':ROOT.kPink-7+2,       'tex':"c_{QQ1}^2"},     
+            {'der':('cQQ8',),                 'color':ROOT.kOrange-4,       'tex':"c_{QQ8}"},    
+            {'der':('cQQ8','cQQ8'),           'color':ROOT.kOrange+2,       'tex':"c_{QQ8}^2"},     
+            {'der':('cQt1',),                 'color':ROOT.kRed-4,          'tex':"c_{Qt1}"},    
+            {'der':('cQt1','cQt1'),           'color':ROOT.kRed+2,          'tex':"c_{Qt1}^2"},     
+            {'der':('cQt8',),                 'color':ROOT.kGreen-4,        'tex':"c_{Qt8}"},    
+            {'der':('cQt8','cQt8'),           'color':ROOT.kGreen+2,        'tex':"c_{Qt8}^2"},     
+            {'der':('ctHRe',),                'color':ROOT.kCyan-4,         'tex':"c_{tHRe}"},   
+            {'der':('ctHRe','ctHRe'),         'color':ROOT.kCyan+2,         'tex':"c_{tHRe}^2"},    
+            {'der':('ctHIm',),                'color':ROOT.kMagenta-4,      'tex':"c_{tHIm}"},   
+            {'der':('ctHIm','ctHIm'),         'color':ROOT.kMagenta+2,      'tex':"c_{tHIm}^2"},    
+            {'der':('ctb1',),                 'color':ROOT.kOrange-2-4,     'tex':"c_{tb1}"},    
+            {'der':('ctb1','ctb1'),           'color':ROOT.kOrange-2+2,     'tex':"c_{tb1}^2"},     
+            {'der':('ctb8',),                 'color':ROOT.kPink-9-4,       'tex':"c_{tb8}"},    
+            {'der':('ctb8','ctb8'),           'color':ROOT.kPink-9+2,       'tex':"c_{tb8}^2"},     
+            {'der':('cQb1',),                 'color':ROOT.kBlue-2-4,       'tex':"c_{Qb1}"},    
+            {'der':('cQb1','cQb1'),           'color':ROOT.kBlue-2+2,       'tex':"c_{Qb1}^2"},     
+            {'der':('cQb8',),                 'color':ROOT.kRed-2-4,        'tex':"c_{Qb8}"},    
+            {'der':('cQb8','cQb8'),           'color':ROOT.kRed-2+2,        'tex':"c_{Qb8}^2"},     
+            {'der':('cQtQb1Re',),             'color':ROOT.kGreen-2-4,      'tex':"c_{QtQb1Re}"},
+            {'der':('cQtQb1Re','cQtQb1Re'),   'color':ROOT.kGreen-2+2,      'tex':"c_{QtQb1Re}^2"}, 
+            {'der':('cQtQb8Re',),             'color':ROOT.kCyan-2-4,       'tex':"c_{QtQb8Re}"},
+            {'der':('cQtQb8Re','cQtQb8Re'),   'color':ROOT.kCyan-2+2,       'tex':"c_{QtQb8Re}^2"}, 
+            {'der':('cQtQb1Im',),             'color':ROOT.kMagenta-2-4,    'tex':"c_{QtQb1Im}"},
+            {'der':('cQtQb1Im','cQtQb1Im'),   'color':ROOT.kMagenta-2+2,    'tex':"c_{QtQb1Im}^2"}, 
+            {'der':('cQtQb8Im',),             'color':ROOT.kCyan+3-4,       'tex':"c_{QtQb8Im}"},
+            {'der':('cQtQb8Im','cQtQb8Im'),   'color':ROOT.kCyan+3+2,       'tex':"c_{QtQb8Im}^2"}, 
+        ]    
+ 
 for eft in eft_configs:
     eft['func'] = signal.weightInfo.get_weight_func(**eft['param']) 
-    eft['name'] = "_".join( ["signal"] + ( ["SM"] if len(eft['param'])==0 else [ "_".join([key, str(val)]) for key, val in sorted(eft['param'].iteritems())] ) )
+    eft['name'] = "_".join( ["signal"] + ( ["SM"] if len(eft['param'])==0 else [ "_".join([key, str(val)]) for key, val in sorted(eft['param'].iteritems())] ) ) 
 
-if args.show_derivatives:
-    eft_derivatives = [
-        {'der':('ctt',),             'color':ROOT.kGreen+1,  'tex':'c_{tt}'},
-        {'der':('ctt','ctt'),        'color':ROOT.kGreen+3,  'tex':'c^{2}_{tt}'},
-#        {'der':('cHWtil',),          'color':ROOT.kCyan+1,   'tex':'c_{H#tilde{W}}'},
-#        {'der':('cHWtil','cHWtil'),  'color':ROOT.kCyan+2,   'tex':'c^{2}_{#tilde{W}}'},
-#        {'der':('cHj3',),            'color':ROOT.kOrange-1, 'tex':'c_{Hq3}'},
-#        {'der':('cHj3','cHj3'),      'color':ROOT.kOrange-2, 'tex':'c^{2}_{Hq3}'},
-        ]
-else:
+if not args.show_derivatives:
     eft_derivatives = []
     
 for der in eft_derivatives:
@@ -122,28 +211,9 @@ def weight_getter( branches ):
         return reduce( operator.mul , [ g(event) for g in getters ], lumi ) 
     return getter
 
-# Read variables and sequences
-jetVars          = ['pt/F', 'eta/F', 'phi/F', 'bTag/F', 'bTagPhys/I']
-
-jetVarNames      = [x.split('/')[0] for x in jetVars]
-
-lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','isolationVar/F', 'isolationVarRhoCorr/F']
-lepVarNames      = [x.split('/')[0] for x in lepVars]
-
-# Training variables
-read_variables = [\
-    "nBTag/I", 
-    "recoMet_pt/F", "recoMet_phi/F",
-    "genMet_pt/F", "genMet_phi/F",
-    "nrecoJet/I",
-    "recoJet[%s]"%(",".join(jetVars)),
-    "nrecoLep/I",
-    "recoLep[%s]"%(",".join(lepVars)),
-    "ngenLep/I", "genLep[pt/F,eta/F,phi/F,pdgId/I,mother_pdgId/I]", 
-    "lumiweight1fb/F",
-    "evt/l", "run/I", "lumi/I",
-    "recoBj0_pt/F",
-]
+import delphes_config as config 
+read_variables = []
+read_variables+=config.read_variables
 
 preselection = [ 
     #("debug", "(evt==25857178)") 
@@ -159,77 +229,13 @@ for sample in stack.samples:
         sample.addSelectionString( selectionString )
     if args.small:
         #sample.reduceFiles( factor = 30 )
-        sample.reduceFiles( to = 15 )
+        sample.reduceFiles( to = 2 )
 
-##BITs
-#import sys, os, time
-#sys.path.insert(0,os.path.expandvars("$CMSSW_BASE/src/BIT"))
-#from BoostedInformationTree import BoostedInformationTree
-#if signal.name.startswith('WH'):
-#    import TMB.BIT.configs.WH_delphes_bkgs as config
-#    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes/v2/")
-#    bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/WH_delphes_bkgs/first_try/")
-#elif signal.name.startswith('ZH'):
-#    import TMB.BIT.configs.ZH_delphes_bkgs_comb as config
-#    bits        = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes/v2/")
-#    #bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs/first_try/")
-#    bits_bkgs   = config.load("/groups/hephy/cms/robert.schoefbeck/BIT/models/ZH_delphes_bkgs_comb/v2/")
-#
-bits = [
-#    ("BIT_bkgs_cHW",             bits_bkgs[('cHW',)],             ([10,-.2,.8] if args.signal=='WH' else [10, -1,9])), 
-#    ("BIT_bkgs_cHW_cHW",         bits_bkgs[('cHW','cHW')],        ([10, 0,10] if args.signal=='WH' else [10,0,4])), 
-#    ("BIT_bkgs_cHWtil",          bits_bkgs[('cHWtil',)],          [20,-1,1]), 
-#    ("BIT_bkgs_cHWtil_cHWtil",   bits_bkgs[('cHWtil','cHWtil')],  [10,0,4]), 
-#    ("BIT_cHWtil_cHWtil",        bits[('cHWtil','cHWtil')],  [10,0,4]), 
-#    ("BIT_cHWtil_cHWtil_wide",   bits[('cHWtil','cHWtil')],  [30,0,10]), 
-##    ("BIT_bkgs_cHj3",            bits_bkgs[('cHj3',)],            [20,-1,1]), 
-##    ("BIT_bkgs_cHj3_cHj3",       bits_bkgs[('cHj3','cHj3')],      [30,-5,5]), 
-]
-#sequence.extend( config.sequence )
-#
-#def bit_predict( event, sample ):
-#
-#    for var, func in config.mva_variables:
-#        setattr( event, var, func(event, sample) )
-#    
-#    # get model inputs assuming lstm
-#    event.features = config.predict_inputs( event, sample )
-#    for name, model, _ in bits:
-#        #print has_lstm, flat_variables, lstm_jets
-#        prediction = model.predict( event.features )
-#        setattr( event, name, prediction )
-##        if not prediction>-float('inf'):
-##            print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
-##            print "mva_m3", event.mva_m3, "m3", event.m3, "event.nJetGood", event.nJetGood
-##            raise RuntimeError("Found NAN prediction?")
-#
-##    # make optimal discriminator for each cfg
-##    for eft_config in eft_configs:
-##        param = eft_config['param']
-##        if len(param)!=1: continue
-##        wc_, val_ = list(param.iteritems())[0]
-##        setattr( event, "opt_%s_%f"%(wc_, val_), getattr( event, "BIT_bkgs_%s"%wc_ ) + 0.5*val_*getattr( event, "BIT_bkgs_%s_%s"%(wc_, wc_) )) 
-#
-#sequence.append( bit_predict )
+bits = []
 
-## load keras models
-#from keras.models import load_model
-#
-keras_models = [
-#    ("ZH_TT_WJets", load_model("/groups/hephy/cms/robert.schoefbeck/TMB/models/ZH_TT_WJets/ZH_delphes_bkgs/multiclass_model.h5")),
-]
-#
-#def keras_predict( event, sample ):
-#
-#    # get model inputs assuming lstm
-#    for name, model in keras_models:
-#        prediction = model.predict( event.features.reshape(1,-1) )
-#
-#        #print prediction
-#        for i_val, val in enumerate( prediction[0] ):
-#            setattr( event, name+'_'+config.training_samples[i_val].name, val)
-#
-#sequence.append( keras_predict )
+keras_models = []
+
+
 
 ### Helpers
 def addTransverseVector( p_dict ):
@@ -242,66 +248,237 @@ def addTLorentzVector( p_dict ):
     '''
     p_dict['vecP4'] = ROOT.TLorentzVector( p_dict['pt']*cos(p_dict['phi']), p_dict['pt']*sin(p_dict['phi']),  p_dict['pt']*sinh(p_dict['eta']), p_dict['pt']*cosh(p_dict['eta']) )
 
+
+
+sequence+=config.sequence
+def make_mva_inputs( event, sample ):
+   for mva_variable, func in config.mva_variables:
+       setattr( event, mva_variable, func(event, sample) )
+
+sequence.append( make_mva_inputs ) 
+
+
 # Use some defaults
 Plot.setDefaults(stack = stack, weight = eft_weights, addOverFlowBin="upper")
  
 plots        = []
 plots2D      = []
 
+postfix = "all_operators" 
+
 plots.append(Plot( name = "b0_pt",
   texX = 'p_{T}(b_{0}) (GeV)', texY = 'Number of Events',
-  attribute = "recoBj0_pt",
+  attribute = lambda event, sample: event.recoBj0_pt,
   binning=[600/20,0,600],
 ))
 
-#for model_name, _, binning in bits:
-#    # 1D discriminator
-#    plots.append(Plot(
-#        name = model_name+postfix,
-#        texX = model_name+postfix_tex, texY = 'Number of Events / 10 GeV',
-#        attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
-#        #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-#        binning   = binning,
-#        addOverFlowBin = 'upper',
-#    ))
-#
-#for model_name, model in keras_models:
-#    for i_tr_s, tr_s in enumerate( config.training_samples ):
-#        disc_name = model_name+'_'+config.training_samples[i_tr_s].name
-#        plots.append(Plot(
-#            texX = disc_name, texY = 'Number of Events',
-#            name = "keras_"+disc_name, 
-#            attribute = lambda event, sample, disc_name=disc_name: getattr( event, disc_name ),
-#            binning=[50, 0, 1],
-#        ))
+plots.append(Plot( name = "b1_pt",
+  texX = 'p_{T}(b_{1}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.recoBj1_pt,
+  binning=[600/20,0,600],
+))
 
-#for eft_config in eft_configs:
-#    param = eft_config['param']
-#    if len(param)!=1: continue
-#    wc_, val_ = list(param.iteritems())[0]
-#    name =  "opt_%s_%f"%(wc_, val_)
-#    plots.append(Plot(
-#        texX = "q(%s=%3.2f)"%(wc_, val_), texY = 'Number of Events',
-#        name =  name, 
-#        attribute = lambda event, sample, disc_name=name: getattr( event, disc_name ),
-#        binning=eft_config['binning'],
-#    ))
+plots.append(Plot( name = 'l1_pt',
+  texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events' ,
+  attribute = lambda event, sample:event.l1_pt,
+  binning=[15,0,300],
+))
 
-#V_pt = "mva_Z_pt" if args.signal.startswith("ZH") else "mva_W_pt"
-#if 'ptZ200' in args.selection:
-#    config.plot_options[V_pt]['binning'] = [12,200,800]
-#elif 'ptZ300' in args.selection:
-#    config.plot_options[V_pt]['binning'] = [10,300,800]
-#else:
-#    config.plot_options[V_pt]['binning'] = [16,0,800]
+plots.append(Plot( name = 'l2_pt',
+  texX = 'p_{T}(l_{2}) (GeV)', texY = 'Number of Events' ,
+  attribute = lambda event, sample:event.l2_pt,
+  binning=[15,0,300],
+))
 
-##features
-#for i_key, (key, _) in enumerate( config.mva_variables ):
-#    plots.append(Plot( name = key.replace("mva_", "")+postfix,
-#      texX = config.plot_options[key]['tex']+postfix_tex, texY = 'Number of Events',
-#      attribute = lambda event, sample, i_key=i_key: event.features[i_key],
-#      binning   =  config.plot_options[key]['binning'],
-#    ))
+plots.append(Plot( name = 'l1_eta',
+  texX = '\eta(l_{1})', texY = 'Number of Events',
+  attribute = lambda event, sample: event.l1_eta,
+  binning=[20,-3,3],
+))
+
+plots.append(Plot( name = 'l2_eta',
+  texX = '\eta(l_{2})', texY = 'Number of Events',
+  attribute = lambda event, sample: event.l2_eta,
+  binning=[20,-3,3],
+))
+
+plots.append(Plot( name = 'mT_l1',
+  texX = '\m_T(l_{1})', texY = 'Number of Events',
+  attribute = lambda event, sample: event.mT_l1,
+  binning=[40,0,800],
+))
+
+plots.append(Plot( name = 'mT_l2',
+  texX = '\m_T(l_{2})', texY = 'Number of Events',
+  attribute = lambda event, sample: event.mT_l2,
+  binning=[40,0,800],
+))
+
+plots.append(Plot( name = 'ml_l2',
+  texX = '\m_(2l)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.ml_12,
+  binning=[40,0,1500],
+))
+
+plots.append(Plot( name = "j0_pt"+postfix,
+  texX = 'p_{T}(j_{0}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet0_pt,
+  binning=[600/20,0,600],
+))
+
+plots.append(Plot( name = "j1_pt"+postfix,
+  texX = 'p_{T}(j_{1}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet1_pt,
+  binning=[600/20,0,600],
+))
+
+plots.append(Plot( name = "j2_pt"+postfix,
+  texX = 'p_{T}(j_{2}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet2_pt,
+  binning=[600/20,0,600],
+))
+
+plots.append(Plot( name = "j3_pt"+postfix,
+  texX = 'p_{T}(j_{3}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet3_pt,
+  binning=[600/20,0,600],
+))
+plots.append(Plot( name = "j4_pt"+postfix,
+  texX = 'p_{T}(j_{4}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet4_pt,
+  binning=[600/20,0,600],
+))
+plots.append(Plot( name = "j5_pt"+postfix,
+  texX = 'p_{T}(j_{5}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet5_pt,
+  binning=[600/20,0,600],
+))
+plots.append(Plot( name = "j6_pt"+postfix,
+  texX = 'p_{T}(j_{6}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet6_pt,
+  binning=[600/20,0,600],
+))
+plots.append(Plot( name = "j7_pt"+postfix,
+  texX = 'p_{T}(j_{7}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet7_pt,
+  binning=[600/20,0,600],
+))
+
+
+plots.append(Plot( name = "j0_eta"+postfix,
+  texX = '#eta(j_{0}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet0_eta,
+  binning=[30,-3,3],
+))
+
+plots.append(Plot( name = "j1_eta"+postfix,
+  texX = '#eta(j_{1}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet1_eta,
+  binning=[30,-3,3],
+))
+
+plots.append(Plot( name = "j2_eta"+postfix,
+  texX = '#eta(j_{2}) (GeV)', texY = 'Number of Events',
+  attribute = lambda event, sample: event.jet2_eta,
+  binning=[30,-3,3],
+))
+
+plots.append(Plot( name = 'Met_pt'+postfix,
+  texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.met_pt,
+  binning=[400/20,0,400],
+))
+
+plots.append(Plot( name = 'nJet'+postfix,
+  texX = 'jet multiplicity', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.nrecoJet,
+  binning=[8,0,8],
+))
+
+plots.append(Plot( name = 'ht'+postfix,
+  texX = 'H_{T}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.ht,
+  binning=[40,0,2500],
+))
+
+plots.append(Plot( name = 'htb'+postfix,
+  texX = 'H_{T,b-jets}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.htb,
+  binning=[40,0,2500],
+))
+
+plots.append(Plot( name = 'ht_ratio'+postfix,
+  texX = '\Delta H_{T}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.ht_ratio,
+  binning=[40,0,1],
+))
+
+plots.append(Plot( name = 'dEta_jj'+postfix,
+  texX = '\Delta\eta_{j}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.dEtaj_12,
+  binning=[40,0,6],
+))
+
+plots.append(Plot( name = 'dEta_l'+postfix,
+  texX = '\Delta\eta_{l}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.dEtal_12,
+  binning=[40,0,6],
+))
+
+plots.append(Plot( name = 'dPhi_jj'+postfix,
+  texX = '\Delta\phi_{j}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.dPhij_12,
+  binning=[40,0,3.5],
+))
+
+plots.append(Plot( name = 'dPhi_l'+postfix,
+  texX = '\Delta\phi_{l}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.dPhil_12,
+  binning=[40,0,3.5],
+))
+
+plots.append(Plot( name = 'min_dR_0'+postfix,
+  texX = '\Delta R_{0}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.dR_min0,
+  binning=[40,0,3.5],
+))
+
+plots.append(Plot( name = 'min_dR_1'+postfix,
+  texX = '\Delta R_{1}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.dR_min1,
+  binning=[40,0,3.5],
+))
+
+plots.append(Plot( name = 'min_dR_bb'+postfix,
+  texX = '\Delta R_{b-jet,b-jet}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.min_dR_bb,
+  binning=[40,0,3.5],
+))
+
+plots.append(Plot( name = 'min_dR_2l'+postfix,
+  texX = '\Delta R_{2l}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.dR_2l,
+  binning=[40,0,3.5],
+))
+
+
+plots.append(Plot( name = 'mj_12'+postfix,
+  texX = 'm_{2j}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.mj_12,
+  binning=[40,0,2500],
+))
+
+plots.append(Plot( name = 'mlj_l1'+postfix,
+  texX = 'm_{l1, j1}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.mlj_11,
+  binning=[40,0,2500],
+))
+
+plots.append(Plot( name = 'mlj_l2'+postfix,
+  texX = 'm_{l1, j2}', texY = 'Number of Events / 20 GeV',
+  attribute = lambda event, sample: event.mlj_12,
+  binning=[40,0,2500],
+))
 
 # Text on the plots
 def drawObjects( hasData = False ):
@@ -338,7 +515,7 @@ def drawPlots(plots, subDirectory=''):
               logX = False, logY = log, sorting = False,
               yRange = (0.03, "auto") if log else "auto",
               scaling = {},
-              legend =  ( (0.17,0.9-0.05*(sum(map(len, plot.histos))-subtr)/2,1.,0.9), 2),
+              legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2), 
               drawObjects = drawObjects( ),
               copyIndexPHP = True,
             )

@@ -7,6 +7,8 @@ import ROOT
 from math                                import sqrt
 
 from tttt.Tools.user                     import plot_directory
+import RootTools.plot.helpers as plot_helpers
+
 
 class Plotter:
 
@@ -22,7 +24,7 @@ class Plotter:
         self.stack = None
         self.binning = None
         self.yMax = 0
-        self.yMin = 0.001
+        self.yMin = 0.9
         self.yFactor = 1.7
         self.samples = []
         self.systDeltas = []
@@ -359,6 +361,9 @@ class Plotter:
                 os.makedirs(plot_directory)
             except OSError: # Resolve rare race condition
                 pass
+        
+        plot_helpers.copyIndexPHP(plot_directory)
+
         for extension in extensions:
             plotname = os.path.join(plot_directory, self.name+".%s"%extension)
             c1.Print(plotname)

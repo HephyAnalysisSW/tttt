@@ -9,7 +9,8 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--noData',         action='store_true', help='Do not plot data.')
 argParser.add_argument('--plot_directory', action='store', default='4t_syst')
-argParser.add_argument('--selection',      action='store', default='dilepL-minDLmass20-offZ1-njet6-btag2p-ht500')
+argParser.add_argument('--selection',      action='store', default='trg-dilepL-minDLmass20-offZ1-njet4p-btag2p-ht500')
+argParser.add_argument('--small',         action='store_true', default=False,      help='Run only on a small subset of the data?')
 args = argParser.parse_args()
 
 import tttt.Tools.logger as logger
@@ -18,7 +19,11 @@ logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 
-hist_dir = "/groups/hephy/cms/maryam.shooshtari/www/tttt/plots/analysisPlots/4t_syst_small"
+hist_dir = "/groups/hephy/cms/maryam.shooshtari/www/tttt/plots/analysisPlots/4t_syst"
+if args.small: 
+  hist_dir += "_small"
+  args.plot_directory += "_small"
+
 nominalSample = ROOT.TFile.Open(os.path.join(hist_dir, 'RunII', "all", args.selection, "Results.root"))
 
 systematics = [{"name" : "LeptonSF",
