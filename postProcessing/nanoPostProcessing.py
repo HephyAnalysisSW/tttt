@@ -590,18 +590,46 @@ if addSystematicVariations:
         # new_variables.extend( ['met_pt_'+var+'/F', 'met_phi_'+var+'/F'] ) # MET variations are calculated with JMECorrector
 
 
-scenarios = ['central', 'up_jes', 'down_jes', 'up_lf',
-             'down_lf', 'up_hfstats1', 'down_hfstats1',
-             'up_hfstats2', 'up_hfstats2', 'down_hfstats2',
-             'up_cferr1', 'down_cferr2', 'up_cferr1',
-             'down_cferr2', 'up_hf', 'down_hf', 'up_lfstats1',
-             'down_lfstats1', 'up_lfstats2', 'down_lfstats2'
-             ]
+    bTagVariations = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
+                 'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
+                 'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
+                 'up_cferr1':1., 'down_cferr2':1., 'up_cferr1':1.,
+                 'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
+                 'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
+                 }
 
-if isMC:
-    for k in scenarios:
-        new_variables.append('weightBTagSF_'+k+'/F')
+    if isMC:
+        for k in bTagVariations.keys():
+            new_variables.append('weightBTagSF_'+k+'/F')
 
+    jesUncertanties = [ 
+        "AbsoluteMPFBias",
+        "AbsoluteScale",
+        "AbsoluteStat",
+        "RelativeBal",
+        "RelativeFSR",
+        "RelativeJEREC1",
+        "RelativeJEREC2",
+        "RelativeJERHF",
+        "RelativePtBB",
+        "RelativePtEC1",
+        "RelativePtEC2",
+        "RelativePtHF",
+        "RelativeStatEC",
+        "RelativeStatFSR",
+        "RelativeStatHF",
+        "PileUpDataMC",
+        "PileUpPtBB",
+        "PileUpPtEC1",
+        "PileUpPtEC2",
+        "PileUpPtHF",
+        "PileUpPtRef",
+        "FlavorQCD",
+        "Fragmentation",
+        "SinglePionECAL",
+        "SinglePionHCAL",
+        "TimePtEta",
+    ]
 
 # Btag weights Method 1a
 for var in btagEff.btagWeightNames:
@@ -630,7 +658,6 @@ if not options.skipNanoTools:
     #from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jecUncertainties import *
     METBranchName = 'MET' if not options.era == "2017" else 'METFixEE2017'
 
-    jesUncertanties = "AbsoluteMPFBias,AbsoluteScale,AbsoluteStat,RelativeBal,RelativeFSR,RelativeJEREC1,RelativeJEREC2,RelativeJERHF,RelativePtBB,RelativePtEC1,RelativePtEC2,RelativePtHF,RelativeStatEC,RelativeStatFSR,RelativeStatHF,PileUpDataMC,PileUpPtBB,PileUpPtEC1,PileUpPtEC2,PileUpPtHF,PileUpPtRef,FlavorQCD,Fragmentation,SinglePionECAL,SinglePionHCAL,TimePtEta"
     # check if files are available (e.g. if dpm is broken this should result in an error)
     for f in sample.files:
         if not checkRootFile(f):
@@ -656,7 +683,7 @@ if not options.skipNanoTools:
             isMC        = (not sample.isData),
             dataYear    = options.era,
             runPeriod   = runPeriod,
-            jesUncert   = jesUncertanties,
+            jesUncert   = ",".join(jesUncertanties) if addSystematicVariations else None,
             jetType     = "AK4PFchs",
             metBranchName = METBranchName,
             isFastSim   = False,
@@ -1129,24 +1156,14 @@ def filler( event ):
             event.l4_isFO       = leptons[3]['isFO']
             event.l4_isTight    = leptons[3]['isTight']
 
-    #if addSystematicVariations:
-    # B tagging weights method 1a
-    scenarios = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
-                 'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
-                 'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
-                 'up_cferr1':1., 'down_cferr2':1., 'up_cferr1':1.,
-                 'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
-                 'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
-                 }
-
-    if isMC:
-        for k in scenarios.keys():
+    if isMC and addSystematicVariations:
+        for k in bTagVariations.keys():
             for j in jets:
                 btagEff.addBTagEffToJet(j)
                 btagRes.getbtagSF(j)
                 if k in list(flavourSys[abs(j['hadronFlavour'])]):
-                    scenarios[k] *= j['jetSF'][k]
-            setattr(event, 'weightBTagSF_'+k, scenarios[k])
+                    bTagVariations[k] *= j['jetSF'][k]
+            setattr(event, 'weightBTagSF_'+k, bTagVariations[k])
             for var in btagEff.btagWeightNames:
                 if var!='MC':
                     setattr(event, 'reweightBTag_'+var, btagEff.getBTagSF_1a( var, bJets, filter( lambda j: abs(j['eta'])<2.4, nonBJets ) ) )
