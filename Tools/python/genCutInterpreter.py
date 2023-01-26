@@ -4,11 +4,14 @@ mZ              = 91.1876
 mT              = 172.5
 
 special_cuts = {
-    'VBS':"genVBS_mjj>400&&abs(genVBS_dEta)>2.4"
+    'VBS':"genVBS_mjj>400&&abs(genVBS_dEta)>2.4",
+    "dilep":"(genLep_pt[0]>20&&genLep_pt[1]>20&&abs(genLep_eta[0])<2.4&&abs(genLep_eta[1])<2.4)",
+ 
   }
 
 continous_variables  = [
     ("ptG","genPhoton_pt[0]"),
+    ("met", "genMet_pt"),
     ("Z1pt", "genZ_pt[0]"), ("Z2pt", "genZ_pt[1]")
     ]
 
@@ -18,6 +21,7 @@ discrete_variables  = [
     ("nZ", "ngenZ"),
     ("nW", "ngenW"),
     ("nG", "ngenPhoton"),
+    
     ]
 
 cutInterpreter = CutInterpreter( continous_variables, discrete_variables, special_cuts)
