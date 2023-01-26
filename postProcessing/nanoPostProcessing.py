@@ -60,7 +60,7 @@ def get_parser():
     argParser.add_argument('--small',       action='store_true',                                                                        help="Run the file on a small sample (for test purpose), bool flag set to True if used" )
     argParser.add_argument('--flagTT',     action='store_true',                                                                        help="Is ttbar?" )
     argParser.add_argument('--flagTTbb',   action='store_true',                                                                        help="Is ttbb?" )
-    argParser.add_argument('--addDoubleB',  action='store_true',                                                                        help="Add fine grained b-tagging information." )
+    argParser.add_argument('--central',    action='store_true',                                                                        help="Run on central samples?" )
     argParser.add_argument('--btag_WP',     action='store',         nargs='?',   type=str, default='loose',                            help="Which b-tagging WP?" )
     argParser.add_argument('--doCRReweighting',             action='store_true',                                                        help="color reconnection reweighting?")
     argParser.add_argument('--noTriggerSelection',          action='store_true',                                                        help="Do NOT apply Trigger selection to Data?" )
@@ -153,22 +153,40 @@ if options.small:
     options.job = 0
     options.nJobs = 10000 # set high to just run over 1 input file
 
-if options.era == "UL2016":
-    from tttt.samples.nano_mc_private_UL20_Summer16  import allSamples as mcSamples
-    from tttt.samples.nano_data_private_UL20_Run2016 import allSamples as dataSamples
-    allSamples = mcSamples + dataSamples
-elif options.era == "UL2016_preVFP":
-    from tttt.samples.nano_mc_private_UL20_Summer16_preVFP  import allSamples as mcSamples
-    from tttt.samples.nano_data_private_UL20_Run2016_preVFP import allSamples as dataSamples
-    allSamples = mcSamples + dataSamples
-elif options.era == "UL2017":
-    from tttt.samples.nano_mc_private_UL20_Fall17    import allSamples as mcSamples
-    from tttt.samples.nano_data_private_UL20_Run2017 import allSamples as dataSamples
-    allSamples = mcSamples + dataSamples
-elif options.era == "UL2018":
-    from tttt.samples.nano_mc_private_UL20_Autumn18  import allSamples as mcSamples
-    from tttt.samples.nano_data_private_UL20_Run2018 import allSamples as dataSamples
-    allSamples = mcSamples + dataSamples
+if options.central:
+    if options.era == "UL2016":
+        from Samples.nanoAOD.UL16_nanoAODv9 import allSamples as mcSamples
+        from Samples.nanoAOD.UL16_DATA_nanoAODv9 import allSamples as dataSamples
+        allSamples = mcSamples + dataSamples
+    elif options.era == "UL2016_preVFP":
+        from Samples.nanoAOD.UL16_nanoAODAPVv9 import allSamples as mcSamples
+        from Samples.nanoAOD.UL16_DATA_nanoAODAPVv9 import allSamples as dataSamples
+        allSamples = mcSamples + dataSamples
+    elif options.era == "UL2017":
+        from Samples.nanoAOD.UL17_nanoAODv9 import allSamples as mcSamples
+        from Samples.nanoAOD.UL17_DATA_nanoAODv9 import allSamples as dataSamples
+        allSamples = mcSamples + dataSamples
+    elif options.era == "UL2018":
+        from Samples.nanoAOD.UL18_nanoAODv9 import allSamples as mcSamples
+        from Samples.nanoAOD.UL18_DATA_nanoAODv9 import allSamples as dataSamples
+        allSamples = mcSamples + dataSamples
+else:
+    if options.era == "UL2016":
+        from tttt.samples.nano_mc_private_UL20_Summer16  import allSamples as mcSamples
+        from tttt.samples.nano_data_private_UL20_Run2016 import allSamples as dataSamples
+        allSamples = mcSamples + dataSamples
+    elif options.era == "UL2016_preVFP":
+        from tttt.samples.nano_mc_private_UL20_Summer16_preVFP  import allSamples as mcSamples
+        from tttt.samples.nano_data_private_UL20_Run2016_preVFP import allSamples as dataSamples
+        allSamples = mcSamples + dataSamples
+    elif options.era == "UL2017":
+        from tttt.samples.nano_mc_private_UL20_Fall17    import allSamples as mcSamples
+        from tttt.samples.nano_data_private_UL20_Run2017 import allSamples as dataSamples
+        allSamples = mcSamples + dataSamples
+    elif options.era == "UL2018":
+        from tttt.samples.nano_mc_private_UL20_Autumn18  import allSamples as mcSamples
+        from tttt.samples.nano_data_private_UL20_Run2018 import allSamples as dataSamples
+        allSamples = mcSamples + dataSamples
 
 samples = []
 for selected in options.samples:
@@ -460,7 +478,7 @@ jetVars         = ['pt/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'muEF/F', 'neHEF/F
 if isMC:
     jetVars     += jetMCInfo
     jetVars     += ['pt_jesTotalUp/F', 'pt_jesTotalDown/F', 'pt_jerUp/F', 'pt_jerDown/F', 'corr_JER/F', 'corr_JEC/F']
-if options.addDoubleB:
+if not options.central:
     jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
 
 jetVarNames     = [x.split('/')[0] for x in jetVars]
@@ -509,7 +527,7 @@ read_variables += [\
     TreeVariable.fromString('nMuon/I'),
     VectorTreeVariable.fromString('Muon[pt/F,eta/F,phi/F,pdgId/I,mediumId/O,miniPFRelIso_all/F,miniPFRelIso_chg/F,pfRelIso03_all/F,sip3d/F,dxy/F,dz/F,charge/I,mvaTTH/F,jetNDauCharged/b,jetPtRelv2/F,jetRelIso/F,segmentComp/F,isGlobal/O,isTracker/O,jetIdx/I]'),
     TreeVariable.fromString('nJet/I'),
-    VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars + (['nBHadrons/b', 'nCHadrons/b'] if isMC else []) )))]
+    VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars + (['nBHadrons/b', 'nCHadrons/b'] if (isMC and not options.central) else []) )))]
 if addReweights:
     read_variables.extend( ["nLHEReweightingWeight/I" ] )#, "nLHEReweighting/I", "LHEReweighting[Weight/F]" ] ) # need to set alias later
 if isMC:
@@ -518,9 +536,12 @@ if isMC:
 
 new_variables += [\
     'overlapRemoval/I','nlep/I',
-    'JetGood[%s]'% ( ','.join(jetVars+['index/I']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if isMC else '' )),
     'met_pt/F', 'met_phi/F',
 ]
+if options.central:
+    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I']) + ( ',genPt/F' if isMC else '' )))
+else:
+    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if isMC else '' )))
 
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['nBTag/I', 'm3/F', 'minDLmass/F'] )
@@ -569,18 +590,46 @@ if addSystematicVariations:
         # new_variables.extend( ['met_pt_'+var+'/F', 'met_phi_'+var+'/F'] ) # MET variations are calculated with JMECorrector
 
 
-scenarios = ['central', 'up_jes', 'down_jes', 'up_lf',
-             'down_lf', 'up_hfstats1', 'down_hfstats1',
-             'up_hfstats2', 'up_hfstats2', 'down_hfstats2',
-             'up_cferr1', 'down_cferr2', 'up_cferr1',
-             'down_cferr2', 'up_hf', 'down_hf', 'up_lfstats1',
-             'down_lfstats1', 'up_lfstats2', 'down_lfstats2'
-             ]
+    bTagVariations = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
+                 'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
+                 'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
+                 'up_cferr1':1., 'down_cferr2':1., 'up_cferr1':1.,
+                 'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
+                 'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
+                 }
 
-if isMC:
-    for k in scenarios:
-        new_variables.append('weightBTagSF_'+k+'/F')
+    if isMC:
+        for k in bTagVariations.keys():
+            new_variables.append('weightBTagSF_'+k+'/F')
 
+    jesUncertanties = [ 
+        "AbsoluteMPFBias",
+        "AbsoluteScale",
+        "AbsoluteStat",
+        "RelativeBal",
+        "RelativeFSR",
+        "RelativeJEREC1",
+        "RelativeJEREC2",
+        "RelativeJERHF",
+        "RelativePtBB",
+        "RelativePtEC1",
+        "RelativePtEC2",
+        "RelativePtHF",
+        "RelativeStatEC",
+        "RelativeStatFSR",
+        "RelativeStatHF",
+        "PileUpDataMC",
+        "PileUpPtBB",
+        "PileUpPtEC1",
+        "PileUpPtEC2",
+        "PileUpPtHF",
+        "PileUpPtRef",
+        "FlavorQCD",
+        "Fragmentation",
+        "SinglePionECAL",
+        "SinglePionHCAL",
+        "TimePtEta",
+    ]
 
 # Btag weights Method 1a
 for var in btagEff.btagWeightNames:
@@ -609,7 +658,6 @@ if not options.skipNanoTools:
     #from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jecUncertainties import *
     METBranchName = 'MET' if not options.era == "2017" else 'METFixEE2017'
 
-    jesUncertanties = "AbsoluteMPFBias,AbsoluteScale,AbsoluteStat,RelativeBal,RelativeFSR,RelativeJEREC1,RelativeJEREC2,RelativeJERHF,RelativePtBB,RelativePtEC1,RelativePtEC2,RelativePtHF,RelativeStatEC,RelativeStatFSR,RelativeStatHF,PileUpDataMC,PileUpPtBB,PileUpPtEC1,PileUpPtEC2,PileUpPtHF,PileUpPtRef,FlavorQCD,Fragmentation,SinglePionECAL,SinglePionHCAL,TimePtEta"
     # check if files are available (e.g. if dpm is broken this should result in an error)
     for f in sample.files:
         if not checkRootFile(f):
@@ -635,7 +683,7 @@ if not options.skipNanoTools:
             isMC        = (not sample.isData),
             dataYear    = options.era,
             runPeriod   = runPeriod,
-            jesUncert   = jesUncertanties,
+            jesUncert   = ",".join(jesUncertanties) if addSystematicVariations else None,
             jetType     = "AK4PFchs",
             metBranchName = METBranchName,
             isFastSim   = False,
@@ -664,7 +712,6 @@ reader = sample.treeReader( \
     variables = read_variables,
     selectionString = selectionString
     )
-
 
 eleSelector_ = eleSelector( "presel", year = year )
 muSelector_  = muonSelector("presel", year = year )
@@ -819,7 +866,7 @@ def filler( event ):
     leptons.sort(key = lambda p:-p['pt'])
 
     # Get all jets because they are needed to calculate the lepton mvaTOP
-    all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if isMC else []))
+    all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if (isMC and not options.central) else []))
     analysis_jets = filter(lambda j: isAnalysisJet(j),all_jets)
 
     # Calculate variables for mvaTOP and get mvaTOP score
@@ -903,8 +950,9 @@ def filler( event ):
             getattr(event, "JetGood_"+b)[iJet] = jet[b]
         event.JetGood_isBJet[iJet] = isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era)
         if isMC:
-            event.JetGood_nBHadrons[iJet] = ord(jet["nBHadrons"])
-            event.JetGood_nCHadrons[iJet] = ord(jet["nCHadrons"])
+            if not options.central:
+                event.JetGood_nBHadrons[iJet] = ord(jet["nBHadrons"])
+                event.JetGood_nCHadrons[iJet] = ord(jet["nCHadrons"])
             if store_jets[iJet]['genJetIdx'] >= 0:
                 if r.nGenJet<maxNJet:
                     try:
@@ -1108,24 +1156,14 @@ def filler( event ):
             event.l4_isFO       = leptons[3]['isFO']
             event.l4_isTight    = leptons[3]['isTight']
 
-    #if addSystematicVariations:
-    # B tagging weights method 1a
-    scenarios = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
-                 'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
-                 'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
-                 'up_cferr1':1., 'down_cferr2':1., 'up_cferr1':1.,
-                 'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
-                 'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
-                 }
-
-    if isMC:
-        for k in scenarios.keys():
+    if isMC and addSystematicVariations:
+        for k in bTagVariations.keys():
             for j in jets:
                 btagEff.addBTagEffToJet(j)
                 btagRes.getbtagSF(j)
                 if k in list(flavourSys[abs(j['hadronFlavour'])]):
-                    scenarios[k] *= j['jetSF'][k]
-            setattr(event, 'weightBTagSF_'+k, scenarios[k])
+                    bTagVariations[k] *= j['jetSF'][k]
+            setattr(event, 'weightBTagSF_'+k, bTagVariations[k])
             for var in btagEff.btagWeightNames:
                 if var!='MC':
                     setattr(event, 'reweightBTag_'+var, btagEff.getBTagSF_1a( var, bJets, filter( lambda j: abs(j['eta'])<2.4, nonBJets ) ) )
