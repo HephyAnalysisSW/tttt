@@ -371,9 +371,6 @@ if not options.noTriggerSelection and isData:
 else:
     logger.info("Sample will have the trigger skim NOT applied!")
 
-# turn on all branches to be flexible for filter cut in skimCond etc.
-sample.chain.SetBranchStatus("*",1)
-
 # this is the global selectionString
 selectionString = '&&'.join(skimConds)
 
@@ -474,7 +471,7 @@ else:
     lumiScaleFactor = xSection*targetLumi/float(sample.normalization) if xSection is not None else None
     branchKeepStrings = branchKeepStrings_DATAMC + branchKeepStrings_MC
 
-jetVars         = ['pt/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'muEF/F', 'neHEF/F', 'rawFactor/F', 'eta/F', 'phi/F', 'jetId/I','isBJet/O','btagDeepB/F', 'btagDeepCvB/F', 'btagDeepCvL/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F', 'btagDeepFlavQG/F', 'btagCSVV2/F', 'area/F', 'pt_nom/F', 'corr_JER/F'] + jetCorrInfo
+jetVars         = ['pt/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'muEF/F', 'neHEF/F', 'rawFactor/F', 'eta/F', 'phi/F', 'jetId/I', 'btagDeepB/F', 'btagDeepCvB/F', 'btagDeepCvL/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F', 'btagDeepFlavQG/F', 'btagCSVV2/F', 'area/F', 'pt_nom/F', 'corr_JER/F'] + jetCorrInfo
 if isMC:
     jetVars     += jetMCInfo
     jetVars     += ['pt_jesTotalUp/F', 'pt_jesTotalDown/F', 'pt_jerUp/F', 'pt_jerDown/F', 'corr_JER/F', 'corr_JEC/F']
@@ -539,9 +536,9 @@ new_variables += [\
     'met_pt/F', 'met_phi/F',
 ]
 if options.central:
-    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I']) + ( ',genPt/F' if isMC else '' )))
+    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F' if isMC else '' )))
 else:
-    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if isMC else '' )))
+    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if isMC else '' )))
 
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['nBTag/I', 'm3/F', 'minDLmass/F'] )
@@ -589,7 +586,6 @@ if addSystematicVariations:
             new_variables.extend( ['nJetGood_'+var+'/I', 'nBTag_'+var+'/I'] )
         # new_variables.extend( ['met_pt_'+var+'/F', 'met_phi_'+var+'/F'] ) # MET variations are calculated with JMECorrector
 
-
     bTagVariations = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
                  'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
                  'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
@@ -602,34 +598,34 @@ if addSystematicVariations:
         for k in bTagVariations.keys():
             new_variables.append('weightBTagSF_'+k+'/F')
 
-    jesUncertanties = [ 
-        "AbsoluteMPFBias",
-        "AbsoluteScale",
-        "AbsoluteStat",
-        "RelativeBal",
-        "RelativeFSR",
-        "RelativeJEREC1",
-        "RelativeJEREC2",
-        "RelativeJERHF",
-        "RelativePtBB",
-        "RelativePtEC1",
-        "RelativePtEC2",
-        "RelativePtHF",
-        "RelativeStatEC",
-        "RelativeStatFSR",
-        "RelativeStatHF",
-        "PileUpDataMC",
-        "PileUpPtBB",
-        "PileUpPtEC1",
-        "PileUpPtEC2",
-        "PileUpPtHF",
-        "PileUpPtRef",
-        "FlavorQCD",
-        "Fragmentation",
-        "SinglePionECAL",
-        "SinglePionHCAL",
-        "TimePtEta",
-    ]
+jesUncertanties = [ 
+    "AbsoluteMPFBias",
+    "AbsoluteScale",
+    "AbsoluteStat",
+    "RelativeBal",
+    "RelativeFSR",
+    "RelativeJEREC1",
+    "RelativeJEREC2",
+    "RelativeJERHF",
+    "RelativePtBB",
+    "RelativePtEC1",
+    "RelativePtEC2",
+    "RelativePtHF",
+    "RelativeStatEC",
+    "RelativeStatFSR",
+    "RelativeStatHF",
+    "PileUpDataMC",
+    "PileUpPtBB",
+    "PileUpPtEC1",
+    "PileUpPtEC2",
+    "PileUpPtHF",
+    "PileUpPtRef",
+    "FlavorQCD",
+    "Fragmentation",
+    "SinglePionECAL",
+    "SinglePionHCAL",
+    "TimePtEta",
+]
 
 # Btag weights Method 1a
 for var in btagEff.btagWeightNames:
@@ -683,7 +679,7 @@ if not options.skipNanoTools:
             isMC        = (not sample.isData),
             dataYear    = options.era,
             runPeriod   = runPeriod,
-            jesUncert   = ",".join(jesUncertanties) if addSystematicVariations else None,
+            jesUncert   = ",".join(jesUncertanties),# if addSystematicVariations else None,
             jetType     = "AK4PFchs",
             metBranchName = METBranchName,
             isFastSim   = False,
@@ -706,8 +702,9 @@ if not options.skipNanoTools:
 mvaTOPreader_ = mvaTOPreader(year = options.era, versions = ["v1", "v2"])
 
 # Define a reader
-
 logger.info( "Running with selectionString %s", selectionString )
+# turn on all branches to be flexible for filter cut in skimCond etc.
+sample.chain.SetBranchStatus("*",1)
 reader = sample.treeReader( \
     variables = read_variables,
     selectionString = selectionString
@@ -949,6 +946,9 @@ def filler( event ):
         for b in jetVarNames:
             getattr(event, "JetGood_"+b)[iJet] = jet[b]
         event.JetGood_isBJet[iJet] = isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era)
+        event.JetGood_isBJet_tight[iJet]  = isBJet(jet, tagger=b_tagger, WP='tight',  year=options.era)
+        event.JetGood_isBJet_medium[iJet] = isBJet(jet, tagger=b_tagger, WP='medium', year=options.era)
+        event.JetGood_isBJet_loose[iJet]  = isBJet(jet, tagger=b_tagger, WP='loose',  year=options.era)
         if isMC:
             if not options.central:
                 event.JetGood_nBHadrons[iJet] = ord(jet["nBHadrons"])
