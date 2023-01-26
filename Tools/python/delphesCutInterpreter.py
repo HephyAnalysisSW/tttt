@@ -9,6 +9,7 @@ bJetSelectionM  = "nBTag"
 
 special_cuts = {
     #"photon" :   "(recoPhoton_pt[0]>20)",
+    "dilep":           "(recoLep_pt[0]>20&&recoLep_pt[1]>20&&abs(recoLep_eta[0])<2.4&&abs(recoLep_eta[1])<2.4)",
   }
 
 continous_variables = [ ("ptG", "recoPhoton_pt[0]"), ("met", "recoMet_pt"), ("ptZ", "recoZ_pt"), ("ptW", "WH_W_pt")]
