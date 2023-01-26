@@ -2,7 +2,7 @@
 
 #Standard imports
 from operator                   import attrgetter
-from math                       import pi, sqrt, cosh, cos, acos
+from math                       import pi, sqrt, cosh, cos, acos, sin, sinh
 import ROOT, os
 import copy
 import itertools
@@ -91,7 +91,7 @@ all_mva_variables = {
      "jet7_pt"               :(lambda event, sample: event.recoJet_pt[7]          if event.nrecoJet >=8 else 0),
      "bjet0_pt"              :(lambda event, sample: event.recoBj0_pt),
      "bjet1_pt"              :(lambda event, sample: event.recoBj1_pt),
-    
+     "m_4b"                  :(lambda event, sample: event.m_4b),
      "dR_min0"               :(lambda event, sample: event.dR_min0),
      "dR_min1"               :(lambda event, sample: event.dR_min1),
      #Smallest dR between two b-tagged jets
@@ -99,7 +99,7 @@ all_mva_variables = {
      #dR between leading/subleading lepton
      "dR_2l"                 :(lambda event, sample: sqrt(deltaPhi(event.recoLep_phi[0], event.recoLep_phi[1])**2 + (event.recoLep_eta[0] - event.recoLep_eta[1])**2)),
      #Mt2 mass lepton + b-jet
-     #"mt2ll"                 :(lambda event, sample : event.mt2ll),
+     # "mt2ll"                 :(lambda event, sample : event.mt2ll),
      #"mt2bb"                 :(lambda event, sample : event.mt2bb),
      #"mt2blbl"               :(lambda event, sample : event.mt2blbl),
      }
@@ -112,15 +112,26 @@ mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() 
 
 sequence = []
 
+def addTLorentzVector( p_dict , name ):
+    ''' add a TLorentz 4D Vector for further calculations
+    '''
+    #v = ROOT.TLorentzVector(0,0,0,0)
+    p_dict[name] = ROOT.TLorentzVector( p_dict['pt']*cos(p_dict['phi']), p_dict['pt']*sin(p_dict['phi']),  p_dict['pt']*sinh(p_dict['eta']), p_dict['pt']*cosh(p_dict['eta']) )
+
+
 def make_bjets ( event, sample ):
 
     event.recoJets = getCollection( event, 'recoJet', ['pt', 'eta', 'phi', 'bTag_loose'], 'nrecoJet' )
     event.recoBJets    = filter( lambda j:     j['bTag_loose'] and abs(j['eta'])<2.4 , event.recoJets )
     event.recoNonBJets = []
     for b in event.recoJets:
+        addTLorentzVector( b, 'vec4D' ) 
         if b not in event.recoBJets:
             event.recoNonBJets.append(b)
-    
+    if (event.nrecoJet >= 4):        
+        event.m_4b  = abs((event.recoJets[0]['vec4D']+event.recoJets[1]['vec4D']+event.recoJets[2]['vec4D']+event.recoJets[3]['vec4D']).M())  
+    else:
+        event.m_4b  = float(NaN) 
     # minDR of all btag combinations
     if len(event.recoBJets)>=2:
         event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.recoBJets, 2)] )
