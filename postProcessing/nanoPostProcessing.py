@@ -655,9 +655,14 @@ if not options.skipNanoTools:
     METBranchName = 'MET' if not options.era == "2017" else 'METFixEE2017'
 
     # check if files are available (e.g. if dpm is broken this should result in an error)
-    for f in sample.files:
-        if not checkRootFile(f):
-            raise IOError ("File %s not available"%f)
+    #for f in sample.files:
+    #    if not checkRootFile(f):
+    #        raise IOError ("File %s not available"%f)
+    n_files = len(sample.files)
+    sample.files = [ f for f in sample.files if checkRootFile( f, checkForObjects=["Events"] ) and deepCheckRootFile( f ) ]
+    if len(sample.files)<n_files:
+        logger.warning( "Warning! Removed %i/%i files.", n_files-len(sample.files), n_files )
+    assert len(sample.files)!=0, "Sample empty after checkRootFile!"
 
     # remove empty files. this is necessary in 2018 because empty miniAOD files exist.
     sample.files = [ f for f in sample.files if nonEmptyFile(f) ]
