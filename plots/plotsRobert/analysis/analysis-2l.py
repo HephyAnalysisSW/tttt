@@ -256,7 +256,7 @@ ttreeFormulas = {
                     "nJetGood30":"Sum$(nJetGood_pt>30)", 
                     "nJetGood40":"Sum$(nJetGood_pt>40)", 
                     "nJetGood50":"Sum$(nJetGood_pt>50)", 
-                    #"nJetBTag30":"Sum$(nJetGood_pt>30&JetGood_isBTag)", 
+                    #"nJetBTag30Tight":"Sum$(nJetGood_pt>30&JetGood_isBTag_tight)", 
     }
 
 yields     = {}
