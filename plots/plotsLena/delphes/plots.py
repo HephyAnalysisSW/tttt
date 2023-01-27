@@ -36,6 +36,7 @@ argParser.add_argument('--plot_directory',     action='store',      default='del
 argParser.add_argument('--selection',          action='store',      default=None)
 argParser.add_argument('--signal',             action='store',      default='TTTT_MS')
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
+argParser.add_argument('--scaling',                                 action='store_true',     help='Scale the eft to SM?')
 argParser.add_argument('--show_derivatives',                        action='store_true',     help='Show also the derivatives?')
 
 args = argParser.parse_args()
@@ -276,7 +277,7 @@ Plot.setDefaults(stack = stack, weight = eft_weights, addOverFlowBin="upper")
 plots        = []
 plots2D      = []
 
-postfix = "" 
+postfix = "_scaled" if args.scaling else ""
 
 
 
@@ -529,13 +530,18 @@ def drawPlots(plots, subDirectory=''):
         else:
             if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
             subtr = 0 #if args.show_derivatives else len(eft_configs)
+            
+            scale = {}
+            if (args.scaling):
+              for i in range(1,len(plot.histos)):
+                  scale.update({i: 0})
             plotting.draw(plot,
               plot_directory = plot_directory_,
               #ratio =  None,
               ratio = {'histos':[(i,0) for i in range(1,len(plot.histos))], 'yRange':(0.1,1.9)},
               logX = False, logY = log, sorting = False,
               yRange = (0.03, "auto") if log else "auto",
-              scaling = { },
+              scaling = scale,
               legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2), 
               drawObjects = drawObjects( ),
               copyIndexPHP = True,
