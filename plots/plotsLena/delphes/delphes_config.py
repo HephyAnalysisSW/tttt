@@ -131,7 +131,7 @@ def make_bjets ( event, sample ):
     if (event.nrecoJet >= 4):        
         event.m_4b  = abs((event.recoJets[0]['vec4D']+event.recoJets[1]['vec4D']+event.recoJets[2]['vec4D']+event.recoJets[3]['vec4D']).M())  
     else:
-        event.m_4b  = float(NaN) 
+        event.m_4b  = 0
     # minDR of all btag combinations
     if len(event.recoBJets)>=2:
         event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.recoBJets, 2)] )
