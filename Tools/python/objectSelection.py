@@ -163,8 +163,8 @@ def get_index_str( index ):
 
 ## MVA TOP lepton thresholds ##
 # mvaTOP = {'mu':{'VL':-0.45, 'L':0.05, 'M':0.65, 'T':0.90}, 'ele':{'VL':-0.55, 'L':0.00, 'M':0.60, 'T':0.90}} # EOY
-# mvaTOP = {'mu':{'VL': 0.20, 'L':0.41, 'M':0.64, 'T':0.81}, 'ele':{'VL': 0.20, 'L':0.41, 'M':0.64, 'T':0.81}} # UL
-mvaTOP = {'mu':{'VL': 0.59, 'L':0.81, 'M':0.90, 'T':0.94}, 'ele':{'VL': 0.59, 'L':0.81, 'M':0.90, 'T':0.94}} # ULv2
+mvaTOP = {'mu':{'VL': 0.20, 'L':0.41, 'M':0.64, 'T':0.81}, 'ele':{'VL': 0.20, 'L':0.41, 'M':0.64, 'T':0.81}} # UL
+mvaTOPv2 = {'mu':{'VL': 0.59, 'L':0.81, 'M':0.90, 'T':0.94}, 'ele':{'VL': 0.59, 'L':0.81, 'M':0.90, 'T':0.94}} # ULv2
 
 def lepString( eleMu = None, WP = 'VL', idx = None):
     idx_str = "[%s]"%idx if idx is not None else ""
@@ -183,10 +183,6 @@ def lepStringNoMVA(eleMu = None, idx = None):
         return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13".format( idx_str=idx_str )
     else:
         return '('+lepString( 'ele', WP, idx=idx) + ')||(' + lepString( 'mu', WP, idx=idx) + ')'
-
-def mvaTopWP(mvaTopThr, pdgId):
-    mvaTOPs = mvaTOP['mu'] if abs(pdgId)==13 else mvaTOP['ele']
-    return sum( [ int( mvaTopThr > th ) for th in mvaTOPs.values() ] )
 
 ## MUONS ##
 def muonSelector( lepton_selection, year, ptCut = 10):
