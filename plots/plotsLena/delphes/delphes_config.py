@@ -12,7 +12,6 @@ from RootTools.core.standard     import *
 
 #From Tools
 from tttt.Tools.helpers          import deltaPhi, deltaR2, deltaR, getCollection, getObjDict
-
 from Analysis.Tools.WeightInfo       import WeightInfo
 
 import logging
@@ -99,9 +98,9 @@ all_mva_variables = {
      #dR between leading/subleading lepton
      "dR_2l"                 :(lambda event, sample: sqrt(deltaPhi(event.recoLep_phi[0], event.recoLep_phi[1])**2 + (event.recoLep_eta[0] - event.recoLep_eta[1])**2)),
      #Mt2 mass lepton + b-jet
-     # "mt2ll"                 :(lambda event, sample : event.mt2ll),
-     #"mt2bb"                 :(lambda event, sample : event.mt2bb),
-     #"mt2blbl"               :(lambda event, sample : event.mt2blbl),
+     "mt2ll"                 :(lambda event, sample : event.mt2ll),
+     "mt2bb"                 :(lambda event, sample : event.mt2bb),
+     "mt2blbl"               :(lambda event, sample : event.mt2blbl),
      }
 
 
@@ -142,7 +141,7 @@ sequence.append ( make_bjets )
 
 def make_leptons(event, sample):
     event.leptons   = getCollection(event, 'recoLep', lepVarNames, 'nrecoLep') 
-
+    
      #(Second) smallest dR between any lepton and medium b-tagged jet
     dR_vals = sorted([deltaR(event.recoBJets[i], event.leptons[j]) for i in range(len(event.recoBJets)) for j in range(len(event.leptons))])
     if len(dR_vals)>=2:
@@ -163,13 +162,14 @@ def MT2(event, sample):
     mt2Calculator.reset()    
     mt2Calculator.setLeptons(event.recoLep_pt[0], event.recoLep_eta[0], event.recoLep_phi[0],event.recoLep_pt[1], event.recoLep_eta[1], event.recoLep_phi[1])
     mt2Calculator.setMet(event.recoMet_pt, event.recoMet_phi)
-    #event.mt2ll = mt2Calculator.mt2ll()
+    event.mt2ll = mt2Calculator.mt2ll()
     
     
     b = (event.recoBJets + event.recoNonBJets )[:2]
     b1, b2 = b[0], b[1]
     mt2Calculator.setBJets(b1['pt'], b1['eta'], b1['phi'], b2['pt'], b2['eta'], b2['phi'])
-    #event.mt2bb = mt2Calculator.mt2bb()
-    #event.mt2blbl = mt2Calculator.mt2blbl()
+    event.mt2bb = mt2Calculator.mt2bb()
+    event.mt2blbl = mt2Calculator.mt2blbl()
+    
 
-#sequence.append( MT2 )
+sequence.append( MT2 )
