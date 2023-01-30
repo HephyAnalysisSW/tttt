@@ -399,19 +399,19 @@ plots.append(Plot( name = "j2_eta"+postfix,
 ))
 
 plots.append(Plot( name = 'Met_pt'+postfix,
-  texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
+  texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.met_pt,
   binning=[400/20,0,400],
 ))
 
 plots.append(Plot( name = 'nJet'+postfix,
-  texX = 'jet multiplicity', texY = 'Number of Events / 20 GeV',
+  texX = 'jet multiplicity', texY = 'Number of Events',
   attribute = lambda event, sample: event.nrecoJet,
   binning=[8,0,8],
 ))
 
 plots.append(Plot( name = 'ht'+postfix,
-  texX = 'H_{T}', texY = 'Number of Events / 20 GeV',
+  texX = 'H_{T}', texY = 'Number of Events',
   attribute = lambda event, sample: event.ht,
   binning=[30,0,3000],
 ))
@@ -423,82 +423,100 @@ plots.append(Plot( name = "m_4b",
 ))
 
 plots.append(Plot( name = 'htb'+postfix,
-  texX = 'H_{T,b-jets}', texY = 'Number of Events / 20 GeV',
+  texX = 'H_{T,b-jets}', texY = 'Number of Events',
   attribute = lambda event, sample: event.htb,
   binning=[40,0,2500],
 ))
 
 plots.append(Plot( name = 'ht_ratio'+postfix,
-  texX = '#Delta H_{T}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta H_{T}', texY = 'Number of Events',
   attribute = lambda event, sample: event.ht_ratio,
   binning=[40,0,1],
 ))
 
 plots.append(Plot( name = 'dEta_jj'+postfix,
-  texX = '#Delta#eta_{jj}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta#eta_{jj}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dEtaj_12,
   binning=[40,0,6],
 ))
 
 plots.append(Plot( name = 'dEta_ll'+postfix,
-  texX = '#Delta#eta_{ll}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta#eta_{ll}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dEtal_12,
   binning=[40,0,6],
 ))
 
 plots.append(Plot( name = 'dPhi_jj'+postfix,
-  texX = '#Delta#phi_{jj}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta#phi_{jj}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dPhij_12,
   binning=[40,0,3.5],
 ))
 
 plots.append(Plot( name = 'dPhi_l'+postfix,
-  texX = '#Delta#phi_{ll}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta#phi_{ll}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dPhil_12,
   binning=[40,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_0'+postfix,
-  texX = '#Delta R_{0}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta R_{0}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dR_min0,
   binning=[40,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_1'+postfix,
-  texX = '#Delta R_{1}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta R_{1}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dR_min1,
   binning=[40,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_bb'+postfix,
-  texX = '#Delta R_{b-jet,b-jet}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta R_{b-jet,b-jet}', texY = 'Number of Events',
   attribute = lambda event, sample: event.min_dR_bb,
   binning=[40,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_2l'+postfix,
-  texX = '#Delta R_{2l}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta R_{2l}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dR_2l,
   binning=[40,0,3.5],
 ))
 
 
 plots.append(Plot( name = 'mj_12'+postfix,
-  texX = 'm_{2j}', texY = 'Number of Events / 20 GeV',
+  texX = 'm_{2j}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mj_12,
   binning=[40,0,2500],
 ))
 
 plots.append(Plot( name = 'mlj_l1'+postfix,
-  texX = 'm_{l1, j1}', texY = 'Number of Events / 20 GeV',
+  texX = 'm_{l1, j1}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mlj_11,
   binning=[40,0,2500],
 ))
 
 plots.append(Plot( name = 'mlj_l2'+postfix,
-  texX = 'm_{l1, j2}', texY = 'Number of Events / 20 GeV',
+  texX = 'm_{l1, j2}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mlj_12,
   binning=[40,0,2500],
+))
+
+plots.append(Plot( name = 'mt2ll'+postfix,
+  texX = 'm2_{T,ll}', texY = 'Number of Events',
+  attribute = lambda event, sample: event.mt2ll,
+  binning=[40,0,1200],
+))
+
+plots.append(Plot( name = 'mt2bb'+postfix,
+  texX = 'm2_{T,bb}', texY = 'Number of Events',
+  attribute = lambda event, sample: event.mt2bb,
+  binning=[40,0,1200],
+))
+
+plots.append(Plot( name = 'mt2blbl'+postfix,
+  texX = 'm2_{T,blbl}', texY = 'Number of Events',
+  attribute = lambda event, sample: event.mt2blbl,
+  binning=[40,0,1200],
 ))
 
 # Text on the plots
