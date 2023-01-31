@@ -223,7 +223,7 @@ def weight_getter( branches ):
 
 
 
-import delphes_config as config 
+import tttt.MVA.configs.ttbb_2l as config 
 read_variables = []
 read_variables+=config.read_variables
 
