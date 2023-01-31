@@ -598,7 +598,7 @@ if addSystematicVariations:
         for k in bTagVariations.keys():
             new_variables.append('weightBTagSF_'+k+'/F')
 
-jesUncertanties = [ 
+jesUncertanties = [
     "AbsoluteMPFBias",
     "AbsoluteScale",
     "AbsoluteStat",
