@@ -21,7 +21,7 @@ import tttt.Tools.user as user
 
 # tttt
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
-from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, mvaTopWP, getGenZs, isAnalysisJet
+from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, getGenZs, isAnalysisJet
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
 
 # Analysis
@@ -297,6 +297,10 @@ if hasattr( sample, "reweight_pkl" ):
 ################################################################################
 ## Sort the list of files?
 len_orig = len(sample.files)
+
+if not  len(sample.files)==options.nJobs:
+    raise RuntimeError("NJobs incorrect! There are only %i files in sample %s in era %s. nJobs=%i"%(len(sample.files), sample.name, options.era, options.nJobs ) )
+
 sample = sample.split( n=options.nJobs, nSub=options.job)
 logger.info( "fileBasedSplitting: Run over %i/%i files for job %i/%i."%(len(sample.files), len_orig, options.job, options.nJobs))
 logger.debug("fileBasedSplitting: Files to be run over:\n%s", "\n".join(sample.files) )

@@ -341,44 +341,44 @@ plots.append(Plot( name = "eta_tt"+postfix,
 ))
 
 plots.append(Plot( name = 'dEta_tt'+postfix,
-  texX = '#Delta#eta_{tt}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta#eta_{tt}', texY = 'Number of Events',
   attribute = lambda event, sample: abs(event.genTop_eta[0] - event.genTop_eta[1]) if event.ngenTop>=2 else float('nan'),
   binning=[40,0,6],
 ))
 
 plots.append(Plot( name = 'dPhi_tt'+postfix,
-  texX = '#Delta#phi_{tt}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta#phi_{tt}', texY = 'Number of Events',
   attribute = lambda event, sample: acos(cos(event.genTop_phi[0]-event.genTop_phi[1])) if event.ngenTop>=2 else float('nan'),
   binning=[40,0,3.5],
 ))
 
 if (args.sample == 'TTTT_MS'):
     plots.append(Plot( name = 'm_tt'+postfix,
-      texX = 'm_{tt}', texY = 'Number of Events / 20 GeV',
+      texX = 'm_{tt}', texY = 'Number of Events',
       attribute = lambda event, sample: event.m_tt, 
       binning=[40,0,2500],
     ))
     
     plots.append(Plot( name = 'm_tttt'+postfix,
-      texX = 'm_{tttt}', texY = 'Number of Events / 20 GeV',
+      texX = 'm_{tttt}', texY = 'Number of Events',
       attribute = lambda event, sample: event.m_tttt,
       binning=[12,500,5000],
     ))
     
     plots.append(Plot( name = 'm_ttbb'+postfix,
-      texX = 'm_{ttbb}', texY = 'Number of Events / 20 GeV',
+      texX = 'm_{ttbb}', texY = 'Number of Events',
       attribute = lambda event, sample: event.m_ttbb,
       binning=[12,300,5000],
     ))
     
     plots.append(Plot( name = 'dEta_bb'+postfix,
-      texX = '#Delta#eta_{b}', texY = 'Number of Events / 20 GeV',
+      texX = '#Delta#eta_{bb}', texY = 'Number of Events',
       attribute = lambda event, sample: abs(event.genB_eta[0] - event.genB_eta[1]) if event.ngenB>=2 else float('nan'),
       binning=[40,0,6],
     ))
 
     plots.append(Plot( name = 'dPhi_bb'+postfix,
-      texX = '#Delta#phi_{bb}', texY = 'Number of Events / 20 GeV',
+      texX = '#Delta#phi_{bb}', texY = 'Number of Events',
       attribute = lambda event, sample: acos(cos(event.genB_phi[0]-event.genB_phi[1])) if event.ngenB>=2 else 0,
       binning=[40,0,3.5],
     ))
@@ -386,49 +386,49 @@ if (args.sample == 'TTTT_MS'):
     
 if (args.sample == 'TTbb_MS'):      
     plots.append(Plot( name = 'm_tt'+postfix,
-      texX = 'm_{tt}', texY = 'Number of Events / 20 GeV',
+      texX = 'm_{tt}', texY = 'Number of Events',
       attribute = lambda event, sample: event.m_tt, 
       binning=[40,0,2500],
     ))
     
     plots.append(Plot( name = 'm_bb_from_t'+postfix,
-      texX = 'm_{bb from t}', texY = 'Number of Events / 20 GeV',
+      texX = 'm_{bb from t}', texY = 'Number of Events',
       attribute = lambda event, sample: event.m_bb_fromt, 
       binning=[40,0,2500],
     ))
     
     plots.append(Plot( name = 'm_bb_extra'+postfix,
-      texX = 'm_{bb extra}', texY = 'Number of Events / 20 GeV',
+      texX = 'm_{bb extra}', texY = 'Number of Events',
       attribute = lambda event, sample: event.m_bb_extra, 
       binning=[40,0,2500],
     ))
     
     plots.append(Plot( name = 'm_bbbb'+postfix,
-      texX = 'm_{bbbb}', texY = 'Number of Events / 20 GeV',
+      texX = 'm_{bbbb}', texY = 'Number of Events',
       attribute = lambda event, sample: event.m_bbbb,
       binning=[30,0,2500],
     ))
     
     plots.append(Plot( name = 'm_ttbb'+postfix,
-      texX = 'm_{ttbb}', texY = 'Number of Events / 20 GeV',
+      texX = 'm_{ttbb}', texY = 'Number of Events',
       attribute = lambda event, sample: event.m_ttbb,
       binning=[12,300,5000],
     ))
     
     plots.append(Plot( name = 'min_dR_bb_extra'+postfix,
-      texX = '#DeltaR_{bb extra}', texY = 'Number of Events / 20 GeV',
+      texX = '#DeltaR_{bb extra}', texY = 'Number of Events',
       attribute = lambda event, sample: event.min_dR_bb_extra,
       binning=[40,0,3.5],
     ))
     
     plots.append(Plot( name = 'dEta_bb_extra'+postfix,
-      texX = '#Delta#eta_{bb extra}', texY = 'Number of Events / 20 GeV',
+      texX = '#Delta#eta_{bb extra}', texY = 'Number of Events',
       attribute = lambda event, sample: abs(event.extrabs[0]['eta'] - event.extrabs[1]['eta']) if len(event.extrabs)>=2 else float('nan'),
       binning=[40,0,6],
     ))
     
     plots.append(Plot( name = 'dPhi_bb_extra'+postfix,
-      texX = '#Delta#phi_{bb extra}', texY = 'Number of Events / 20 GeV',
+      texX = '#Delta#phi_{bb extra}', texY = 'Number of Events',
       attribute = lambda event, sample: acos(cos(event.extrabs[0]['phi']-event.extrabs[1]['phi'])) if len(event.extrabs)>=2  else float('nan'),
       binning=[40,0,3.5],
     ))
@@ -448,7 +448,7 @@ if (args.sample == 'TTbb_MS'):
     
     
 plots.append(Plot( name = 'min_dR_tt'+postfix,
-  texX = '#DeltaR_{tt}', texY = 'Number of Events / 20 GeV',
+  texX = '#DeltaR_{tt}', texY = 'Number of Events',
   attribute = lambda event, sample: event.min_dR_tt,
   binning=[40,0,3.5],
 ))
@@ -538,67 +538,67 @@ plots.append(Plot( name = "bj1_eta"+postfix,
 ))
 
 plots.append(Plot( name = 'Met_pt'+postfix,
-  texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events / 20 GeV',
+  texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.genMet_pt,
   binning=[400/20,0,400],
 ))
 
 plots.append(Plot( name = 'nJet'+postfix,
-  texX = 'jet multiplicity', texY = 'Number of Events / 20 GeV',
+  texX = 'jet multiplicity', texY = 'Number of Events',
   attribute = lambda event, sample: len(event.jets),
   binning=[8,0,8],
 ))
 
 plots.append(Plot( name = 'ht'+postfix,
-  texX = 'H_{T}', texY = 'Number of Events / 20 GeV',
+  texX = 'H_{T}', texY = 'Number of Events',
   attribute = lambda event, sample: sum( [j['pt'] for j in event.jets]),
   binning=[30,0,2500],
 ))
 
 plots.append(Plot( name = 'htb'+postfix,
-  texX = 'H_{T,b-jets}', texY = 'Number of Events / 20 GeV',
+  texX = 'H_{T,b-jets}', texY = 'Number of Events',
   attribute = lambda event, sample: sum( [j['pt'] for j in event.trueBjets]),
   binning=[40,0,2500],
 ))
 
 plots.append(Plot( name = 'ht_ratio'+postfix,
-  texX = '#DeltaH_{T}', texY = 'Number of Events / 20 GeV',
+  texX = '#DeltaH_{T}', texY = 'Number of Events',
   attribute = lambda event, sample: sum( [j['pt'] for j in event.jets[:4]])/ sum( [j['pt'] for j in event.jets ]) if len(event.jets)>=4 else float('nan'),
   binning=[40,0,1],
 ))
 
 plots.append(Plot( name = 'dEta_jj'+postfix,
-  texX = '#Delta#eta_{jj}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta#eta_{jj}', texY = 'Number of Events',
   attribute = lambda event, sample: abs(event.jets[0]['eta'] - event.jets[1]['eta']) if len(event.jets)>=2 else float('nan'),
   binning=[40,0,6],
 ))
 
 plots.append(Plot( name = 'dPhi_jj'+postfix,
-  texX = '#Delta#phi_{jj}', texY = 'Number of Events / 20 GeV',
+  texX = '#Delta#phi_{jj}', texY = 'Number of Events',
   attribute = lambda event, sample: acos(cos(event.jets[0]['phi']-event.jets[1]['phi'])) if len(event.jets)>=2 else float('nan'),
   binning=[40,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_jj'+postfix,
-  texX = '#DeltaR_{jj}', texY = 'Number of Events / 20 GeV',
+  texX = '#DeltaR_{jj}', texY = 'Number of Events',
   attribute = lambda event, sample: event.min_dR_jj,
   binning=[40,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_bjbj'+postfix,
-  texX = '#DeltaR_{b-jet,b-jet}', texY = 'Number of Events / 20 GeV',
+  texX = '#DeltaR_{b-jet,b-jet}', texY = 'Number of Events',
   attribute = lambda event, sample: event.min_dR_bjbj,
   binning=[40,0,3.5],
 ))
 
 plots.append(Plot( name = 'm_jj'+postfix,
-  texX = 'm_{jj}', texY = 'Number of Events / 20 GeV',
+  texX = 'm_{jj}', texY = 'Number of Events',
   attribute = lambda event, sample: sqrt(2*event.jets[0]['pt']*event.jets[1]['pt']*(cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))) if len(event.jets)>=2 else float('nan'),
   binning=[40,0,2500],
 ))
 
 plots.append(Plot( name = 'm_bjbj'+postfix,
-  texX = 'm_{b-jet b-jet}', texY = 'Number of Events / 20 GeV',
+  texX = 'm_{b-jet b-jet}', texY = 'Number of Events',
   attribute = lambda event, sample: sqrt(2*event.trueBjets[0]['pt']*event.trueBjets[1]['pt']*(cosh(event.trueBjets[0]['eta']-event.trueBjets[1]['eta'])-cos(event.trueBjets[0]['phi']-event.trueBjets[1]['phi']))) if len(event.trueBjets)>=2 else float('nan'),
   binning=[40,0,2500],
 ))
