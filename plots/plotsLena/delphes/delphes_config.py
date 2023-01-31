@@ -28,12 +28,17 @@ jetVarNames      = [x.split('/')[0] for x in jetVars]
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','isolationVar/F', 'isolationVarRhoCorr/F']
 lepVarNames      = [x.split('/')[0] for x in lepVars]
 
+lstm_jets_maxN   = 10
+lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F']
+lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
+
 # Training variables
 read_variables = [\
     "nBTag/I", 
     "recoMet_pt/F", "recoMet_phi/F",
     "genMet_pt/F", "genMet_phi/F",
     "nrecoJet/I",
+    "recoJet/F",
     "recoJet[%s]"%(",".join(jetVars)),
     "nrecoLep/I",
     "recoLep[%s]"%(",".join(lepVars)),
@@ -109,6 +114,18 @@ mva_variables_ = all_mva_variables.keys()
 mva_variables_.sort()
 mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
 
+def lstm_jets(event, sample):
+    jets = [ getObjDict( event, 'recoJet_', lstm_jetVarNames, event.recoJet_index[i] ) for i in range(int(event.nrecoJet)) ]
+    #jets = filter( jet_vector_var['selector'], jets )
+    return jets
+
+# for the filler
+mva_vector_variables    =   {
+    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10}
+    "mva_Jet":  {"func":lstm_jets, "name":"recoJet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames}
+}
+
+
 sequence = []
 
 def addTLorentzVector( p_dict , name ):
@@ -173,3 +190,7 @@ def MT2(event, sample):
     
 
 sequence.append( MT2 )
+
+
+import tttt.samples.GEN_EFT_postProcessed as samples
+training_samples = [samples.TTTT_MS, samples.TTbb_MS]
