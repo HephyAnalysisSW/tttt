@@ -29,7 +29,7 @@ lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','isolationVar/F', 'isolatio
 lepVarNames      = [x.split('/')[0] for x in lepVars]
 
 lstm_jets_maxN   = 10
-lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F']
+lstm_jetVars     = ['pt/F', 'eta/F', 'bTagPhys/I']
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
 # Training variables
@@ -38,7 +38,6 @@ read_variables = [\
     "recoMet_pt/F", "recoMet_phi/F",
     "genMet_pt/F", "genMet_phi/F",
     "nrecoJet/I",
-    "recoJet/F",
     "recoJet[%s]"%(",".join(jetVars)),
     "nrecoLep/I",
     "recoLep[%s]"%(",".join(lepVars)),
@@ -115,14 +114,15 @@ mva_variables_.sort()
 mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
 
 def lstm_jets(event, sample):
-    jets = [ getObjDict( event, 'recoJet_', lstm_jetVarNames, event.recoJet_index[i] ) for i in range(int(event.nrecoJet)) ]
+    #print event.recoJet_bTagPhys[0]
+    jets = [ getObjDict( event, 'recoJet_', lstm_jetVarNames, i) for i in range(int(event.nrecoJet)) ]
     #jets = filter( jet_vector_var['selector'], jets )
     return jets
 
 # for the filler
 mva_vector_variables    =   {
     #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10}
-    "mva_Jet":  {"func":lstm_jets, "name":"recoJet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames}
+    "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames}
 }
 
 

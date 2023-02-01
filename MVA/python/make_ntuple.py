@@ -17,11 +17,12 @@ import tttt.MVA.configs  as configs
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel', action='store', nargs='?',  choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],   default='INFO', help="Log level for logging" )
-argParser.add_argument('--sample',             action='store', type=str)
-argParser.add_argument('--config',             action='store', type=str)
-argParser.add_argument('--selection',          action='store', type=str, default=None,  help="Additional training selection?")
-argParser.add_argument('--output_directory',   action='store', type=str,   default='.')
-argParser.add_argument('--small',              action='store_true')
+argParser.add_argument('--sample',                    action='store', type=str)
+argParser.add_argument('--config',                    action='store', type=str)
+argParser.add_argument('--selection',                 action='store', type=str, default=None,  help="Additional training selection?")
+argParser.add_argument('--output_directory',          action='store', type=str,   default='.')
+argParser.add_argument('--small',                     action='store_true')
+argParser.add_argument('--delphesCutInterpreter',     action='store_true', default=False, help="Use delphesCutInterpreter?")
 
 args = argParser.parse_args()
 
@@ -61,7 +62,10 @@ if args.small:
     subDir += '_small'
 
 if args.selection is not None:
-    from tttt.Tools.cutInterpreter import cutInterpreter
+    if args.delphesCutInterpreter:
+        from tttt.Tools.delphesCutInterpreter import cutInterpreter
+    else:    
+        from tttt.Tools.cutInterpreter import cutInterpreter
     custom_sel = cutInterpreter.cutString( args.selection)
     sample.addSelectionString( custom_sel )
     logger.info( "Add selectionstring %s", custom_sel )
@@ -123,8 +127,10 @@ mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
 
 # vector variables, if any
 for name, vector_var in config.mva_vector_variables.iteritems():
-    #mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']') )
-    mva_variables.append( name+'['+','.join(vector_var['vars'])+']' )
+    mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']') )
+    if vector_var.has_key("nMax"):
+        mva_variables[-1].nMax = vector_var["nMax"]
+    #mva_variables.append( name+'['+','.join(vector_var['vars'])+']' )
 # FIs
 if hasattr( config, "FIs"):
     FI_variables = ["FI_%s/F"%var for var in config.FIs.keys() ]
@@ -142,9 +148,8 @@ outputfile = ROOT.TFile.Open(output_file, 'recreate')
 outputfile.cd()
 maker = TreeMaker(
     sequence  = [ filler ],
-    variables = map(TreeVariable.fromString,
-          mva_variables+FI_variables,
-        ),
+    variables = map(lambda v: TreeVariable.fromString(v) if type(v)==type("") else v,
+                mva_variables+FI_variables ),
     treeName = "Events"
     )
 
