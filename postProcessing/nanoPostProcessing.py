@@ -915,7 +915,7 @@ def filler( event ):
     # Remove leptons that do not fulfil quality criteria
     all_leptons = list(leptons) # Copy list to not loop over the list from which we remove entries
     for lep in all_leptons:
-        if lep['mvaTOPWP'] < 1:
+        if not lep['isFO'] :
             leptons.remove(lep)
 
     # Now set index corresponding to cleaned list
