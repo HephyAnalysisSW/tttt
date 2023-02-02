@@ -129,29 +129,26 @@ if options.event > 0:
 if isDilep:
     skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5)>=2" )
 elif isTrilep:
-    skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)&&Electron_pfRelIso03_all<0.4) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5&&Muon_pfRelIso03_all<0.4)>=2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5)+Sum$(Muon_pt>10&&abs(Muon_eta)<2.5)>=3" )
+    skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5&&(Electron_pfRelIso03_all)<0.4) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5&&Muon_pfRelIso03_all<0.4)>=2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5)+Sum$(Muon_pt>10&&abs(Muon_eta)<2.5)>=3" )
 elif isSinglelep:
     skimConds.append( "Sum$(Electron_pt>10&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>10&&abs(Muon_eta)<2.5)>=1" )
 
 if 'ht500' in options.skim.lower():
     skimConds.append("Sum$(Jet_pt*(Jet_pt>20&&abs(Jet_eta)<2.4))>500")
 
-if isOS:
-    skimConds.append("Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&Sum$(lep_pdgId*lep_isTight)==0)")
 
 if isInclusive:
     skimConds.append('(1)')
     isSinglelep = True #otherwise no lepton variables?!
     isDilep     = True
     isTrilep    = True
-    isOS        = True
 
 ################################################################################
 #Samples: Load samples
 maxN = 1 if options.small else None
 if options.small:
     options.job = 0
-    options.nJobs = 10000 # set high to just run over 1 input file
+    options.nJobs = 1000 # set high to just run over 1 input file
 
 if options.central:
     if options.era == "UL2016":
@@ -298,7 +295,7 @@ if hasattr( sample, "reweight_pkl" ):
 ## Sort the list of files?
 len_orig = len(sample.files)
 
-if not  len(sample.files)==options.nJobs:
+if options.nJobs>len(sample.files):
     raise RuntimeError("NJobs incorrect! There are only %i files in sample %s in era %s. nJobs=%i"%(len(sample.files), sample.name, options.era, options.nJobs ) )
 
 sample = sample.split( n=options.nJobs, nSub=options.job)
@@ -597,10 +594,17 @@ if addSystematicVariations:
                  'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
                  'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
                  }
+    bTagVariation = ['central', 'up_jes', 'down_jes', 'up_lf',
+                 'down_lf', 'up_hfstats1', 'down_hfstats1',
+                 'up_hfstats2', 'up_hfstats2', 'down_hfstats2',
+                 'up_cferr1', 'down_cferr2', 'up_cferr1',
+                 'down_cferr2', 'up_hf', 'down_hf', 'up_lfstats1',
+                 'down_lfstats1', 'up_lfstats2', 'down_lfstats2'
+                 ]
 
-    if isMC:
-        for k in bTagVariations.keys():
-            new_variables.append('weightBTagSF_'+k+'/F')
+    #if isMC:
+        # for k in bTagVariations.keys():
+        #     new_variables.append('weightBTagSF_'+k+'/F')
 
 jesUncertanties = [
     "AbsoluteMPFBias",
@@ -918,6 +922,8 @@ def filler( event ):
     for iLep, lep in enumerate(leptons):
         lep['index'] = iLep
 
+
+    #SPOSTA QUESTA PARTE PRIMA DELLA SELEZIONE DI ANALYSISJETS
     # Now create cleaned jets, b jets, ...
     clean_jets,unclean_jets = cleanJetsAndLeptons( analysis_jets, [l for l in leptons if l['isFO']] )
     clean_jets_acc = filter(lambda j:abs(j['eta'])<2.4, clean_jets)
@@ -1166,16 +1172,23 @@ def filler( event ):
             event.l4_isTight    = leptons[3]['isTight']
 
     if isMC and addSystematicVariations:
+        for j in jets:
+            #btagEff.addBTagEffToJet(j)
+            btagRes.getbtagSF(j)
         for k in bTagVariations.keys():
-            for j in jets:
-                btagEff.addBTagEffToJet(j)
-                btagRes.getbtagSF(j)
-                if k in list(flavourSys[abs(j['hadronFlavour'])]):
-                    bTagVariations[k] *= j['jetSF'][k]
-            setattr(event, 'weightBTagSF_'+k, bTagVariations[k])
-            for var in btagEff.btagWeightNames:
-                if var!='MC':
-                    setattr(event, 'reweightBTag_'+var, btagEff.getBTagSF_1a( var, bJets, filter( lambda j: abs(j['eta'])<2.4, nonBJets ) ) )
+            if len(jets)>0:
+
+                setattr( event, 'reweightBTagSF_'+k, reduce(mul, [(j["jetSF"][k] if j["jetSF"].has_key(k) else 1)], 1))
+                print('reweightBTagSF_'+k, reduce(mul, [(j["jetSF"][k] if j["jetSF"].has_key(k) else 1) for j in jets]))
+            else:
+                setattr( event, 'reweightBTagSF_'+k,1)
+#if k in list(flavourSys[abs(j['hadronFlavour'])]):
+        #    for k in bTagVariations.keys():
+        #            bTagVariations[k] *= j['jetSF'][k]
+        #    setattr(event, 'reweightBTagSF_'+k, bTagVariations[k])
+            # for var in btagEff.btagWeightNames:
+            #     if var!='MC':
+            #         setattr(event, 'reweightBTag_'+var, btagEff.getBTagSF_1a( var, bJets, filter( lambda j: abs(j['eta'])<2.4, nonBJets ) ) )
 
 
 # Create a maker. Maker class will be compiled. This instance will be used as a parent in the loop
