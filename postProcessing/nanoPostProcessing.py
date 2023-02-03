@@ -1175,6 +1175,7 @@ def filler( event ):
         for j in jets:
             #btagEff.addBTagEffToJet(j)
             btagRes.getbtagSF(j)
+            print(j['jetSF']['central'])
         for k in bTagVariations.keys():
             if len(jets)>0:
 
