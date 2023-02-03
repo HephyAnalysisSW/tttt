@@ -9,6 +9,7 @@ import itertools
 import copy
 import array
 import operator
+import numpy as np
 from   math                              import sqrt, cos, sin, pi, atan2, cosh
 
 # RootTools
@@ -24,7 +25,6 @@ from Analysis.Tools.helpers              import deltaPhi, deltaR
 from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
 import Analysis.Tools.syncer
-import numpy as np
 
 # Arguments
 import argparse
@@ -36,10 +36,11 @@ argParser.add_argument('--noData',         action='store_true', help='Do not plo
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?')
 argParser.add_argument('--plot_directory', action='store', default='TMB_4t_v2')
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
+argParser.add_argument('--nLeps',          action='store', default='2l', choices=['2l', '3l'], help='How many leptons do we require?')
 args = argParser.parse_args()
 
 # Logger
-import TMB.Tools.logger as logger
+import tttt.Tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
@@ -48,44 +49,56 @@ if args.small: args.plot_directory += "_small"
 if args.noData:args.plot_directory += "_noData"
 
 # Simulated samples
-from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+if args.nLeps == "2l":
+    from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+    logger.info("Importing dilep samples")
+elif args.nLeps == "3l":
+    from tttt.samples.nano_private_UL20_RunII_postProcessed_trilep import *
+    logger.info("Importing trilep samples")
 
 # Split dileptonic TTBar into three different contributions
 sample_TTLep = TTLep
-# ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
+# # ttbar gen classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
 TTLep_bb    = copy.deepcopy( sample_TTLep )
 TTLep_bb.name = "TTLep_bb"
 TTLep_bb.texName = "t#bar{t}b#bar{b}"
-TTLep_bb.color   = ROOT.kRed + 2 
+TTLep_bb.color   = ROOT.kRed + 2
 TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
 TTLep_cc    = copy.deepcopy( sample_TTLep )
 TTLep_cc.name = "TTLep_cc"
-TTLep_cc.texName = "t#bar{t}c#bar{c}" 
-TTLep_cc.color   = ROOT.kRed - 3 
+TTLep_cc.texName = "t#bar{t}c#bar{c}"
+TTLep_cc.color   = ROOT.kRed - 3
 TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
 TTLep_other = copy.deepcopy( sample_TTLep )
 TTLep_other.name = "TTLep_other"
-TTLep_other.texName = "t#bar{t} + light j." 
+TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
-# group all the simulated backgroundsamples 
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, TTW, TTH, TTZ, TTTT] 
+# group all the simulated backgroundsamples
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT]
 
 # Now we add the data
 if not args.noData:
-    from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
-    data_sample = RunII
-    data_sample.name = "data"
-    all_samples = mc +  [data_sample]
-else:
-    all_samples = mc 
+    if args.nLeps == "2l":
+        from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
+        data_sample = RunII
+        data_sample.name = "data"
+        all_samples = mc +  [data_sample]
 
-# Here we compute the scaling of the simulation to the data luminosity (event.weight corresponds to 1/fb for simulation, hence we divide the data lumi in pb^-1 by 1000) 
+    elif args.nLeps == "3l":
+        from tttt.samples.nano_private_UL20_RunII_postProcessed_trilep import RunII
+        data_sample = RunII
+        data_sample.name = "data"
+        all_samples = mc +  [data_sample]
+else:
+    all_samples = mc
+
+# Here we compute the scaling of the simulation to the data luminosity (event.weight corresponds to 1/fb for simulation, hence we divide the data lumi in pb^-1 by 1000)
 lumi_scale = 137. if args.noData else data_sample.lumi/1000.
 
 # We're going to "scale" the simulation if "small" is true. So let's define a "scale" which will correct this
 for sample in mc:
-    sample.scale  = 1 
+    sample.scale  = 1
 
 # For R&D we just use a fraction of the data
 if args.small:
@@ -105,10 +118,10 @@ tex.SetTextAlign(11) # align right
 
 def drawObjects( dataMCScale, lumi_scale ):
     lines = [
-      (0.15, 0.95, 'CMS Simulation'), 
+      (0.15, 0.95, 'CMS Simulation'),
       (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale),
     ]
-    return [tex.DrawLatex(*l) for l in lines] 
+    return [tex.DrawLatex(*l) for l in lines]
 
 def drawPlots(plots, mode, dataMCScale):
   for log in [False, True]:
@@ -139,25 +152,34 @@ jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F',
 jetVarNames     = [x.split('/')[0] for x in jetVars]
 #    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
 
-# the following we read for both, data and simulation 
+# the following we read for both, data and simulation
 read_variables += [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
-    "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I", 
+    "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I",
     "l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
     "JetGood[%s]"%(",".join(jetVars)),
     "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I,mvaTOP/F]",
-    "Z1_l1_index/I", "Z1_l2_index/I",  
+    "Z1_l1_index/I", "Z1_l2_index/I",
     "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
     "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
     "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
 ]
+
+if args.nLeps == "3l":
+    read_variables.append("l3_pt/F")
+    read_variables.append("l3_eta/F")
+    read_variables.append("l3_phi/F")
+    read_variables.append("l3_mvaTOP/F")
+    read_variables.append("l3_mvaTOPWP/I")
+    read_variables.append("l3_index/I")
+
 
 # the following we read only in simulation
 read_variables_MC = [
     'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
-            
+
 # Read variables and sequences
 sequence       = []
 
@@ -166,61 +188,68 @@ from tttt.Tools.helpers import getObjDict
 
 
 def make_jets( event, sample ):
-    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))] 
+    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
 
 sequence.append( make_jets )
 
 #MVA
 import tttt.MVA.configs as configs
-config = configs.tttt_2l
+config = configs.tttt_3l
 read_variables += config.read_variables
 
 # Add sequence that computes the MVA inputs
-def make_mva_inputs( event, sample ):
-    for mva_variable, func in config.mva_variables:
-        setattr( event, mva_variable, func(event, sample) )
-sequence.append( make_mva_inputs )
+# def make_mva_inputs( event, sample ):
+#     for mva_variable, func in config.mva_variables:
+#         setattr( event, mva_variable, func(event, sample) )
+# sequence.append( make_mva_inputs )
 
 # load models
 from keras.models import load_model
-
-classes = [ts.name for ts in config.training_samples]
-models  = [
-    {'name':"tttt_3b_2l",     'classes':classes, 'has_lstm':False, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l/tttt_2l/multiclass_model.h5")},
-    {'name':"tttt_3b_2l_lstm",'classes':classes, 'has_lstm':True, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l_lstm_LSTM/tttt_2l/multiclass_model.h5")},
-]
-
-def keras_predict( event, sample ):
-
-    # get model inputs assuming lstm
-    flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
-    #print "flat_variables", flat_variables
-    #print "lstm_jets", lstm_jets 
-    for model in models:
-        #print has_lstm, flat_variables, lstm_jets
-        if model['has_lstm']:
-            prediction = model['model'].predict( [flat_variables, lstm_jets] )
-        else:
-            prediction = model['model'].predict( flat_variables )
-        for i_class_, class_ in enumerate(model['classes']):
-            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
-        #print (model['name'], model['classes'], prediction)
-        #if not prediction>-float('inf'):
-        #    print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
-        #    print event.nJetGood
-        #    raise RuntimeError("Found NAN prediction?")
-
-sequence.append( keras_predict )
+#
+# classes = [ts.name for ts in config.training_samples]
+# models  = [
+#     {'name':"tttt_3b_2l",     'classes':classes, 'has_lstm':False, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l/tttt_2l/multiclass_model.h5")},
+#     {'name':"tttt_3b_2l_lstm",'classes':classes, 'has_lstm':True, 'model':load_model("/groups/hephy/cms/robert.schoefbeck/tttt/models/tttt_2l_lstm_LSTM/tttt_2l/multiclass_model.h5")},
+# ]
+#
+# def keras_predict( event, sample ):
+#
+#     # get model inputs assuming lstm
+#     flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
+#     #print "flat_variables", flat_variables
+#     #print "lstm_jets", lstm_jets
+#     for model in models:
+#         #print has_lstm, flat_variables, lstm_jets
+#         if model['has_lstm']:
+#             prediction = model['model'].predict( [flat_variables, lstm_jets] )
+#         else:
+#             prediction = model['model'].predict( flat_variables )
+#         for i_class_, class_ in enumerate(model['classes']):
+#             setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
+#         #print (model['name'], model['classes'], prediction
+#         #if not prediction>-float('inf'):
+#         #    print name, prediction, [[getattr( event, mva_variable) for mva_variable, _ in config.mva_variables]]
+#         #    print event.nJetGood
+#         #    raise RuntimeError("Found NAN prediction?")
+#
+# sequence.append( keras_predict )
 
 # Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
 ele_string = lepString('ele','VL')
 def getLeptonSelection( mode ):
-    if   mode=="mumu": return "Sum$({mu_string})==2&&Sum$({ele_string})==0".format(mu_string=mu_string,ele_string=ele_string)
-    elif mode=="mue":  return "Sum$({mu_string})==1&&Sum$({ele_string})==1".format(mu_string=mu_string,ele_string=ele_string)
-    elif mode=="ee":   return "Sum$({mu_string})==0&&Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
-    elif mode=='all':    return "Sum$({mu_string})+Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
+    #if args.nLeps == "3l":
+    if   mode == "mumumu":    return "Sum$({mu_string})==3&&Sum$({ele_string})==0".format(mu_string=mu_string,ele_string=ele_string)
+    elif mode == "mumue":     return "Sum$({mu_string})==2&&Sum$({ele_string})==1".format(mu_string=mu_string,ele_string=ele_string)
+    elif mode == "muee":      return "Sum$({mu_string})==1&&Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
+    elif mode == "eee":       return "Sum$({mu_string})==0&&Sum$({ele_string})==3".format(mu_string=mu_string,ele_string=ele_string)
+    elif mode == "all_3":       return "Sum$({mu_string})+Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
+    #if args.nLeps == "2l":
+    elif   mode == "mumu":    return "Sum$({mu_string})==2&&Sum$({ele_string})==0".format(mu_string=mu_string,ele_string=ele_string)
+    elif mode == "mue":     return "Sum$({mu_string})==1&&Sum$({ele_string})==1".format(mu_string=mu_string,ele_string=ele_string)
+    elif mode == "ee":      return "Sum$({mu_string})==0&&Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
+    elif mode=='all_2':    return "Sum$({mu_string})+Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
 
 def charge(pdgId):
     return -pdgId/abs(pdgId)
@@ -250,13 +279,19 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
     return func_
 
 # We don't use tree formulas, but I leave them so you understand the syntax. TTreeFormulas are faster than if we compute things in the event loop.
-ttreeFormulas = {   
-#                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection), 
+ttreeFormulas = {
+#                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection),
     }
 
 yields     = {}
 allPlots   = {}
-allModes   = ['mumu','mue', 'ee']
+
+if args.nLeps == "2l":
+    allModes   = ['mumu','mue', 'ee', 'all_2']
+
+if args.nLeps == "3l":
+    allModes   = ['mumumu','mumue', 'muee', 'eee' 'all_3']
+
 for i_mode, mode in enumerate(allModes):
     yields[mode] = {}
 
@@ -268,11 +303,11 @@ for i_mode, mode in enumerate(allModes):
     for sample in mc: sample.style = styles.fillStyle(sample.color)
     #TTTT.style = styles.lineStyle( ROOT.kBlack, width=2)
     if not args.noData:
-        data_sample.style = styles.errorStyle( ROOT.kBlack ) 
+        data_sample.style = styles.errorStyle( ROOT.kBlack )
 
     # read the MC variables only in MC; apply reweighting to simulation for specific detector effects
     for sample in mc:
-      sample.read_variables = read_variables_MC 
+      sample.read_variables = read_variables_MC
       sample.weight = lambda event, sample: event.reweightBTag_SF*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger#*event.reweightLeptonSF
 
     # Define what we want to see.
@@ -290,17 +325,17 @@ for i_mode, mode in enumerate(allModes):
       binning=[3, 0, 3],
     ))
 
-    for model in models:
-        for class_ in model['classes']:
-            model_name = model['name']+'_'+class_
-            plots.append(Plot(
-                name = model_name,
-                texX = model_name, texY = 'Number of Events',
-                attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
-                #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
-                binning=[50,0,1],
-                addOverFlowBin='upper',
-            ))
+    # for model in models:
+    #     for class_ in model['classes']:
+    #         model_name = model['name']+'_'+class_
+    #         plots.append(Plot(
+    #             name = model_name,
+    #             texX = model_name, texY = 'Number of Events',
+    #             attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
+    #             #binning=Binning.fromThresholds([0, 0.5, 1, 2,3,4,10]),
+    #             binning=[50,0,1],
+    #             addOverFlowBin='upper',
+    #         ))
 
     plots.append(Plot(
       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
@@ -444,7 +479,7 @@ for i_mode, mode in enumerate(allModes):
         attribute = TreeVariable.fromString( "Z1_mass/F" ),
         binning=[50,20,120],
         addOverFlowBin='upper',
-    )) 
+    ))
 
     plots.append(Plot(
         name = "Z1_cosThetaStar", texX = 'cos#theta(l-)', texY = 'Number of Events / 0.2',
@@ -458,7 +493,7 @@ for i_mode, mode in enumerate(allModes):
         attribute = TreeVariable.fromString( "Z2_mass/F" ),
         binning=[60,0,120],
         addOverFlowBin='upper',
-    )) 
+    ))
 
     plots.append(Plot(
         name = "minDLmass",
@@ -466,7 +501,7 @@ for i_mode, mode in enumerate(allModes):
         attribute = TreeVariable.fromString( "minDLmass/F" ),
         binning=[60,0,120],
         addOverFlowBin='upper',
-    )) 
+    ))
 
     plots.append(Plot(
         texX = '#Delta#phi(Z_{1}(ll))', texY = 'Number of Events',
@@ -610,9 +645,15 @@ for i_mode, mode in enumerate(allModes):
         for i, l in enumerate(plot.histos):
           for j, h in enumerate(l):
             yields[mode][plot.stack[i][j].name] = h.GetBinContent(h.FindBin(0.5+i_mode))
-            h.GetXaxis().SetBinLabel(1, "#mu#mu")
-            h.GetXaxis().SetBinLabel(2, "#mue")
-            h.GetXaxis().SetBinLabel(3, "ee")
+            if args.nLeps == "3l":
+                h.GetXaxis().SetBinLabel(1, "#mu#mu#mu")
+                h.GetXaxis().SetBinLabel(2, "#mu#mue")
+                h.GetXaxis().SetBinLabel(3, "#muee")
+                h.GetXaxis().SetBinLabel(4, "eee")
+            if args.nLeps == "2l":
+                h.GetXaxis().SetBinLabel(1, "#mu#mu")
+                h.GetXaxis().SetBinLabel(2, "#mue")
+                h.GetXaxis().SetBinLabel(3, "ee")
       if plot.name.endswith("_Flag"):
         for i, l in enumerate(plot.histos):
           for j, h in enumerate(l):
@@ -621,7 +662,7 @@ for i_mode, mode in enumerate(allModes):
             h.GetXaxis().SetBinLabel(3, "loose")
             h.GetXaxis().SetBinLabel(4, "medium")
             h.GetXaxis().SetBinLabel(5, "tight")
-        
+
     #yields[mode]["data"] = 0
 
     yields[mode]["MC"] = sum(yields[mode][s.name] for s in mc)
@@ -634,21 +675,40 @@ for i_mode, mode in enumerate(allModes):
     allPlots[mode] = plots
 
 # Add the different channels into SF and all
-for mode in ["SF","all"]:
-    yields[mode] = {}
-    for y in yields[allModes[0]]:
-        try:    yields[mode][y] = sum(yields[c][y] for c in (['ee','mumu'] if mode=="SF" else ['ee','mumu','mue']))
-        except: yields[mode][y] = 0
-    if args.noData:
-        dataMCScale = 1.
-    else:
-        dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
-    for plot in allPlots['mumu']:
-        for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
-            for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
-                for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
-                    if i==k: j.Add(l)
 
-    drawPlots(allPlots['mumu'], mode, dataMCScale)
+if args.nLeps == "2l":
+    for mode in ["SF","all_2"]:
+        yields[mode] = {}
+        for y in yields[allModes[0]]:
+            try:    yields[mode][y] = sum(yields[c][y] for c in (['ee','mumu'] if mode=="SF" else ['ee','mumu','mue']))
+            except: yields[mode][y] = 0
+        if args.noData:
+            dataMCScale = 1.
+        else:
+            dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
+        for plot in allPlots['mumu']:
+            for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
+                for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
+                    for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
+                        if i==k: j.Add(l)
+
+elif args.nLeps == "3l":
+    for mode in ["SF","all_2"]:
+        yields[mode] = {}
+        for y in yields[allModes[0]]:
+            try:    yields[mode][y] = sum(yields[c][y] for c in (['eee','mumumu'] if mode=="SF" else ['eee','mumumu','mumue', 'muee']))
+            except: yields[mode][y] = 0
+        if args.noData:
+            dataMCScale = 1.
+        else:
+            dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
+        for plot in allPlots['mumumu']:
+            for plot2 in (p for p in (allPlots['eee'] if mode=="SF" else allPlots["muee"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
+                for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
+                    for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
+                        if i==k: j.Add(l)
+
+
+    drawPlots(allPlots['mumumu'], mode, dataMCScale)
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
