@@ -1,16 +1,13 @@
 import copy, os, sys
-from RootTools.core.Sample import Sample 
+from RootTools.core.Sample import Sample
 import ROOT
 
 # Logging
 import logging
 logger = logging.getLogger(__name__)
 
-try:
-    directory_ = sys.modules['__main__'].directory_
-except:
-    import tttt.samples.config as config
-    directory_ = config.location_data_UL2018
+import tttt.samples.config as config
+directory_ = config.location_data_UL2018
 
 logger.info("Loading data samples from directory %s", directory_)
 
@@ -30,7 +27,7 @@ SingleMuon_Run2018               = getSample('SingleMuon',       'Run2018',     
 allSamples += [MuonEG_Run2018, EGamma_Run2018, DoubleMuon_Run2018, SingleMuon_Run2018]
 
 Run2018 = Sample.combine("Run2018", [MuonEG_Run2018, EGamma_Run2018, DoubleMuon_Run2018, SingleMuon_Run2018], texName = "Run2018")
-Run2018.lumi = config.lumi_era["Run2018"] 
+Run2018.lumi = config.lumi_era["Run2018"]
 allSamples.append( Run2018 )
 
 for s in allSamples:

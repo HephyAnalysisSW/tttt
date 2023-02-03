@@ -1,16 +1,13 @@
 import copy, os, sys
-from RootTools.core.Sample import Sample 
+from RootTools.core.Sample import Sample
 import ROOT
 
 # Logging
 import logging
 logger = logging.getLogger(__name__)
 
-try:
-    directory_ = sys.modules['__main__'].directory_
-except:
-    import tttt.samples.config as config
-    directory_ = config.location_data_UL2017
+import tttt.samples.config as config
+directory_ = config.location_data_UL2017
 
 logger.info("Loading data samples from directory %s", directory_)
 

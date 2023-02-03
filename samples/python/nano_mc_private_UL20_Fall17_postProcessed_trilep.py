@@ -8,11 +8,8 @@ logger = logging.getLogger(__name__)
 
 from tttt.samples.color import color
 
-try:
-    directory_ = sys.modules['__main__'].directory_
-except:
-    import tttt.samples.config as config
-    directory_ = config.location_mc_UL2017_trilep
+import tttt.samples.config as config
+directory_ = config.location_mc_UL2017_trilep
 
 # TTHnobb  TTHTobb  TTLep_pow_CP5  TTTT  TTWToLNu  TTWToQQ  TTZToLLNuNu  TTZToLLNuNu_m1to10  TTZToQQ
 
