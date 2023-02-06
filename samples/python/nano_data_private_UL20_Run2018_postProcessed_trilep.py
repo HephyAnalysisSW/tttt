@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 import tttt.samples.config as config
-directory_ = config.location_data_UL2018
+directory_ = config.location_data_UL2018_trilep
 
 logger.info("Loading data samples from directory %s", directory_)
 

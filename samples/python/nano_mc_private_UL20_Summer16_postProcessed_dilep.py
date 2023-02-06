@@ -8,11 +8,8 @@ logger = logging.getLogger(__name__)
 
 from tttt.samples.color import color
 
-try:
-    directory_ = sys.modules['__main__'].directory_
-except:
-    import tttt.samples.config as config
-    directory_ = config.location_mc_UL2016
+import tttt.samples.config as config
+directory_ = config.location_mc_UL2016
 
 def make_dirs( dirs ):
     return [ os.path.join( directory_, dir_ ) for dir_ in dirs ]
@@ -25,4 +22,3 @@ TTTT  = Sample.fromDirectory(name="TTTT",  treeName="Events", isData=False, colo
 TTW   = Sample.fromDirectory(name="TTW",   treeName="Events", isData=False, color=color.TTW, texName="t#bar{t}W", directory=make_dirs( ['TTWToLNu', 'TTWToQQ'] ))
 TTZ   = Sample.fromDirectory(name="TTZ",   treeName="Events", isData=False, color=color.TTZ, texName="t#bar{t}Z", directory=make_dirs( ['TTZToLLNuNu', 'TTZToLLNuNu_m1to10', 'TTZToQQ'] ))
 TTH   = Sample.fromDirectory(name="TTH",   treeName="Events", isData=False, color=color.TTH, texName="t#bar{t}H", directory=make_dirs( ['TTHTobb', 'TTHnobb'] ))
-
