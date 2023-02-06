@@ -67,6 +67,6 @@ color.VG7            = ROOT.kViolet
 color.VG8            = ROOT.kYellow
 
 
-color.DY             = ROOT.kOrange-3
+#color.DY             = ROOT.kOrange-3
 color.TTZ            = ROOT.kSpring+1 #ROOT.kBlack
 color.TTLep          = ROOT.kAzure+6
