@@ -594,17 +594,9 @@ if addSystematicVariations:
                  'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
                  'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
                  }
-    bTagVariation = ['central', 'up_jes', 'down_jes', 'up_lf',
-                 'down_lf', 'up_hfstats1', 'down_hfstats1',
-                 'up_hfstats2', 'up_hfstats2', 'down_hfstats2',
-                 'up_cferr1', 'down_cferr2', 'up_cferr1',
-                 'down_cferr2', 'up_hf', 'down_hf', 'up_lfstats1',
-                 'down_lfstats1', 'up_lfstats2', 'down_lfstats2'
-                 ]
-
-    #if isMC:
-        # for k in bTagVariations.keys():
-        #     new_variables.append('weightBTagSF_'+k+'/F')
+    if isMC:
+        for k in bTagVariations.keys():
+            new_variables.append('reweightBTagSF_'+k+'/F')
 
 jesUncertanties = [
     "AbsoluteMPFBias",
@@ -1172,21 +1164,17 @@ def filler( event ):
             event.l4_isTight    = leptons[3]['isTight']
 
     if isMC and addSystematicVariations:
-        for j in jets:
-            #btagEff.addBTagEffToJet(j)
-            btagRes.getbtagSF(j)
-            print(j['jetSF']['central'])
-        for k in bTagVariations.keys():
-            if len(jets)>0:
+        #for j in jets:
 
+            #Comment 1a method (tbc)
+            #btagEff.addBTagEffToJet(j)
+
+        for k in bTagVariations.keys():
+            for j in jets:
+                btagRes.getbtagSF(j)
                 setattr( event, 'reweightBTagSF_'+k, reduce(mul, [(j["jetSF"][k] if j["jetSF"].has_key(k) else 1)], 1))
-                print('reweightBTagSF_'+k, reduce(mul, [(j["jetSF"][k] if j["jetSF"].has_key(k) else 1) for j in jets]))
-            else:
-                setattr( event, 'reweightBTagSF_'+k,1)
-#if k in list(flavourSys[abs(j['hadronFlavour'])]):
-        #    for k in bTagVariations.keys():
-        #            bTagVariations[k] *= j['jetSF'][k]
-        #    setattr(event, 'reweightBTagSF_'+k, bTagVariations[k])
+
+            #Comment 1a method (tbc)
             # for var in btagEff.btagWeightNames:
             #     if var!='MC':
             #         setattr(event, 'reweightBTag_'+var, btagEff.getBTagSF_1a( var, bJets, filter( lambda j: abs(j['eta'])<2.4, nonBJets ) ) )
