@@ -307,8 +307,6 @@ logger.debug("fileBasedSplitting: Files to be run over:\n%s", "\n".join(sample.f
 addSystematicVariations = (not isData) and (not options.skipSystematicVariations)
 
 ################################################################################
-# TODO FIX BTAG REWEIGHTING!!!!
-
 # B tagging SF
 b_tagger = "DeepJet"
 btagEff = BTagEfficiency( fastSim = False, year=options.era, tagger=b_tagger )
@@ -475,7 +473,35 @@ else:
 jetVars         = ['pt/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'muEF/F', 'neHEF/F', 'rawFactor/F', 'eta/F', 'phi/F', 'jetId/I', 'btagDeepB/F', 'btagDeepCvB/F', 'btagDeepCvL/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavCvL/F', 'btagDeepFlavQG/F', 'btagCSVV2/F', 'area/F', 'pt_nom/F', 'corr_JER/F'] + jetCorrInfo
 if isMC:
     jetVars     += jetMCInfo
-    jetVars     += ['pt_jesTotalUp/F', 'pt_jesTotalDown/F', 'pt_jerUp/F', 'pt_jerDown/F', 'corr_JER/F', 'corr_JEC/F']
+    jetVars     += ['pt_jesTotalUp/F', 'pt_jesTotalDown/F', 'pt_jerUp/F', 'pt_jerDown/F', 'corr_JER/F', 'corr_JEC/F',
+                    'pt_jesAbsoluteMPFBiasUp/F', 'pt_jesAbsoluteMPFBiasDown/F', 'pt_jesAbsoluteStatUp/F', 'pt_jesAbsoluteStatDown/F',
+                    'pt_jesRelativeBalUp/F', 'pt_jesRelativeBalDown/F', 'pt_jesRelativeFSRUp/F', 'pt_jesRelativeFSRDown/F',
+                    'pt_jesRelativeJEREC1Up/F', 'pt_jesRelativeJEREC1Down/F', 'pt_jesRelativeJEREC2Up/F', 'pt_jesRelativeJEREC2Down/F',
+                    'pt_jesRelativeJERHFUp/F', 'pt_jesRelativeJERHFDown/F', 'pt_jesRelativePtBBUp/F', 'pt_jesRelativePtBBDown/F',
+                    'pt_jesRelativePtEC1Up/F', 'pt_jesRelativePtEC1Down/F', 'pt_jesRelativePtEC2Up/F', 'pt_jesRelativePtEC2Down/F',
+                    'pt_jesRelativePtHFUp/F', 'pt_jesRelativePtHFDown/F', 'pt_jesRelativeStatECUp/F', 'pt_jesRelativeStatECDown/F',
+                    'pt_jesRelativeStatFSRUp/F', 'pt_jesRelativeStatFSRDown/F', 'pt_jesRelativeStatHFUp/F', 'pt_jesRelativeStatHFDown/F',
+                    'pt_jesPileUpDataMCUp/F', 'pt_jesPileUpDataMCDown/F',
+                    'pt_jesPileUpPtBBUp/F', 'pt_jesPileUpPtBBDown/F', 'pt_jesPileUpPtEC1Up/F', 'pt_jesPileUpPtEC1Down/F',
+                    'pt_jesPileUpPtEC2Up/F', 'pt_jesPileUpPtEC2Down/F', 'pt_jesPileUpPtHFUp/F', 'pt_jesPileUpPtHFDown/F',
+                    'pt_jesPileUpPtRefUp/F', 'pt_jesPileUpPtRefDown/F', 'pt_jesFlavorQCDUp/F', 'pt_jesFlavorQCDDown/F',
+                    'pt_jesFragmentationUp/F', 'pt_jesFragmentationDown/F', 'pt_jesSinglePionECALUp/F', 'pt_jesSinglePionECALDown/F',
+                    'pt_jesSinglePionHCALUp/F', 'pt_jesSinglePionHCALDown/F', 'pt_jesTimePtEtaUp/F', 'pt_jesTimePtEtaDown/F',
+
+                    'mass_jesAbsoluteMPFBiasUp/F', 'mass_jesAbsoluteMPFBiasDown/F', #'mass_jesAbsoluteStatUp/F', 'mass_jesAbsoluteStatDown/F',
+                    'mass_jesRelativeBalUp/F', 'mass_jesRelativeBalDown/F', 'mass_jesRelativeFSRUp/F', 'mass_jesRelativeFSRDown/F',
+                    'mass_jesRelativeJEREC1Up/F', 'mass_jesRelativeJEREC1Down/F', 'mass_jesRelativeJEREC2Up/F', 'mass_jesRelativeJEREC2Down/F',
+                    'mass_jesRelativeJERHFUp/F', 'mass_jesRelativeJERHFDown/F', 'mass_jesRelativePtBBUp/F', 'mass_jesRelativePtBBDown/F',
+                    'mass_jesRelativePtEC1Up/F', 'mass_jesRelativePtEC1Down/F', 'mass_jesRelativePtEC2Up/F', 'mass_jesRelativePtEC2Down/F',
+                    'mass_jesRelativePtHFUp/F', 'mass_jesRelativePtHFDown/F', 'mass_jesRelativeStatECUp/F', 'mass_jesRelativeStatECDown/F',
+                    'mass_jesRelativeStatFSRUp/F', 'mass_jesRelativeStatFSRDown/F', 'mass_jesRelativeStatHFUp/F', 'mass_jesRelativeStatHFDown/F',
+                    'mass_jesPileUpDataMCUp/F', 'mass_jesPileUpDataMCDown/F',
+                    'mass_jesPileUpPtBBUp/F', 'mass_jesPileUpPtBBDown/F', 'mass_jesPileUpPtEC1Up/F', 'mass_jesPileUpPtEC1Down/F',
+                    'mass_jesPileUpPtEC2Up/F', 'mass_jesPileUpPtEC2Down/F', 'mass_jesPileUpPtHFUp/F', 'mass_jesPileUpPtHFDown/F',
+                    'mass_jesPileUpPtRefUp/F', 'mass_jesPileUpPtRefDown/F', 'mass_jesFlavorQCDUp/F', 'mass_jesFlavorQCDDown/F',
+                    'mass_jesFragmentationUp/F', 'mass_jesFragmentationDown/F', 'mass_jesSinglePionECALUp/F', 'mass_jesSinglePionECALDown/F',
+                    'mass_jesSinglePionHCALUp/F', 'mass_jesSinglePionHCALDown/F', 'mass_jesTimePtEtaUp/F', 'mass_jesTimePtEtaDown/F'
+                    ]
 if not options.central:
     jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
 
@@ -542,7 +568,7 @@ else:
     new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if isMC else '' )))
 
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
-new_variables.extend( ['nBTag/I', 'm3/F', 'minDLmass/F'] )
+new_variables.extend( ['ht/F', 'nBTag/I', 'm3/F', 'minDLmass/F'] )
 
 new_variables.append( 'lep[%s]'% ( ','.join(lepVars )) )
 
@@ -582,10 +608,23 @@ for i in [1,2]:
     new_variables.extend( ['Z%i_pt/F'%i, 'Z%i_eta/F'%i, 'Z%i_phi/F'%i, 'Z%i_lldPhi/F'%i, 'Z%i_lldR/F'%i,  'Z%i_mass/F'%i, 'Z%i_cosThetaStar/F'%i] )
 
 if addSystematicVariations:
-    for var in ['jesTotalUp', 'jesTotalDown', 'jerUp', 'jer', 'jerDown', 'unclustEnUp', 'unclustEnDown']:
+    for var in ['jesTotalUp', 'jesTotalDown', 'jerUp', 'jer', 'jerDown', 'unclustEnUp', 'unclustEnDown',
+                'jesAbsoluteMPFBiasUp', 'jesAbsoluteMPFBiasDown', 'jesAbsoluteStatUp', 'jesAbsoluteStatDown',
+                'jesRelativeBalUp', 'jesRelativeBalDown', 'jesRelativeFSRUp', 'jesRelativeFSRDown',
+                'jesRelativeJEREC1Up', 'jesRelativeJEREC1Down', 'jesRelativeJEREC2Up', 'jesRelativeJEREC2Down',
+                'jesRelativeJERHFUp', 'jesRelativeJERHFDown', 'jesRelativePtBBUp', 'jesRelativePtBBDown',
+                'jesRelativePtEC1Up', 'jesRelativePtEC1Down', 'jesRelativePtEC2Up', 'jesRelativePtEC2Down',
+                'jesRelativePtHFUp', 'jesRelativePtHFDown', 'jesRelativeStatECUp', 'jesRelativeStatECDown',
+                'jesRelativeStatFSRUp', 'jesRelativeStatFSRDown', 'jesRelativeStatHFUp', 'jesRelativeStatHFDown',
+                'jesPileUpDataMCUp', 'jesPileUpDataMCDown',
+                'jesPileUpPtBBUp', 'jesPileUpPtBBDown', 'jesPileUpPtEC1Up', 'jesPileUpPtEC1Down',
+                'jesPileUpPtEC2Up', 'jesPileUpPtEC2Down', 'jesPileUpPtHFUp', 'jesPileUpPtHFDown',
+                'jesPileUpPtRefUp', 'jesPileUpPtRefDown', 'jesFlavorQCDUp', 'jesFlavorQCDDown',
+                'jesFragmentationUp', 'jesFragmentationDown', 'jesSinglePionECALUp', 'jesSinglePionECALDown',
+                'jesSinglePionHCALUp', 'jesSinglePionHCALDown', 'jesTimePtEtaUp', 'jesTimePtEtaDown']:
+
         if not var.startswith('unclust'):
-            new_variables.extend( ['nJetGood_'+var+'/I', 'nBTag_'+var+'/I'] )
-        # new_variables.extend( ['met_pt_'+var+'/F', 'met_phi_'+var+'/F'] ) # MET variations are calculated with JMECorrector
+            new_variables.extend( ['nJetGood_'+var+'/I', 'nBTag_'+var+'/I', 'ht_'+var+'/F'] )
 
     bTagVariations = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
                  'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
@@ -599,6 +638,7 @@ if addSystematicVariations:
             new_variables.append('reweightBTagSF_'+k+'/F')
 
 jesUncertanties = [
+    "Total",
     "AbsoluteMPFBias",
     "AbsoluteScale",
     "AbsoluteStat",
@@ -627,10 +667,42 @@ jesUncertanties = [
     "TimePtEta",
 ]
 
+#Other list of jes uncertainties from NanoAODTools/python/postprocessing/modules/jme/jecUncertainties.py
+# allUncerts = [
+#     "AbsoluteStat", "AbsoluteScale",
+#     "AbsoluteFlavMap", "AbsoluteMPFBias",
+#     "Fragmentation", "SinglePionECAL",
+#     "SinglePionHCAL", "FlavorQCD",
+#     "TimePtEta", "RelativeJEREC1",
+#     "RelativeJEREC2", "RelativeJERHF",
+#     "RelativePtBB", "RelativePtEC1",
+#     "RelativePtEC2", "RelativePtHF",
+#     "RelativeBal", "RelativeFSR",
+#     "RelativeStatFSR", "RelativeStatEC",
+#     "RelativeStatHF", "PileUpDataMC",
+#     "PileUpPtRef", "PileUpPtBB",
+#     "PileUpPtEC1", "PileUpPtEC2",
+#     "PileUpPtHF", "PileUpMuZero",
+#     "PileUpEnvelope", "SubTotalPileUp",
+#     "SubTotalRelative", "SubTotalPt",
+#     "SubTotalScale", "SubTotalAbsolute",
+#     "SubTotalMC", "Total",
+#     "TotalNoFlavor", "TotalNoTime",
+#     "TotalNoFlavorNoTime", "FlavorZJet",
+#     "FlavorPhotonJet", "FlavorPureGluon",
+#     "FlavorPureQuark", "FlavorPureCharm",
+#     "FlavorPureBottom", "TimeRunBCD",
+#     "TimeRunEF", "TimeRunG",
+#     "TimeRunH", "CorrelationGroupMPFInSitu",
+#     "CorrelationGroupIntercalibration", "CorrelationGroupbJES",
+#     "CorrelationGroupFlavor", "CorrelationGroupUncorrelated",
+#     ]
+
+#Comment 1a method (tbc)
 # Btag weights Method 1a
-for var in btagEff.btagWeightNames:
-    if var!='MC':
-        new_variables.append('reweightBTag_'+var+'/F')
+# for var in btagEff.btagWeightNames:
+#     if var!='MC':
+#         new_variables.append('reweightBTag_'+var+'/F')
 
 if not options.skipNanoTools:
     ### nanoAOD postprocessor
@@ -651,7 +723,7 @@ if not options.skipNanoTools:
 
     # Import MET/JEC/JER Tools
     from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jetmetHelperRun2 import *
-    #from PhysicsTools.NanoAODTools.postprocessing.modules.jme.jecUncertainties import *
+
     METBranchName = 'MET' if not options.era == "2017" else 'METFixEE2017'
 
     # check if files are available (e.g. if dpm is broken this should result in an error)
@@ -956,6 +1028,8 @@ def filler( event ):
         event.JetGood_isBJet_tight[iJet]  = isBJet(jet, tagger=b_tagger, WP='tight',  year=options.era)
         event.JetGood_isBJet_medium[iJet] = isBJet(jet, tagger=b_tagger, WP='medium', year=options.era)
         event.JetGood_isBJet_loose[iJet]  = isBJet(jet, tagger=b_tagger, WP='loose',  year=options.era)
+
+        #event.ht[iJet] = [sum(jet['pt'])]
         if isMC:
             if not options.central:
                 event.JetGood_nBHadrons[iJet] = ord(jet["nBHadrons"])
@@ -970,6 +1044,7 @@ def filler( event ):
                     event.JetGood_genPt[iJet] = -1
         getattr(event, "JetGood_pt")[iJet] = jet['pt']
 
+    event.ht = sum([jet['pt'] for jet in store_jets])
     if isMC and options.doCRReweighting:
         event.reweightCR = getCRWeight(event.nJetGood)
 
@@ -983,18 +1058,32 @@ def filler( event ):
     nonBjets_sys  = {}
 
     if addSystematicVariations:
-        for var in ['jesTotalUp', 'jesTotalDown', 'jerUp', 'jerDown', 'unclustEnUp', 'unclustEnDown']: # don't use 'jer' as of now
+        for var in ['jesTotalUp', 'jesTotalDown', 'jerUp', 'jerDown', 'unclustEnUp', 'unclustEnDown', 'jesAbsoluteMPFBiasUp', 'jesAbsoluteMPFBiasDown',
+                    'jesAbsoluteStatUp', 'jesAbsoluteStatDown',
+                    'jesRelativeBalUp', 'jesRelativeBalDown', 'jesRelativeFSRUp', 'jesRelativeFSRDown',
+                    'jesRelativeJEREC1Up', 'jesRelativeJEREC1Down', 'jesRelativeJEREC2Up', 'jesRelativeJEREC2Down',
+                    'jesRelativeJERHFUp', 'jesRelativeJERHFDown', 'jesRelativePtBBUp', 'jesRelativePtBBDown',
+                    'jesRelativePtEC1Up', 'jesRelativePtEC1Down', 'jesRelativePtEC2Up', 'jesRelativePtEC2Down',
+                    'jesRelativePtHFUp', 'jesRelativePtHFDown', 'jesRelativeStatECUp', 'jesRelativeStatECDown',
+                    'jesRelativeStatFSRUp', 'jesRelativeStatFSRDown', 'jesRelativeStatHFUp', 'jesRelativeStatHFDown',
+                    'jesPileUpDataMCUp', 'jesPileUpDataMCDown',
+                    'jesPileUpPtBBUp', 'jesPileUpPtBBDown', 'jesPileUpPtEC1Up', 'jesPileUpPtEC1Down',
+                    'jesPileUpPtEC2Up', 'jesPileUpPtEC2Down', 'jesPileUpPtHFUp', 'jesPileUpPtHFDown',
+                    'jesPileUpPtRefUp', 'jesPileUpPtRefDown', 'jesFlavorQCDUp', 'jesFlavorQCDDown',
+                    'jesFragmentationUp', 'jesFragmentationDown', 'jesSinglePionECALUp', 'jesSinglePionECALDown',
+                    'jesSinglePionHCALUp', 'jesSinglePionHCALDown', 'jesTimePtEtaUp', 'jesTimePtEtaDown']: # don't use 'jer' as of now
             # MET variations are calculated with JMECorrector, not here
-            # setattr(event, 'met_pt_'+var,  getattr(r, 'METFixEE2017_pt_'+var)  if options.era == 2017 else getattr(r, 'MET_pt_'+var) )
-            # setattr(event, 'met_phi_'+var, getattr(r, 'METFixEE2017_phi_'+var) if options.era == 2017 else getattr(r, 'MET_phi_'+var) )
             if not var.startswith('unclust'):
                 corrFactor = 'corr_JER' if var == 'jer' else None
                 jets_sys[var]       = filter(lambda j:j['pt_'+var]>25, clean_jets_acc)
                 bjets_sys[var]      = filter(lambda j: isBJet(j) and abs(j['eta'])<2.4, jets_sys[var])
+                #print(clean_jets_acc[0]['pt_'+var])
                 nonBjets_sys[var]   = filter(lambda j: not ( isBJet(j) and abs(j['eta'])<2.4), jets_sys[var])
+
 
                 setattr(event, "nJetGood_"+var, len(jets_sys[var]))
                 setattr(event, "nBTag_"+var,    len(bjets_sys[var]))
+                setattr(event, "ht_"+var,   sum([j['pt_'+var] for j in jets_sys[var]]))
 
     if isSinglelep or isTrilep or isDilep:
         event.nGoodMuons      = len(filter( lambda l:abs(l['pdgId'])==13, leptons))
@@ -1164,8 +1253,6 @@ def filler( event ):
             event.l4_isTight    = leptons[3]['isTight']
 
     if isMC and addSystematicVariations:
-        #for j in jets:
-
             #Comment 1a method (tbc)
             #btagEff.addBTagEffToJet(j)
 
