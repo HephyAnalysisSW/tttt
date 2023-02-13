@@ -687,9 +687,9 @@ def filler( event ):
 
     # store if gen-jet is DR matched to a B parton
     for genJet in genJets:
-        genJet['matchBParton'] = ( min([999]+[deltaR2(genJet, {'eta':b.eta(), 'phi':b.phi()}) for b in b_partons]) < 0.2**2 )
+        genJet['matchBParton'] = ( min([999]+[deltaR2(genJet, {'eta':b.eta(), 'phi':b.phi()}) for b in b_partons]) < 0.4**2 )
         if not genJet['matchBParton']:
-            genJet['matchCParton'] = ( min([999]+[deltaR2(genJet, {'eta':c.eta(), 'phi':c.phi()}) for c in c_partons]) < 0.2**2 )
+            genJet['matchCParton'] = ( min([999]+[deltaR2(genJet, {'eta':c.eta(), 'phi':c.phi()}) for c in c_partons]) < 0.4**2 )
         else:
             genJet['matchCParton'] = False
 
