@@ -46,6 +46,7 @@ read_variables = [\
     "evt/l", "run/I", "lumi/I",
     "recoBj0_pt/F",
     "recoBj1_pt/F",
+    "np/I", "p[C/F]",
 ]
 
 
@@ -119,10 +120,15 @@ def lstm_jets(event, sample):
     #jets = filter( jet_vector_var['selector'], jets )
     return jets
 
+def copy_p(event, sample):
+    p_C = [ getObjDict( event, 'p_', "C", i) for i in range(int(event.np)) ]
+    return p_C
+    
 # for the filler
 mva_vector_variables    =   {
     #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10}
-    "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames}
+    "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames},
+    "p":        {"func":copy_p, "name":"p", "vars":["C/F"], "varnames":"C", "nMax":200}
 }
 
 
