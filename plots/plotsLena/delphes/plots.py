@@ -284,13 +284,13 @@ postfix = "_scaled" if args.scaling else ""
 plots.append(Plot( name = "b0_pt",
   texX = 'p_{T}(b_{0}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.recoBj0_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 
 plots.append(Plot( name = "b1_pt",
   texX = 'p_{T}(b_{1}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.recoBj1_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 
 plots.append(Plot( name = 'l1_pt',
@@ -320,88 +320,88 @@ plots.append(Plot( name = 'l2_eta',
 plots.append(Plot( name = 'mT_l1',
   texX = 'm_{T}(l_{1})', texY = 'Number of Events',
   attribute = lambda event, sample: event.mT_l1,
-  binning=[40,0,800],
+  binning=[20,0,800],
 ))
 
 plots.append(Plot( name = 'mT_l2',
   texX = 'm_{T}(l_{2})', texY = 'Number of Events',
   attribute = lambda event, sample: event.mT_l2,
-  binning=[40,0,800],
+  binning=[20,0,800],
 ))
 
 plots.append(Plot( name = 'ml_l2',
   texX = 'm_{2l}', texY = 'Number of Events',
   attribute = lambda event, sample: event.ml_12,
-  binning=[40,0,1500],
+  binning=[20,0,1500],
 ))
 
 plots.append(Plot( name = "j0_pt"+postfix,
   texX = 'p_{T}(j_{0}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet0_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 
 plots.append(Plot( name = "j1_pt"+postfix,
   texX = 'p_{T}(j_{1}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet1_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 
 plots.append(Plot( name = "j2_pt"+postfix,
   texX = 'p_{T}(j_{2}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet2_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 
 plots.append(Plot( name = "j3_pt"+postfix,
   texX = 'p_{T}(j_{3}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet3_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 plots.append(Plot( name = "j4_pt"+postfix,
   texX = 'p_{T}(j_{4}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet4_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 plots.append(Plot( name = "j5_pt"+postfix,
   texX = 'p_{T}(j_{5}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet5_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 plots.append(Plot( name = "j6_pt"+postfix,
   texX = 'p_{T}(j_{6}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet6_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 plots.append(Plot( name = "j7_pt"+postfix,
   texX = 'p_{T}(j_{7}) (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet7_pt,
-  binning=[600/20,0,600],
+  binning=[20,0,600],
 ))
 
 
 plots.append(Plot( name = "j0_eta"+postfix,
-  texX = '#eta(j_{0}) (GeV)', texY = 'Number of Events',
+  texX = '#eta(j_{0})', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet0_eta,
-  binning=[30,-3,3],
+  binning=[20,-3,3],
 ))
 
 plots.append(Plot( name = "j1_eta"+postfix,
-  texX = '#eta(j_{1}) (GeV)', texY = 'Number of Events',
+  texX = '#eta(j_{1})', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet1_eta,
-  binning=[30,-3,3],
+  binning=[20,-3,3],
 ))
 
 plots.append(Plot( name = "j2_eta"+postfix,
-  texX = '#eta(j_{2}) (GeV)', texY = 'Number of Events',
+  texX = '#eta(j_{2})', texY = 'Number of Events',
   attribute = lambda event, sample: event.jet2_eta,
-  binning=[30,-3,3],
+  binning=[20,-3,3],
 ))
 
 plots.append(Plot( name = 'Met_pt'+postfix,
   texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.met_pt,
-  binning=[400/20,0,400],
+  binning=[20,0,400],
 ))
 
 plots.append(Plot( name = 'nJet'+postfix,
@@ -413,110 +413,110 @@ plots.append(Plot( name = 'nJet'+postfix,
 plots.append(Plot( name = 'ht'+postfix,
   texX = 'H_{T}', texY = 'Number of Events',
   attribute = lambda event, sample: event.ht,
-  binning=[30,0,3000],
+  binning=[20,0,3000],
 ))
 
 plots.append(Plot( name = "m_4b",
   texX = 'm_{4b} (GeV)', texY = 'Number of Events',
   attribute = lambda event, sample: event.m_4b,
-  binning=[25,0,2500],
+  binning=[20,0,2500],
 ))
 
 plots.append(Plot( name = 'htb'+postfix,
   texX = 'H_{T,b-jets}', texY = 'Number of Events',
   attribute = lambda event, sample: event.htb,
-  binning=[40,0,2500],
+  binning=[20,0,2500],
 ))
 
 plots.append(Plot( name = 'ht_ratio'+postfix,
   texX = '#Delta H_{T}', texY = 'Number of Events',
   attribute = lambda event, sample: event.ht_ratio,
-  binning=[40,0,1],
+  binning=[20,0,1],
 ))
 
 plots.append(Plot( name = 'dEta_jj'+postfix,
-  texX = '#Delta#eta_{jj}', texY = 'Number of Events',
+  texX = '#Delta#eta_{2j}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dEtaj_12,
-  binning=[40,0,6],
+  binning=[20,0,6],
 ))
 
 plots.append(Plot( name = 'dEta_ll'+postfix,
-  texX = '#Delta#eta_{ll}', texY = 'Number of Events',
+  texX = '#Delta#eta_{2l}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dEtal_12,
-  binning=[40,0,6],
+  binning=[20,0,6],
 ))
 
 plots.append(Plot( name = 'dPhi_jj'+postfix,
-  texX = '#Delta#phi_{jj}', texY = 'Number of Events',
+  texX = '#Delta#phi_{2j}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dPhij_12,
-  binning=[40,0,3.5],
+  binning=[20,0,3.5],
 ))
 
 plots.append(Plot( name = 'dPhi_l'+postfix,
-  texX = '#Delta#phi_{ll}', texY = 'Number of Events',
+  texX = '#Delta#phi_{2l}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dPhil_12,
-  binning=[40,0,3.5],
+  binning=[20,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_0'+postfix,
   texX = '#Delta R_{0}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dR_min0,
-  binning=[40,0,3.5],
+  binning=[20,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_1'+postfix,
   texX = '#Delta R_{1}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dR_min1,
-  binning=[40,0,3.5],
+  binning=[20,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_bb'+postfix,
   texX = '#Delta R_{b-jet,b-jet}', texY = 'Number of Events',
   attribute = lambda event, sample: event.min_dR_bb,
-  binning=[40,0,3.5],
+  binning=[20,0,3.5],
 ))
 
 plots.append(Plot( name = 'min_dR_2l'+postfix,
   texX = '#Delta R_{2l}', texY = 'Number of Events',
   attribute = lambda event, sample: event.dR_2l,
-  binning=[40,0,3.5],
+  binning=[20,0,3.5],
 ))
 
 
 plots.append(Plot( name = 'mj_12'+postfix,
   texX = 'm_{2j}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mj_12,
-  binning=[40,0,2500],
+  binning=[20,0,2500],
 ))
 
 plots.append(Plot( name = 'mlj_l1'+postfix,
   texX = 'm_{l1, j1}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mlj_11,
-  binning=[40,0,2500],
+  binning=[20,0,2500],
 ))
 
 plots.append(Plot( name = 'mlj_l2'+postfix,
   texX = 'm_{l1, j2}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mlj_12,
-  binning=[40,0,2500],
+  binning=[20,0,2500],
 ))
 
 plots.append(Plot( name = 'mt2ll'+postfix,
   texX = 'm2_{T,ll}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mt2ll,
-  binning=[40,0,1200],
+  binning=[20,0,1200],
 ))
 
 plots.append(Plot( name = 'mt2bb'+postfix,
   texX = 'm2_{T,bb}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mt2bb,
-  binning=[40,0,1200],
+  binning=[20,0,1200],
 ))
 
 plots.append(Plot( name = 'mt2blbl'+postfix,
   texX = 'm2_{T,blbl}', texY = 'Number of Events',
   attribute = lambda event, sample: event.mt2blbl,
-  binning=[40,0,1200],
+  binning=[20,0,1200],
 ))
 
 # Text on the plots
@@ -562,7 +562,7 @@ def drawPlots(plots, subDirectory=''):
               scaling = scale,
               legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2), 
               drawObjects = drawObjects( ),
-              copyIndexPHP = True,
+              copyIndexPHP = True,  
             )
 
 plotting.fill(plots+plots2D, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
