@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 from tttt.samples.color import color
 #dir = "/scratch-cbe/users/robert.schoefbeck/tttt/nanoTuples/gen/v1/"
-dir = "/scratch-cbe/users/lena.wild/tttt/nanoTuples/gen/v2/"
+dir = "/scratch-cbe/users/lena.wild/tttt/nanoTuples/gen/v4/"
 
 TTTT_MS = Sample.fromDirectory("TTTT_MS", os.path.join( dir, "TTTT_MS" ))
 TTTT_MS.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl" 
