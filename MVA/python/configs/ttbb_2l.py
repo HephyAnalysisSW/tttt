@@ -46,9 +46,8 @@ read_variables = [\
     "evt/l", "run/I", "lumi/I",
     "recoBj0_pt/F",
     "recoBj1_pt/F",
-    "np/I", #"p[C/F]",
+    "np/I", VectorTreeVariable.fromString("p[C/F]", nMax=200),
 ]
-
 
 all_mva_variables = {
 

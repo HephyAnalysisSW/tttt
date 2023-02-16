@@ -112,8 +112,7 @@ def filler( event ):
     # copy vector variables
     for name, vector_var in config.mva_vector_variables.iteritems():
         objs = vector_var["func"]( r, sample=None )
-
-        fill_vector_collection( event, name, vector_var['varnames'], objs )
+        fill_vector_collection( event, name, vector_var['varnames'], objs, maxN = vector_var['nMax'] if vector_var.has_key('nMax') else 100)
 
     # fill FIs
     if hasattr(config, "FIs"):
