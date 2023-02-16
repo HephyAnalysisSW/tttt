@@ -47,7 +47,7 @@ for sample in config.training_samples:
         break # found it
     else:
         sample_names.append( sample.name )
-
+      
 if not found:
     logger.error( "Need sample to be one of %s, got %s", ",".join( sample_names ), args.sample )
     sys.exit()
@@ -107,7 +107,8 @@ def filler( event ):
     # copy scalar variables
     for name, func in config.all_mva_variables.iteritems():
         setattr( event, name, func(r, sample=None) )
-
+            
+       
     # copy vector variables
     for name, vector_var in config.mva_vector_variables.iteritems():
         objs = vector_var["func"]( r, sample=None )
@@ -127,9 +128,10 @@ mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
 
 # vector variables, if any
 for name, vector_var in config.mva_vector_variables.iteritems():
-    mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']') )
-    if vector_var.has_key("nMax"):
-        mva_variables[-1].nMax = vector_var["nMax"]
+    #print vector_var
+    mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var["nMax"] if vector_var.has_key("nMax") else None) )
+    #if vector_var.has_key("nMax"):
+    #    mva_variables[-1].nMax = vector_var["nMax"]
     #mva_variables.append( name+'['+','.join(vector_var['vars'])+']' )
 # FIs
 if hasattr( config, "FIs"):
