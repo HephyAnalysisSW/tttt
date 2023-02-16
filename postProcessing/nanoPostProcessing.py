@@ -77,7 +77,7 @@ def get_parser():
     argParser.add_argument('--event',                       action='store',     type=int, default=-1,                                   help="Just process event no")
     argParser.add_argument('--pogEleId',                    action='store',               default=None,                                 help="Change electron selection to POG lepton IDs")
     argParser.add_argument('--pogMuId',                     action='store',               default=None,                                 help="Change muon selection to POG lepton IDs")
-
+    argParser.add_argument('--isJetNom',                    action='store_true',                                                        help="Store nominal jet selection")
     return argParser
 
 options = get_parser().parse_args()
@@ -486,21 +486,7 @@ if isMC:
                     'pt_jesPileUpPtEC2Up/F', 'pt_jesPileUpPtEC2Down/F', 'pt_jesPileUpPtHFUp/F', 'pt_jesPileUpPtHFDown/F',
                     'pt_jesPileUpPtRefUp/F', 'pt_jesPileUpPtRefDown/F', 'pt_jesFlavorQCDUp/F', 'pt_jesFlavorQCDDown/F',
                     'pt_jesFragmentationUp/F', 'pt_jesFragmentationDown/F', 'pt_jesSinglePionECALUp/F', 'pt_jesSinglePionECALDown/F',
-                    'pt_jesSinglePionHCALUp/F', 'pt_jesSinglePionHCALDown/F', 'pt_jesTimePtEtaUp/F', 'pt_jesTimePtEtaDown/F',
-
-                    'mass_jesAbsoluteMPFBiasUp/F', 'mass_jesAbsoluteMPFBiasDown/F', #'mass_jesAbsoluteStatUp/F', 'mass_jesAbsoluteStatDown/F',
-                    'mass_jesRelativeBalUp/F', 'mass_jesRelativeBalDown/F', 'mass_jesRelativeFSRUp/F', 'mass_jesRelativeFSRDown/F',
-                    'mass_jesRelativeJEREC1Up/F', 'mass_jesRelativeJEREC1Down/F', 'mass_jesRelativeJEREC2Up/F', 'mass_jesRelativeJEREC2Down/F',
-                    'mass_jesRelativeJERHFUp/F', 'mass_jesRelativeJERHFDown/F', 'mass_jesRelativePtBBUp/F', 'mass_jesRelativePtBBDown/F',
-                    'mass_jesRelativePtEC1Up/F', 'mass_jesRelativePtEC1Down/F', 'mass_jesRelativePtEC2Up/F', 'mass_jesRelativePtEC2Down/F',
-                    'mass_jesRelativePtHFUp/F', 'mass_jesRelativePtHFDown/F', 'mass_jesRelativeStatECUp/F', 'mass_jesRelativeStatECDown/F',
-                    'mass_jesRelativeStatFSRUp/F', 'mass_jesRelativeStatFSRDown/F', 'mass_jesRelativeStatHFUp/F', 'mass_jesRelativeStatHFDown/F',
-                    'mass_jesPileUpDataMCUp/F', 'mass_jesPileUpDataMCDown/F',
-                    'mass_jesPileUpPtBBUp/F', 'mass_jesPileUpPtBBDown/F', 'mass_jesPileUpPtEC1Up/F', 'mass_jesPileUpPtEC1Down/F',
-                    'mass_jesPileUpPtEC2Up/F', 'mass_jesPileUpPtEC2Down/F', 'mass_jesPileUpPtHFUp/F', 'mass_jesPileUpPtHFDown/F',
-                    'mass_jesPileUpPtRefUp/F', 'mass_jesPileUpPtRefDown/F', 'mass_jesFlavorQCDUp/F', 'mass_jesFlavorQCDDown/F',
-                    'mass_jesFragmentationUp/F', 'mass_jesFragmentationDown/F', 'mass_jesSinglePionECALUp/F', 'mass_jesSinglePionECALDown/F',
-                    'mass_jesSinglePionHCALUp/F', 'mass_jesSinglePionHCALDown/F', 'mass_jesTimePtEtaUp/F', 'mass_jesTimePtEtaDown/F'
+                    'pt_jesSinglePionHCALUp/F', 'pt_jesSinglePionHCALDown/F', 'pt_jesTimePtEtaUp/F', 'pt_jesTimePtEtaDown/F'
                     ]
 if not options.central:
     jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
@@ -941,7 +927,13 @@ def filler( event ):
 
     # Get all jets because they are needed to calculate the lepton mvaTOP
     all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if (isMC and not options.central) else []))
-    analysis_jets = filter(lambda j: isAnalysisJet(j),all_jets)
+    if not options.isJetNom:
+        analysis_jets = filter(lambda j: isAnalysisJet(j),all_jets)
+    else:
+        analysis_jets = filter(lambda j: isAnalysisJet(j, ptCut=20),all_jets)
+    # for j in all_jets:
+    #     if options.isJetNom:
+
 
     # Calculate variables for mvaTOP and get mvaTOP score
     for iLep, lep in enumerate(leptons):
@@ -991,7 +983,10 @@ def filler( event ):
     # Now create cleaned jets, b jets, ...
     clean_jets,unclean_jets = cleanJetsAndLeptons( analysis_jets, [l for l in leptons if l['isFO']] )
     clean_jets_acc = filter(lambda j:abs(j['eta'])<2.4, clean_jets)
-    jets         = filter(lambda j:j['pt']>25, clean_jets_acc)
+    if not options.isJetNom:
+        jets         = filter(lambda j:j['pt']>25, clean_jets_acc)
+    else:
+        jets         = filter(lambda j:j['pt']>20, clean_jets_acc)
     bJets       = []
     nonBJets    = []
     for jet in jets:
@@ -1075,7 +1070,10 @@ def filler( event ):
             # MET variations are calculated with JMECorrector, not here
             if not var.startswith('unclust'):
                 corrFactor = 'corr_JER' if var == 'jer' else None
-                jets_sys[var]       = filter(lambda j:j['pt_'+var]>25, clean_jets_acc)
+                if not options.isJetNom:
+                    jets_sys[var]       = filter(lambda j:j['pt_'+var]>25, clean_jets_acc)
+                else:
+                    jets_sys[var]       = filter(lambda j:j['pt_'+var]>20, clean_jets_acc)
                 bjets_sys[var]      = filter(lambda j: isBJet(j) and abs(j['eta'])<2.4, jets_sys[var])
                 #print(clean_jets_acc[0]['pt_'+var])
                 nonBjets_sys[var]   = filter(lambda j: not ( isBJet(j) and abs(j['eta'])<2.4), jets_sys[var])
