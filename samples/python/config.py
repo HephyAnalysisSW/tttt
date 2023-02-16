@@ -23,7 +23,7 @@ if os.environ["USER"] in ["cristina.giordano"]:
 
 
 
-elif os.environ["USER"] in ["robert.schoefbeck"]:
+elif os.environ["USER"] in ["robert.schoefbeck", "lena.wild"]:
     location_data_UL2016             = "/scratch-cbe/users/robert.schoefbeck/tttt/nanoTuples/tttt_v6/UL2016/dilep-ht500/"
     location_data_UL2016_preVFP      = "/scratch-cbe/users/robert.schoefbeck/tttt/nanoTuples/tttt_v6/UL2016_preVFP/dilep-ht500/"
     location_data_UL2017             = "/scratch-cbe/users/robert.schoefbeck/tttt/nanoTuples/tttt_v6/UL2017/dilep-ht500/"
