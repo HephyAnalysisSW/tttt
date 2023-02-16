@@ -11,9 +11,18 @@ jetVars = ['eta','pt','phi','btagDeepB', 'btagDeepFlavB', 'btagCSVV2', 'jetId', 
 def getJets(c, jetVars=jetVars, jetColl="Jet"):
     return [getObjDict(c, jetColl+'_', jetVars, i) for i in range(int(getVarValue(c, 'n'+jetColl)))]
 
-def isAnalysisJet(j, ptCut=25, absEtaCut=2.4, ptVar='pt', idVar='jetId', corrFactor=None):
-  j_pt = j[ptVar] if not corrFactor else j[ptVar]*j[corrFactor]
-  return j_pt>ptCut and abs(j['eta'])<absEtaCut and ( j[idVar] >= 2 if idVar is not None else True )
+def isAnalysisJet(j, ptCut=25, absEtaCut=2.4, ptVar='pt', idVar='jetId'):
+
+    # we pass a string
+    if  type(ptVar)==type(''):
+        j_pt = j[ptVar]
+    # we pass a list of strings -> we take the minimum
+    elif (type( ptVar )==type([]) or type( ptVar )==type( tuple() )) and len(ptVar)>=1:
+        j_pt = max( [ j[v] for v in ptVar ] )
+    else:
+        raise RuntimeError( "Do n ot know what to do with ptVar %r" % ptVar )
+
+    return j_pt>ptCut and abs(j['eta'])<absEtaCut and ( j[idVar] >= 2 if idVar is not None else True )
 
 def isBJet(j, tagger = 'DeepFlavor', WP='loose', year = 2016):
     if tagger == 'DeepFlavor' or tagger == 'DeepJet':
