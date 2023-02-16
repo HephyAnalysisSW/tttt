@@ -504,45 +504,11 @@ jesUncertainties = [
 ]
 if isMC:
     jetVars     += jetMCInfo
-<<<<<<< HEAD
-
-#    jesVariations=['jesTotalUp', 'jesTotalDown', 'jerUp', 'jerDown', 'corr_JER', 'corr_JEC',
-#                    'jesAbsoluteMPFBiasUp', 'jesAbsoluteMPFBiasDown', 'jesAbsoluteStatUp', 'jesAbsoluteStatDown',
-#                    'jesRelativeBalUp', 'jesRelativeBalDown', 'jesRelativeFSRUp', 'jesRelativeFSRDown',
-#                    'jesRelativeJEREC1Up', 'jesRelativeJEREC1Down', 'jesRelativeJEREC2Up', 'jesRelativeJEREC2Down',
-#                    'jesRelativeJERHFUp', 'jesRelativeJERHFDown', 'jesRelativePtBBUp', 'jesRelativePtBBDown',
-#                    'jesRelativePtEC1Up', 'jesRelativePtEC1Down', 'jesRelativePtEC2Up', 'jesRelativePtEC2Down',
-#                    'jesRelativePtHFUp', 'jesRelativePtHFDown', 'jesRelativeStatECUp', 'jesRelativeStatECDown',
-#                    'jesRelativeStatFSRUp', 'jesRelativeStatFSRDown', 'jesRelativeStatHFUp', 'jesRelativeStatHFDown',
-#                    'jesPileUpDataMCUp', 'jesPileUpDataMCDown',
-#                    'jesPileUpPtBBUp', 'jesPileUpPtBBDown', 'jesPileUpPtEC1Up', 'jesPileUpPtEC1Down',
-#                    'jesPileUpPtEC2Up', 'jesPileUpPtEC2Down', 'jesPileUpPtHFUp', 'jesPileUpPtHFDown',
-#                    'jesPileUpPtRefUp', 'jesPileUpPtRefDown', 'jesFlavorQCDUp', 'jesFlavorQCDDown',
-#                    'jesFragmentationUp', 'jesFragmentationDown', 'jesSinglePionECALUp', 'jesSinglePionECALDown',
-#                    'jesSinglePionHCALUp', 'jesSinglePionHCALDown', 'jesTimePtEtaUp', 'jesTimePtEtaDown',
-#                    ]
     jesVariations= ["pt_jes%s%s"%(var, upOrDown) for var in jesUncertainties for upOrDown in ["Up","Down"]]
     jetVars     += ["%s/F"%var for var in jesVariations]
 else:
     jesVariations = []
 
-=======
-    jetVars     += ['pt_jesTotalUp/F', 'pt_jesTotalDown/F', 'pt_jerUp/F', 'pt_jerDown/F', 'corr_JER/F', 'corr_JEC/F',
-                    'pt_jesAbsoluteMPFBiasUp/F', 'pt_jesAbsoluteMPFBiasDown/F', 'pt_jesAbsoluteStatUp/F', 'pt_jesAbsoluteStatDown/F',
-                    'pt_jesRelativeBalUp/F', 'pt_jesRelativeBalDown/F', 'pt_jesRelativeFSRUp/F', 'pt_jesRelativeFSRDown/F',
-                    'pt_jesRelativeJEREC1Up/F', 'pt_jesRelativeJEREC1Down/F', 'pt_jesRelativeJEREC2Up/F', 'pt_jesRelativeJEREC2Down/F',
-                    'pt_jesRelativeJERHFUp/F', 'pt_jesRelativeJERHFDown/F', 'pt_jesRelativePtBBUp/F', 'pt_jesRelativePtBBDown/F',
-                    'pt_jesRelativePtEC1Up/F', 'pt_jesRelativePtEC1Down/F', 'pt_jesRelativePtEC2Up/F', 'pt_jesRelativePtEC2Down/F',
-                    'pt_jesRelativePtHFUp/F', 'pt_jesRelativePtHFDown/F', 'pt_jesRelativeStatECUp/F', 'pt_jesRelativeStatECDown/F',
-                    'pt_jesRelativeStatFSRUp/F', 'pt_jesRelativeStatFSRDown/F', 'pt_jesRelativeStatHFUp/F', 'pt_jesRelativeStatHFDown/F',
-                    'pt_jesPileUpDataMCUp/F', 'pt_jesPileUpDataMCDown/F',
-                    'pt_jesPileUpPtBBUp/F', 'pt_jesPileUpPtBBDown/F', 'pt_jesPileUpPtEC1Up/F', 'pt_jesPileUpPtEC1Down/F',
-                    'pt_jesPileUpPtEC2Up/F', 'pt_jesPileUpPtEC2Down/F', 'pt_jesPileUpPtHFUp/F', 'pt_jesPileUpPtHFDown/F',
-                    'pt_jesPileUpPtRefUp/F', 'pt_jesPileUpPtRefDown/F', 'pt_jesFlavorQCDUp/F', 'pt_jesFlavorQCDDown/F',
-                    'pt_jesFragmentationUp/F', 'pt_jesFragmentationDown/F', 'pt_jesSinglePionECALUp/F', 'pt_jesSinglePionECALDown/F',
-                    'pt_jesSinglePionHCALUp/F', 'pt_jesSinglePionHCALDown/F', 'pt_jesTimePtEtaUp/F', 'pt_jesTimePtEtaDown/F'
-                    ]
->>>>>>> 59a530fe681b1897d9e26aef3b56499c2b067063
 if not options.central:
     jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
 
