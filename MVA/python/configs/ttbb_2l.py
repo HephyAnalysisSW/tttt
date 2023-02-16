@@ -46,7 +46,7 @@ read_variables = [\
     "evt/l", "run/I", "lumi/I",
     "recoBj0_pt/F",
     "recoBj1_pt/F",
-    "np/I", "p[C/F]",
+    "np/I", #"p[C/F]",
 ]
 
 
