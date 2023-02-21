@@ -31,7 +31,7 @@ class Plotter:
         self.systNames = []
         self.data = {}
         self.totalHist = ROOT.TH1F()
-        self.totalError = ROOT.TGraphAsymmErrors()
+        self.totalError = ROOT.TGraphErrors()
         self.stack = ROOT.THStack()
         self.padSize = {"yWidth" : 500 , "xWidth": 500}
 
@@ -75,11 +75,9 @@ class Plotter:
 
         for smp in self.samples:
             if smp["name"] == sampleName:
-                deltaUp = upHist.Clone()
-                deltaUp.Add(smp["hist"], -1)
-                deltaDown = downHist.Clone()
-                deltaDown.Add(smp["hist"], -1)
-                self.systDeltas.append((sampleName, sysName, deltaUp, deltaDown))
+                delta = upHist.Clone()
+                delta.Add(downHist, -1)
+                self.systDeltas.append((sampleName, sysName, delta))
                 self.systNames.append(sysName)
 
         self.noSyst = False
@@ -123,20 +121,19 @@ class Plotter:
             binContent = self.totalHist.GetBinContent(binNumber)
             self.totalError.SetPoint(binNumber, binCenter, binContent)
 
-            upErr2 = pow(10, -20)
-            downErr2 = pow(10, -20)
+            Err2 = pow(10, -20)
+            #downErr2 = pow(10, -20)
             for sys in self.systNames:
-                shiftUp = 0
-                shiftDown = 0
-                for sampleName, sysName, deltaUp, deltaDown in self.systDeltas:
+                shift = 0
+                #shiftDown = 0
+                for sampleName, sysName, delta in self.systDeltas:
                     if sys == sysName:
-                        shiftUp   += deltaUp.GetBinContent(binNumber)
-                        shiftDown += deltaDown.GetBinContent(binNumber)
-                upErr2   += pow(shiftUp,2)
-                downErr2 += pow(shiftDown,2)
-            xELow  = binCenter - binXLow
-            xEHigh = binXUp - binCenter
-            self.totalError.SetPointError(binNumber, xELow, xEHigh, sqrt(downErr2), sqrt(upErr2))
+                        shift   += abs(delta.GetBinContent(binNumber))
+                        #shiftDown += deltaDown.GetBinContent(binNumber)
+                Err2   += pow(shift,2)
+                #downErr2 += pow(shiftDown,2)
+            xE  = (binXUp - binXLow)/2
+            self.totalError.SetPointError(binNumber, xE, sqrt(Err2)/2)
 
         self.totalError.SetFillStyle(3245)
         self.totalError.SetFillColor(13)
@@ -172,18 +169,18 @@ class Plotter:
             errorgraph.GetPoint(point, d1, d2)
             Xval = float(d1)
             Yval = float(d2)
-            eX_hi = errorgraph.GetErrorXhigh(point)
-            eX_lo = errorgraph.GetErrorXlow(point)
+            #eX_hi = errorgraph.GetErrorXhigh(point)
+            eX = errorgraph.GetErrorXlow(point)
 
             if Yval==0:
-                eY_hi = 0
-                eY_lo = 0
+                #eY_hi = 0
+                eY = 0
             else:
-                eY_hi = errorgraph.GetErrorYhigh(point)/Yval
-                eY_lo = errorgraph.GetErrorYlow(point)/Yval
+                #eY_hi = errorgraph.GetErrorYhigh(point)/Yval
+                eY = errorgraph.GetErrorYlow(point)/Yval
 
             ratio.SetPoint(point, Xval, 1.0)
-            ratio.SetPointError(point, eX_lo, eX_hi, eY_lo, eY_hi)
+            ratio.SetPointError(point, eX, eY)
 
         return ratio
 
