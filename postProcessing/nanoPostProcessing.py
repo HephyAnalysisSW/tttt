@@ -623,7 +623,7 @@ if addSystematicVariations:
     bTagVariations = {'central':1., 'up_jes':1., 'down_jes':1., 'up_lf':1.,
                  'down_lf':1., 'up_hfstats1':1., 'down_hfstats1':1.,
                  'up_hfstats2':1., 'up_hfstats2':1., 'down_hfstats2':1.,
-                 'up_cferr1':1., 'down_cferr2':1., 'up_cferr1':1.,
+                 'up_cferr1':1., 'down_cferr1':1., 'up_cferr2':1.,
                  'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
                  'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
                  }
