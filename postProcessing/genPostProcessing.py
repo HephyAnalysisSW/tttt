@@ -47,6 +47,9 @@ argParser.add_argument('--addReweights',       action='store_true',   help="Add 
 argParser.add_argument('--combinatoricalBTags', action='store_true',   help="BTags combinatorical?")
 argParser.add_argument('--removeDelphesFiles', action='store_true',   help="remove Delphes file after postprocessing?")
 argParser.add_argument('--interpolationOrder', action='store',      nargs='?', type=int, default=3,  help="Interpolation order for EFT weights.")
+argParser.add_argument('--add_training_vars',  action='store_true',   default = False, help="add training variables for particle net?")
+argParser.add_argument('--trainingCoefficients', action='store',    nargs='?', default=['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm','ctb1', 'ctb8', 'cQb1', 'cQb8', 'cQtQb1Re', 'cQtQb8Re', 'cQtQb1Im', 'cQtQb8Im'],  help="Training vectors for particle net")
+argParser.add_argument('--config',             action='store', type=str)
 args = argParser.parse_args()
 
 #
@@ -77,6 +80,8 @@ xsec = sample.xsec if hasattr( sample, "xsec" ) else sample.xSection
 nEvents = sample.nEvents
 lumiweight1fb = xsec * 1000. / nEvents
 
+
+    
 # output directory
 output_directory = os.path.join(postprocessing_output_directory, 'gen', args.targetDir, sample.name) 
 
@@ -91,6 +96,7 @@ if not os.path.exists( output_directory ):
 extra_variables = []
 if args.addReweights:
     weightInfo = WeightInfo( sample.reweight_pkl )
+    weightInfo.set_order( args.interpolationOrder ) 
     # Determine coefficients for storing in vector
     # Sort Ids wrt to their position in the card file
 
@@ -242,6 +248,7 @@ if args.delphesEra is not None:
         recoJet_vars += ',bTag_'+btagWP+"/I"
 
     variables += ["recoJet[%s]"%recoJet_vars]
+    variables += ["recoBJet[%s]"%recoJet_vars]
     recoJet_varnames = varnames( recoJet_vars )
     variables += ["recoBj0_%s"%var for var in recoJet_vars.split(',')]
     variables += ["recoBj1_%s"%var for var in recoJet_vars.split(',')]
@@ -272,6 +279,20 @@ if args.addReweights:
     variables.append('rw_nominal/F')
     # Lumi weight 1fb / w_0
     variables.append("ref_lumiweight1fb/F")
+
+import tttt.MVA.configs  as configs 
+config = getattr( configs, args.config)    
+if args.add_training_vars:
+    for var in config.all_mva_variables.keys():
+        if not var == "nrecoJet":
+            variables.append("%s/F"%var ) 
+        if var == "nrecoJet":
+            variables.append("%s/I"%var )   
+
+    # for each Wilson coefficient listed in args.trainingCoefficients, store a separate length-3 ntuple of ('w0'*10**6, 'w1', 'w2') to facilitate particle-net training 
+    for coefficient in args.trainingCoefficients:    
+        variables += [VectorTreeVariable.fromString("%s[coeff/F]"%coefficient, nMax=3 )]            
+        
 
 
 def fill_vector_collection( event, collection_name, collection_varnames, objects):
@@ -347,7 +368,7 @@ output_file = ROOT.TFile( output_filename, 'recreate')
 output_file.cd()
 maker = TreeMaker(
     #sequence  = [ filler ],
-    variables = [ TreeVariable.fromString(x) for x in variables ] + extra_variables,
+    variables = [ (TreeVariable.fromString(x) if type(x)==str else x) for x in variables ] + extra_variables,
     treeName = "Events"
     )
 
@@ -407,7 +428,16 @@ def filler( event ):
             #print n, "p_C", n, coeff[n]
         # lumi weight / w0
         event.ref_lumiweight1fb = event.lumiweight1fb / coeff[0]
-
+    
+    if args.add_training_vars:
+        for coefficient in args.trainingCoefficients:
+            setattr(event, "n"+coefficient, 3)
+            getattr(event, coefficient+"_coeff")[0] = event.p_C[0]*10**6
+            index_lin  = weightInfo.combinations.index((coefficient, ))
+            index_quad = weightInfo.combinations.index((coefficient, coefficient))
+            getattr(event, coefficient+"_coeff")[1] = event.p_C[index_lin]/event.p_C[0] 
+            getattr(event, coefficient+"_coeff")[2] = event.p_C[index_quad]/event.p_C[0]
+            
     # parton x1 x2
     event.x1 = fwliteReader.products['gen'].pdf().x.first
     event.x2 = fwliteReader.products['gen'].pdf().x.second
@@ -761,12 +791,12 @@ def filler( event ):
         # make reco b jets
         recoBJets    = filter( lambda j:     j['bTag_'+default_btagWP] and abs(j['eta'])<2.4 , recoJets )
         recoNonBJets = filter( lambda j:not (j['bTag_'+default_btagWP] and abs(j['eta'])<2.4), recoJets )
-
+        fill_vector_collection( event, "recoBJet",    recoJet_varnames, recoBJets )
         recoBj0, recoBj1 = ( recoBJets + recoNonBJets + [None, None] )[:2]
 
         if recoBj0: fill_vector( event, "recoBj0", recoJet_varnames, recoBj0)
         if recoBj1: fill_vector( event, "recoBj1", recoJet_varnames, recoBj1) 
-
+        
         # VBS jets
         combs = list(itertools.combinations(range(len(recoJets)),2))
         combs.sort(key=lambda comb:-recoJets[comb[0]]['pt']-recoJets[comb[1]]['pt'])
@@ -882,6 +912,9 @@ def filler( event ):
                     event.recoBjNonZlep_index, event.recoBjNonZhad_index = recoBj0['index'], recoBj1['index']
                 else:
                     event.recoBjNonZlep_index, event.recoBjNonZhad_index = recoBj1['index'], recoBj0['index']
+        if args.add_training_vars:        
+            for name, func in config.all_mva_variables.items():
+                setattr( event, name, func(event, sample=None) )
 
 
 counter = 0
