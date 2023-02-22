@@ -78,7 +78,7 @@ all_mva_variables = {
      "dEtaj_12"              :(lambda event, sample: abs(event.recoJet_eta[0]-event.recoJet_eta[1]) if event.nrecoJet >=2 else -10),
 
      "ht"                    :(lambda event, sample: sum( [event.recoJet_pt[i] for i in range (event.nrecoJet)] ) ),
-     "htb"                   :(lambda event, sample: sum( [j['pt'] for j in event.recoBJets] ) ),
+     "htb"                   :(lambda event, sample: sum( [event.recoBJet_pt[i] for i in range (event.nrecoBJet)] ) ),
      "ht_ratio"              :(lambda event, sample: sum( [event.recoJet_pt[i] for i in range (4)])/ sum( [event.recoJet_pt[i] for i in range (event.nrecoJet) ]) if event.nrecoJet>=4 else 1 ),
 
      "jet0_pt"               :(lambda event, sample: event.recoJet_pt[0]          if event.nrecoJet >=1 else 0),
@@ -92,8 +92,8 @@ all_mva_variables = {
      "jet5_pt"               :(lambda event, sample: event.recoJet_pt[5]          if event.nrecoJet >=6 else 0),
      "jet6_pt"               :(lambda event, sample: event.recoJet_pt[6]          if event.nrecoJet >=7 else 0),
      "jet7_pt"               :(lambda event, sample: event.recoJet_pt[7]          if event.nrecoJet >=8 else 0),
-     "bjet0_pt"              :(lambda event, sample: event.recoBj0_pt),
-     "bjet1_pt"              :(lambda event, sample: event.recoBj1_pt),
+     "bjet0_pt"              :(lambda event, sample: event.recoBJet_pt[0]),
+     "bjet1_pt"              :(lambda event, sample: event.recoBJet_pt[1]),
      "m_4b"                  :(lambda event, sample: event.m_4b),
      "dR_min0"               :(lambda event, sample: event.dR_min0),
      "dR_min1"               :(lambda event, sample: event.dR_min1),
@@ -143,19 +143,19 @@ def addTLorentzVector( p_dict , name ):
 def make_bjets ( event, sample ):
 
     event.recoJets = getCollection( event, 'recoJet', ['pt', 'eta', 'phi', 'bTag_loose'], 'nrecoJet' )
-    event.recoBJets    = filter( lambda j:     j['bTag_loose'] and abs(j['eta'])<2.4 , event.recoJets )
+    event.recoBJet = getCollection( event, 'recoBJet', ['pt', 'eta', 'phi', 'bTag_loose'], 'nrecoBJet' )
     event.recoNonBJets = []
     for b in event.recoJets:
         addTLorentzVector( b, 'vec4D' ) 
-        if b not in event.recoBJets:
+        if b not in event.recoBJet:
             event.recoNonBJets.append(b)
     if (event.nrecoJet >= 4):        
         event.m_4b  = abs((event.recoJets[0]['vec4D']+event.recoJets[1]['vec4D']+event.recoJets[2]['vec4D']+event.recoJets[3]['vec4D']).M())  
     else:
         event.m_4b  = 0
     # minDR of all btag combinations
-    if len(event.recoBJets)>=2:
-        event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.recoBJets, 2)] )
+    if len(event.recoBJet)>=2:
+        event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.recoBJet, 2)] )
     else:
         event.min_dR_bb = -1
         
@@ -165,7 +165,7 @@ def make_leptons(event, sample):
     event.leptons   = getCollection(event, 'recoLep', lepVarNames, 'nrecoLep') 
     
      #(Second) smallest dR between any lepton and medium b-tagged jet
-    dR_vals = sorted([deltaR(event.recoBJets[i], event.leptons[j]) for i in range(len(event.recoBJets)) for j in range(len(event.leptons))])
+    dR_vals = sorted([deltaR(event.recoBJet[i], event.leptons[j]) for i in range(len(event.recoBJet)) for j in range(len(event.leptons))])
     if len(dR_vals)>=2:
         event.dR_min0 = dR_vals[0]
         event.dR_min1 = dR_vals[1]
@@ -187,7 +187,7 @@ def MT2(event, sample):
     event.mt2ll = mt2Calculator.mt2ll()
     
     
-    b = (event.recoBJets + event.recoNonBJets )[:2]
+    b = (event.recoBJet + event.recoNonBJets )[:2]
     b1, b2 = b[0], b[1]
     mt2Calculator.setBJets(b1['pt'], b1['eta'], b1['phi'], b2['pt'], b2['eta'], b2['phi'])
     event.mt2bb = mt2Calculator.mt2bb()
