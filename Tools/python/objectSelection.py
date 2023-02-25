@@ -29,7 +29,7 @@ def isBJet(j, tagger = 'DeepFlavor', WP='loose', year = 2016):
         if WP == 'tight':
             if year in [2016, "UL2016_preVFP"]:
                 #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16preVFP
-                return j['btagDeepFlavB'] > 0.6502 
+                return j['btagDeepFlavB'] > 0.6502
             elif year in [2016, "UL2016"]:
                 #https://twiki.cern.ch/twiki/bin/view/CMS/BtagRecommendation106XUL16postVFP
                 return j['btagDeepFlavB'] > 0.6377
