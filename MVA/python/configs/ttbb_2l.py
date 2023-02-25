@@ -38,7 +38,9 @@ read_variables = [\
     "recoMet_pt/F", "recoMet_phi/F",
     "genMet_pt/F", "genMet_phi/F",
     "nrecoJet/I",
+    "nrecoBJet/I",
     "recoJet[%s]"%(",".join(jetVars)),
+    "recoBJet[%s]"%(",".join(jetVars)),
     "nrecoLep/I",
     "recoLep[%s]"%(",".join(lepVars)),
     "ngenLep/I", "genLep[pt/F,eta/F,phi/F,pdgId/I,mother_pdgId/I]", 
@@ -141,31 +143,35 @@ def addTLorentzVector( p_dict , name ):
 
 
 def make_bjets ( event, sample ):
-
     event.recoJets = getCollection( event, 'recoJet', ['pt', 'eta', 'phi', 'bTag_loose'], 'nrecoJet' )
-    event.recoBJet = getCollection( event, 'recoBJet', ['pt', 'eta', 'phi', 'bTag_loose'], 'nrecoBJet' )
+    event.recoBJets = getCollection( event, 'recoBJet', ['pt', 'eta', 'phi', 'bTag_loose'], 'nrecoBJet' )
     event.recoNonBJets = []
     for b in event.recoJets:
         addTLorentzVector( b, 'vec4D' ) 
-        if b not in event.recoBJet:
-            event.recoNonBJets.append(b)
-    if (event.nrecoJet >= 4):        
-        event.m_4b  = abs((event.recoJets[0]['vec4D']+event.recoJets[1]['vec4D']+event.recoJets[2]['vec4D']+event.recoJets[3]['vec4D']).M())  
+        # if b not in event.recoBJets:
+            # event.recoNonBJets.append(b)
+    for b in event.recoBJets:
+        addTLorentzVector( b, 'vec4D' )      
+        
+    if (event.nrecoBJet >= 4):        
+        event.m_4b  = abs((event.recoBJets[0]['vec4D']+event.recoBJets[1]['vec4D']+event.recoBJets[2]['vec4D']+event.recoBJets[3]['vec4D']).M())  
     else:
         event.m_4b  = 0
+        
     # minDR of all btag combinations
-    if len(event.recoBJet)>=2:
-        event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.recoBJet, 2)] )
+    if len(event.recoBJets)>=2:
+        event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.recoBJets, 2)] )
     else:
         event.min_dR_bb = -1
         
 sequence.append ( make_bjets )
 
+
 def make_leptons(event, sample):
     event.leptons   = getCollection(event, 'recoLep', lepVarNames, 'nrecoLep') 
     
      #(Second) smallest dR between any lepton and medium b-tagged jet
-    dR_vals = sorted([deltaR(event.recoBJet[i], event.leptons[j]) for i in range(len(event.recoBJet)) for j in range(len(event.leptons))])
+    dR_vals = sorted([deltaR(event.recoBJets[i], event.leptons[j]) for i in range(len(event.recoBJets)) for j in range(len(event.leptons))])
     if len(dR_vals)>=2:
         event.dR_min0 = dR_vals[0]
         event.dR_min1 = dR_vals[1]
@@ -180,20 +186,26 @@ sequence.append(make_leptons)
 
 def MT2(event, sample):
 
-    # we must always have two leptons and two jets, hence no default needed.
+    # we must always have two leptons and two jets, hence no default needed?
     mt2Calculator.reset()    
-    mt2Calculator.setLeptons(event.recoLep_pt[0], event.recoLep_eta[0], event.recoLep_phi[0],event.recoLep_pt[1], event.recoLep_eta[1], event.recoLep_phi[1])
+    
     mt2Calculator.setMet(event.recoMet_pt, event.recoMet_phi)
-    event.mt2ll = mt2Calculator.mt2ll()
-    
-    
-    b = (event.recoBJet + event.recoNonBJets )[:2]
-    b1, b2 = b[0], b[1]
-    mt2Calculator.setBJets(b1['pt'], b1['eta'], b1['phi'], b2['pt'], b2['eta'], b2['phi'])
-    event.mt2bb = mt2Calculator.mt2bb()
-    event.mt2blbl = mt2Calculator.mt2blbl()
-    
-
+    if (len(event.leptons)>=2):
+        mt2Calculator.setLeptons(event.recoLep_pt[0], event.recoLep_eta[0], event.recoLep_phi[0],event.recoLep_pt[1], event.recoLep_eta[1], event.recoLep_phi[1])
+        event.mt2ll = mt2Calculator.mt2ll()
+    else: 
+        event.mt2ll = float('nan')
+        
+    b = event.recoBJets
+    if (len(b)>=2) and (len(event.leptons)>=2):   
+        b1, b2 = b[0], b[1]
+        mt2Calculator.setBJets(b1['pt'], b1['eta'], b1['phi'], b2['pt'], b2['eta'], b2['phi'])
+        event.mt2bb = mt2Calculator.mt2bb()  
+        event.mt2blbl = mt2Calculator.mt2blbl()
+    else: 
+        event.mt2blbl = float('nan')  
+        event.mt2bb   = float('nan')
+        
 sequence.append( MT2 )
 
 
