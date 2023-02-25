@@ -48,7 +48,7 @@ argParser.add_argument('--combinatoricalBTags', action='store_true',   help="BTa
 argParser.add_argument('--removeDelphesFiles', action='store_true',   help="remove Delphes file after postprocessing?")
 argParser.add_argument('--interpolationOrder', action='store',      nargs='?', type=int, default=3,  help="Interpolation order for EFT weights.")
 argParser.add_argument('--add_training_vars',  action='store_true',   default = False, help="add training variables for particle net?")
-argParser.add_argument('--trainingCoefficients', action='store',    nargs='?', default=['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm','ctb1', 'ctb8', 'cQb1', 'cQb8', 'cQtQb1Re', 'cQtQb8Re', 'cQtQb1Im', 'cQtQb8Im'],  help="Training vectors for particle net")
+argParser.add_argument('--trainingCoefficients', action='store',    nargs='*', default=['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm','ctb1', 'ctb8', 'cQb1', 'cQb8', 'cQtQb1Re', 'cQtQb8Re', 'cQtQb1Im', 'cQtQb8Im'], type = str,  help="Training vectors for particle net")
 argParser.add_argument('--config',             action='store', type=str)
 args = argParser.parse_args()
 
@@ -367,7 +367,7 @@ if os.path.exists( output_filename ) and checkRootFile( output_filename, checkFo
 output_file = ROOT.TFile( output_filename, 'recreate')
 output_file.cd()
 maker = TreeMaker(
-    #sequence  = [ filler ],
+    #sequence  = config.sequence,
     variables = [ (TreeVariable.fromString(x) if type(x)==str else x) for x in variables ] + extra_variables,
     treeName = "Events"
     )
@@ -376,9 +376,8 @@ tmp_dir.cd()
 
 gRandom = ROOT.TRandom3()
 def filler( event ):
-
+    
     event.lumiweight1fb = lumiweight1fb
-
     event.run, event.lumi, event.evt = fwliteReader.evt
     if fwliteReader.position % 100==0: logger.info("At event %i/%i", fwliteReader.position, fwliteReader.nEvents)
 
@@ -912,9 +911,15 @@ def filler( event ):
                     event.recoBjNonZlep_index, event.recoBjNonZhad_index = recoBj0['index'], recoBj1['index']
                 else:
                     event.recoBjNonZlep_index, event.recoBjNonZhad_index = recoBj1['index'], recoBj0['index']
+                    
+        for func in config.sequence:
+            func(event, sample=None)
+                   
         if args.add_training_vars:        
             for name, func in config.all_mva_variables.items():
                 setattr( event, name, func(event, sample=None) )
+                
+             
 
 
 counter = 0
