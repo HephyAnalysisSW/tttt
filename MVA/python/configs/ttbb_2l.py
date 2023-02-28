@@ -32,6 +32,13 @@ lstm_jets_maxN   = 10
 lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'bTag/F']
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
+eft_coeff        = ['coeff/F']
+eft_VarNames     = [x.split('/')[0] for x in eft_coeff]
+
+WC = {}
+WC['TTTT_MS']    = ['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm']
+WC['TTbb_MS']    = ['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm','ctb1', 'ctb8', 'cQb1', 'cQb8', 'cQtQb1Re', 'cQtQb8Re', 'cQtQb1Im', 'cQtQb8Im']
+
 # Training variables
 read_variables = [\
     "nBTag/I", 
@@ -49,6 +56,7 @@ read_variables = [\
     "recoBj0_pt/F",
     "recoBj1_pt/F",
     "np/I", VectorTreeVariable.fromString("p[C/F]", nMax=200),
+    
 ]
 
 all_mva_variables = {
@@ -125,11 +133,11 @@ def copy_p(event, sample):
     p_C = [ getObjDict( event, 'p_', "C", i) for i in range(int(event.np)) ]
     return p_C
     
-# for the filler
+# for the filler (ParticleNet coeff targets are added according to sample in make_ntuples.py)
 mva_vector_variables    =   {
-    #"mva_Jet":  {"name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames, "selector": (lambda jet: True), 'maxN':10}
-    "mva_Jet":  {"func":lstm_jets, "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames},
-    "p":        {"func":copy_p, "name":"p", "vars":["C/F"], "varnames":"C", "nMax":200}
+    "mva_Jet":  {"func":lstm_jets,  "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames},
+    "p":        {"func":copy_p,     "name":"p", "vars":["C/F"], "varnames":"C", "nMax":200},
+    #"ctt":      {"func":copy_coeff, "name":"ctt", "vars":eft_coeff, "varnames":eft_VarNames, "nMax":3}
 }
 
 
@@ -143,8 +151,8 @@ def addTLorentzVector( p_dict , name ):
 
 
 def make_bjets ( event, sample ):
-    event.recoJets = getCollection( event, 'recoJet', ['pt', 'eta', 'phi', 'bTag_loose'], 'nrecoJet' )
-    event.recoBJets = getCollection( event, 'recoBJet', ['pt', 'eta', 'phi', 'bTag_loose'], 'nrecoBJet' )
+    event.recoJets = getCollection( event, 'recoJet', jetVarNames, 'nrecoJet' )
+    event.recoBJets = getCollection( event, 'recoBJet', jetVarNames, 'nrecoBJet' )
     event.recoNonBJets = []
     for b in event.recoJets:
         addTLorentzVector( b, 'vec4D' ) 
