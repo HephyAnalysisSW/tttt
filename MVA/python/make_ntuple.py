@@ -23,8 +23,10 @@ argParser.add_argument('--selection',                 action='store', type=str, 
 argParser.add_argument('--output_directory',          action='store', type=str,   default='.')
 argParser.add_argument('--small',                     action='store_true')
 argParser.add_argument('--delphesCutInterpreter',     action='store_true', default=False, help="Use delphesCutInterpreter?")
+argParser.add_argument('--coeff_ParticleNet',         action='store_true', default=False, help="write weight vector for ParticleNet target?")
 
 args = argParser.parse_args()
+
 
 #Logger
 import tttt.Tools.logger as logger
@@ -79,11 +81,26 @@ else:
 
 # where the output goes
 output_file  = os.path.join( args.output_directory, "MVA-training", subDir, sample.name, sample.name + ".root" )
+coeff_variables = []
+if args.coeff_ParticleNet:
+    for coefficient in config.WC[args.sample]:    
+            coeff_variables += [VectorTreeVariable.fromString("%s[coeff/F]"%coefficient, nMax=3 )]            
+
+
+# add eft-weights for ParticleNet training (if needed)
+# this way the same training data can be used for ParticleNet too!
+mva_vector_variables = {}
+if args.coeff_ParticleNet:
+    for coefficient in config.WC[args.sample]:  
+        def copy_coeff(event, sample):
+            coef = [ getObjDict( event, coefficient+'_', config.eft_VarNames, i) for i in range(3)] 
+            return coef 
+        mva_vector_variables[coefficient]={"func":copy_coeff, "name":coefficient, "vars":config.eft_coeff, "varnames":config.eft_VarNames, "nMax":3}
+mva_vector_variables.update(config.mva_vector_variables)
 
 # reader
 reader = sample.treeReader( \
-    #variables = map( TreeVariable.fromString, config.read_variables),
-    variables =  config.read_variables,
+    variables =  config.read_variables + coeff_variables,
     sequence  = config.sequence,
     )
 reader.start()
@@ -101,34 +118,34 @@ def fill_vector_collection( event, collection_name, collection_varnames, objects
 
 #filler
 def filler( event ):
-
+    
     r = reader.event
-
+   
     # copy scalar variables
     for name, func in config.all_mva_variables.iteritems():
         setattr( event, name, func(r, sample=None) )
             
        
     # copy vector variables
-    for name, vector_var in config.mva_vector_variables.iteritems():
+    for name, vector_var in mva_vector_variables.iteritems():
         objs = vector_var["func"]( r, sample=None )
         fill_vector_collection( event, name, vector_var['varnames'], objs, maxN = vector_var['nMax'] if vector_var.has_key('nMax') else 100)
-
+    
     # fill FIs
     if hasattr(config, "FIs"):
         for FI_name, FI in config.FIs.iteritems():
             #print( event, 'mva_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] ) )
             setattr( event, 'FI_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] )[1][0][0] )
-
+    
 # Create a maker. Maker class will be compiled.
 
 # scalar variables
 mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
 
 # vector variables, if any
-for name, vector_var in config.mva_vector_variables.iteritems():
-    #print vector_var
+for name, vector_var in mva_vector_variables.iteritems():
     mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var["nMax"] if vector_var.has_key("nMax") else None) )
+    
     #if vector_var.has_key("nMax"):
     #    mva_variables[-1].nMax = vector_var["nMax"]
     #mva_variables.append( name+'['+','.join(vector_var['vars'])+']' )
@@ -175,4 +192,5 @@ logger.info( "Written %s", output_file)
 #
 #      # Destroy the TTree
 maker.clear()
+
 logger.info( "Written %i events to %s",  nEventsTotal, output_file )
