@@ -130,7 +130,7 @@ if args.nJobs>1:
     n_files_after  = len(sample.files)
     logger.info( "Running job %i/%i over %i files from a total of %i.", args.job, args.nJobs, n_files_after, n_files_before)
 
-max_jet_abseta = 5.1
+max_jet_abseta = 2.5
 
 if args.miniAOD:
     products = {
@@ -788,8 +788,8 @@ def filler( event ):
             #upgradeJECUncertainty.applyJECInfo( jet, flavor = 5 if btag else 0 )
 
         # make reco b jets
-        recoBJets    = filter( lambda j:     j['bTag_'+default_btagWP] and abs(j['eta'])<2.4 , recoJets )
-        recoNonBJets = filter( lambda j:not (j['bTag_'+default_btagWP] and abs(j['eta'])<2.4), recoJets )
+        recoBJets    = filter( lambda j:     j['bTag_'+default_btagWP] and abs(j['eta'])<2.5 , recoJets )
+        recoNonBJets = filter( lambda j:not (j['bTag_'+default_btagWP] and abs(j['eta'])<2.5), recoJets )
         fill_vector_collection( event, "recoBJet",    recoJet_varnames, recoBJets )
         recoBj0, recoBj1 = ( recoBJets + recoNonBJets + [None, None] )[:2]
 
