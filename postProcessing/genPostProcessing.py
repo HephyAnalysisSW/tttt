@@ -130,7 +130,7 @@ if args.nJobs>1:
     n_files_after  = len(sample.files)
     logger.info( "Running job %i/%i over %i files from a total of %i.", args.job, args.nJobs, n_files_after, n_files_before)
 
-max_jet_abseta = 2.5
+max_jet_abseta = 5.2
 
 if args.miniAOD:
     products = {
