@@ -1,38 +1,32 @@
 #!/usr/bin/env python
-''' Analysis script for Stacked plots
+''' Stacked plots (2l)
 '''
 
-#----------------- Standard imports and batch mode
+# Standard imports
 
-import ROOT, os
-import itertools
-import copy
-import array
-import operator
+import ROOT, os, itertools, copy, array, operator
 import numpy as np
 from math                                import sqrt, cos, sin, pi, atan2, cosh
 
-#----------------- Standard imports and batch mode
+# RootTools
 
 from RootTools.core.standard             import *
 
-#----------------- tttt tools import
+# tttt tools import
 
 from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList, isBJet
 from tttt.Tools.helpers                  import getObjDict
 
-
-#---------------- Analysis Tools imports
+# Analysis Tools imports
 
 from Analysis.Tools.helpers              import deltaPhi, deltaR
 from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
 import Analysis.Tools.syncer
 
-
-#---------------- Parser (customizable)
+# Arguments
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
@@ -45,55 +39,52 @@ argParser.add_argument('--plot_directory', action='store', default='tttt')
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
 args = argParser.parse_args()
 
-#---------------- DIrectory naming parser options
-
 if args.noData: args.plot_directory += "_noData"
 if args.small: args.plot_directory += "_small"
 
-#---------------- Logger
+# Logger
 
 import tttt.Tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
+# Simulated samples
 
-#---------------- Simulated samples
-
-from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+from tttt.samples.nano_private_UL20_RunII_postProcessed_trilep import *
 
 # Split dileptonic TTBar into three different contributions
-#NOTE------------ move this bit to sample files?
-sample_TTLep = TTLep
+sample_TTLep = TTLepbb
 # ttbar gen classification:
 # https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
+
 TTLep_bb    = copy.deepcopy( sample_TTLep )
 TTLep_bb.name = "TTLep_bb"
 TTLep_bb.texName = "t#bar{t}b#bar{b}"
 TTLep_bb.color   = ROOT.kRed + 2
-TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
+TTLep_bb.setSelectionString( "genTtbarId%100>=50&&overlapRemoval" )
 TTLep_cc    = copy.deepcopy( sample_TTLep )
 TTLep_cc.name = "TTLep_cc"
 TTLep_cc.texName = "t#bar{t}c#bar{c}"
 TTLep_cc.color   = ROOT.kRed - 3
-TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
+TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50&&overlapRemoval" )
 TTLep_other = copy.deepcopy( sample_TTLep )
 TTLep_other.name = "TTLep_other"
 TTLep_other.texName = "t#bar{t} + light j."
-TTLep_other.setSelectionString( "genTtbarId%100<40" )
+TTLep_other.setSelectionString( "genTtbarId%100<40&&overlapRemoval" )
 
-#Merge simulated background samples
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT]
-#Add the data
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, TTTT, ST, TTW, TTH, TTZ]# Merge simulated background sample
+
+# Add the data
 if not args.noData:
-    from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
+    from tttt.samples.nano_private_UL20_RunII_postProcessed_trilep import RunII
     data_sample = RunII
     data_sample.name = "data"
     all_samples = mc +  [data_sample]
 else:
     all_samples = mc
 
-#----------------- Luminosity scaling
+# Luminosity scaling
 
 lumi_scale = 137. if args.noData else data_sample.lumi/1000.
 
@@ -108,7 +99,7 @@ if args.small:
         sample.reduceFiles( to = 1 )
         sample.scale /= sample.normalization
 
-#----------------- Plot helpers
+# Plot helpers
 
 tex = ROOT.TLatex()
 tex.SetNDC()
@@ -127,6 +118,9 @@ def drawPlots(plots, mode, dataMCScale):
     plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), args.selection)
     for plot in plots:
       if not max(l.GetMaximum() for l in sum(plot.histos,[])): continue # Empty plot
+      if not args.noData:
+          if mode == "all": plot.histos[1][0].legendText = "Data"
+          if mode == "SF":  plot.histos[1][0].legendText = "Data (SF)"
 
       _drawObjects = []
 
@@ -144,30 +138,16 @@ def drawPlots(plots, mode, dataMCScale):
 
 read_variables = []
 
-jetVars     =   ['pt/F',
-                 'eta/F',
-                 'phi/F',
-                 'btagDeepFlavB/F',
-                 'btagDeepFlavCvB/F',
-                 'btagDeepFlavQG/F',
-                 'btagDeepFlavb/F',
-                 'btagDeepFlavbb/F',
-                 'btagDeepFlavlepb/F',
-                 'btagDeepb/F',
-                 'btagDeepbb/F',
-                 'chEmEF/F',
-                 'chHEF/F',
-                 'neEmEF/F',
-                 'neHEF/F' ]
-
+jetVars     =   ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F', 'chEmEF/F', 'chHEF/F', 'neEmEF/F', 'neHEF/F' ]
 jetVarNames     = [x.split('/')[0] for x in jetVars]
 
-#----------------- Read variables (data & MC)
+# Read variables (data & MC)
 
 read_variables += [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
     "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I",
     "l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
+    "l3_pt/F", "l3_eta/F" , "l3_phi/F", "l3_mvaTOP/F", "l3_mvaTOPWP/I", "l3_index/I",
     "JetGood[%s]"%(",".join(jetVars)),
     "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I,mvaTOP/F]",
     "Z1_l1_index/I", "Z1_l2_index/I",
@@ -176,7 +156,7 @@ read_variables += [
     "Electron[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,vidNestedWPBitmap/I]",
 ]
 
-#MC only
+# MC only
 read_variables_MC = [
     'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
@@ -184,24 +164,20 @@ read_variables_MC = [
 
 sequence       = []
 
-def make_jets( event, sample ):
-    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
-    event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
-
-sequence.append( make_jets )
-
-#----------------- MVA configuration
+# MVA configuration
 import tttt.MVA.configs as configs
-from keras.models import load_model
-
-config = configs.tttt_2l
+config = configs.tttt_3l
 read_variables += config.read_variables
+
+sequence += config.sequence
+
 # Add sequence that computes the MVA inputs
 def make_mva_inputs( event, sample ):
     for mva_variable, func in config.mva_variables:
         setattr( event, mva_variable, func(event, sample) )
 sequence.append( make_mva_inputs )
 
+from keras.models import load_model
 classes = [ts.name for ts in config.training_samples]
 
 models  = []
@@ -210,22 +186,24 @@ def keras_predict( event, sample ):
     flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
     for model in models:
         if model['has_lstm']:
-            prediction = model['model'].predict( [flat_variables, lstm_jets] )
+            prediction = model['model'].predict( [flat_variables ])#, lstm_jets] )
         else:
-            prediction = model['model'].predict( flat_variables )
+            prediction = model['model'].predict( [flat_variables] )
         for i_class_, class_ in enumerate(model['classes']):
+            print(class_)
             setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
 sequence.append( keras_predict )
 
-#----------------- Lepton selection helpers
+# Lepton selection helpers
 
 mu_string  = lepString('mu','VL')
 ele_string = lepString('ele','VL')
 def getLeptonSelection( mode ):
-    if   mode=="mumu": return "Sum$({mu_string})==2&&Sum$({ele_string})==0".format(mu_string=mu_string,ele_string=ele_string)
-    elif mode=="mue":  return "Sum$({mu_string})==1&&Sum$({ele_string})==1".format(mu_string=mu_string,ele_string=ele_string)
-    elif mode=="ee":   return "Sum$({mu_string})==0&&Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
-    elif mode=='all':    return "Sum$({mu_string})+Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
+        if   mode == "mumumu"   :    return "Sum$({mu_string})==3&&Sum$({ele_string})==0".format(mu_string=mu_string,ele_string=ele_string)
+        elif mode == "mumue"    :    return "Sum$({mu_string})==2&&Sum$({ele_string})==1".format(mu_string=mu_string,ele_string=ele_string)
+        elif mode == "muee"     :    return "Sum$({mu_string})==1&&Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
+        elif mode == "eee"      :    return "Sum$({mu_string})==0&&Sum$({ele_string})==3".format(mu_string=mu_string,ele_string=ele_string)
+        elif mode == "all"      :    return "Sum$({mu_string})+Sum$({ele_string})==2".format(mu_string=mu_string,ele_string=ele_string)
 
 def charge(pdgId):
     return -pdgId/abs(pdgId)
@@ -253,11 +231,18 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
                 return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
     return func_
 
+    ttreeFormulas = {
+                        # "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection),
+                        "nJetGood30":"Sum$(nJetGood_pt>30)",
+                        "nJetGood40":"Sum$(nJetGood_pt>40)",
+                        "nJetGood50":"Sum$(nJetGood_pt>50)",
+                        # "nJetBTag30":"Sum$(nJetGood_pt>30&JetGood_isBTag)",
+                        }
 
 yields     = {}
 allPlots   = {}
 ttreeFormulas = {}
-allModes   = ['mumu','mue', 'ee']
+allModes   = ['mumumu','mumue','muee', 'eee']
 for i_mode, mode in enumerate(allModes):
     yields[mode] = {}
 
@@ -284,7 +269,7 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
       name = 'yield', texX = '', texY = 'Number of Events',
       attribute = lambda event, sample: 0.5 + i_mode,
-      binning=[3, 0, 3],
+      binning=[4, 0, 4],
     ))
 
     for model in models:
@@ -357,7 +342,36 @@ for i_mode, mode in enumerate(allModes):
     ))
 
     plots.append(Plot(
-        name = 'l2_mvaTOPWP',
+        name = 'l3_mvaTOPWP',
+        texX = 'MVA_{TOP}(l_{1}) WP', texY = 'Number of Events',
+        attribute = lambda event, sample: event.l2_mvaTOPWP,
+        binning=[5,0,5],
+    ))
+
+    plots.append(Plot(
+        name = 'l3_pt',
+        texX = 'p_{T}(l_{2}) (GeV)', texY = 'Number of Events / 20 GeV',
+        attribute = lambda event, sample:event.l2_pt,
+        binning=[15,0,300],
+        addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+        name = 'l3_eta',
+        texX = '#eta(l_{2})', texY = 'Number of Events',
+        attribute = lambda event, sample: event.l2_eta,
+        binning=[20,-3,3],
+    ))
+
+    plots.append(Plot(
+        name = 'l3_mvaTOP',
+        texX = 'MVA_{TOP}(l_{2})', texY = 'Number of Events',
+        attribute = lambda event, sample: event.l2_mvaTOP,
+        binning=[20,-1,1],
+    ))
+
+    plots.append(Plot(
+        name = 'l3_mvaTOPWP',
         texX = 'MVA_{TOP}(l_{1}) WP', texY = 'Number of Events',
         attribute = lambda event, sample: event.l2_mvaTOPWP,
         binning=[5,0,5],
@@ -613,9 +627,10 @@ for i_mode, mode in enumerate(allModes):
         for i, l in enumerate(plot.histos):
           for j, h in enumerate(l):
             yields[mode][plot.stack[i][j].name] = h.GetBinContent(h.FindBin(0.5+i_mode))
-            h.GetXaxis().SetBinLabel(1, "#mu#mu")
-            h.GetXaxis().SetBinLabel(2, "#mue")
-            h.GetXaxis().SetBinLabel(3, "ee")
+            h.GetXaxis().SetBinLabel(1, "#mu#mu#mu")
+            h.GetXaxis().SetBinLabel(2, "#mu#mue")
+            h.GetXaxis().SetBinLabel(3, "#muee")
+            h.GetXaxis().SetBinLabel(4, "eee")
       if plot.name.endswith("_Flag"):
         for i, l in enumerate(plot.histos):
           for j, h in enumerate(l):
@@ -634,7 +649,7 @@ for i_mode, mode in enumerate(allModes):
     drawPlots(plots, mode, dataMCScale)
     allPlots[mode] = plots
 
-for mode in ["SF","all"]:
+for mode in ["all"]:
     yields[mode] = {}
     for y in yields[allModes[0]]:
         try:    yields[mode][y] = sum(yields[c][y] for c in (['ee','mumu'] if mode=="SF" else ['ee','mumu','mue']))
@@ -643,12 +658,26 @@ for mode in ["SF","all"]:
         dataMCScale = 1.
     else:
         dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
-    for plot in allPlots['mumu']:
-        for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
+
+    for plot in allPlots['mumumu']:
+        if mode=="comb1":
+            tmp = allPlots['mumue']
+        elif mode=="comb2":
+            tmp = allPlots['muee']
+        else:
+            tmp = allPlots['eee']
+        for plot2 in (p for p in tmp if p.name == plot.name):
             for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
                 for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
-                    if i==k: j.Add(l)
+                    if i==k:
+                        j.Add(l)
 
-    drawPlots(allPlots['mumu'], mode, dataMCScale)
+    if mode == "all": drawPlots(allPlots['mumumu'], mode, dataMCScale)
+
+        # for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
+        #     for i, j in enumerate(list(itertools.chain.from_iterable(plot.histos))):
+        #         for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
+        #             if i==k: j.Add(l)
+
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )

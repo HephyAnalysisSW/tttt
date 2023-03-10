@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 
-jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F']#,'index/I']
+jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F','index/I']
 
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 
@@ -241,13 +241,13 @@ TTLep_other.name = "TTLep_other"
 TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40&&overlapRemoval" )
 
-training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, TTLep_other ]
+training_samples = [ samples.TTTT, TTLep_bb, TTLep_cc, TTLep_other]#, samples.ST, samples.TTW, samples.TTH, samples.TTZ]
 
 
 assert len(training_samples)==len(set([s.name for s in training_samples])), "training_samples names are not unique!"
 
 # training selection
 
-selection = 'trg-dilepVL-minDLmass20-offZ1-njet4p-btag2p-ht500'
+selection = 'trg-dilepVL-minDLmass20-offZ1-njet4p-btag3p-ht500'
 from tttt.Tools.cutInterpreter import cutInterpreter
 selectionString = cutInterpreter.cutString( selection )
