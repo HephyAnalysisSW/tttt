@@ -32,6 +32,10 @@ lstm_jets_maxN   = 10
 lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'bTag/F']
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
+WC = {}
+WC['TTTT_MS']    = ['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm']
+WC['TTbb_MS']    = ['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm','ctb1', 'ctb8', 'cQb1', 'cQb8', 'cQtQb1Re', 'cQtQb8Re', 'cQtQb1Im', 'cQtQb8Im']
+
 # Training variables
 read_variables = [\
     "nBTag/I", 
