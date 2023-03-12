@@ -86,17 +86,14 @@ if args.coeff_ParticleNet:
     for coefficient in config.WC[args.sample]:    
             coeff_variables += [VectorTreeVariable.fromString("%s[coeff/F]"%coefficient, nMax=3 )]            
 
-
 # add eft-weights for ParticleNet training (if needed)
 # this way the same training data can be used for ParticleNet too!
-mva_vector_variables = {}
+mva_vector_variables_coeff = {}
+
 if args.coeff_ParticleNet:
+    coeff_funcs = lambda event, sample, coefficient: [ getObjDict( event, coefficient+'_', config.eft_VarNames, i) for i in range(3)]
     for coefficient in config.WC[args.sample]:  
-        def copy_coeff(event, sample):
-            coef = [ getObjDict( event, coefficient+'_', config.eft_VarNames, i) for i in range(3)] 
-            return coef 
-        mva_vector_variables[coefficient]={"func":copy_coeff, "name":coefficient, "vars":config.eft_coeff, "varnames":config.eft_VarNames, "nMax":3}
-mva_vector_variables.update(config.mva_vector_variables)
+        mva_vector_variables_coeff[coefficient]={"func": coeff_funcs , "name":coefficient, "vars":config.eft_coeff, "varnames":config.eft_VarNames, "nMax":3}
 
 # reader
 reader = sample.treeReader( \
@@ -127,9 +124,12 @@ def filler( event ):
             
        
     # copy vector variables
-    for name, vector_var in mva_vector_variables.iteritems():
+    for name, vector_var in config.mva_vector_variables.iteritems():
         objs = vector_var["func"]( r, sample=None )
         fill_vector_collection( event, name, vector_var['varnames'], objs, maxN = vector_var['nMax'] if vector_var.has_key('nMax') else 100)
+    for name, vector_var in mva_vector_variables_coeff.iteritems():
+        objs = vector_var["func"]( r, sample=None , coefficient = vector_var['name'])
+        fill_vector_collection( event, name, vector_var['varnames'], objs, maxN = vector_var['nMax'] if vector_var.has_key('nMax') else 100)    
     
     # fill FIs
     if hasattr(config, "FIs"):
@@ -143,9 +143,11 @@ def filler( event ):
 mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
 
 # vector variables, if any
-for name, vector_var in mva_vector_variables.iteritems():
+for name, vector_var in config.mva_vector_variables.iteritems():
     mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var["nMax"] if vector_var.has_key("nMax") else None) )
-    
+for name, vector_var in mva_vector_variables_coeff.iteritems():
+    mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var["nMax"] if vector_var.has_key("nMax") else None) )
+        
     #if vector_var.has_key("nMax"):
     #    mva_variables[-1].nMax = vector_var["nMax"]
     #mva_variables.append( name+'['+','.join(vector_var['vars'])+']' )
