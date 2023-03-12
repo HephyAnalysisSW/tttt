@@ -1,30 +1,30 @@
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --flagTT   --sample TTLep_pow_CP5  #SPLIT212
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --flagTTbb --sample TTbb  #SPLIT20
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample T_tch_pow   #SPLIT200
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample Tbar_tch_pow  #SPLIT100
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample T_tWch  #SPLIT66
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TBar_tWch  #SPLIT75
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTTT  #SPLIT100
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTWToLNu #SPLIT50
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTWToQQ #SPLIT10
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTZToLLNuNu #SPLIT50
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTZToLLNuNu_m1to10 #SPLIT18
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTZToQQ #SPLIT50
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTHnobb #SPLIT40
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTHTobb #SPLIT50
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --flagTT   --sample TTLep_pow_CP5  #SPLIT212
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --flagTTbb --sample TTbb  #SPLIT20
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample T_tch_pow   #SPLIT200
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample Tbar_tch_pow  #SPLIT100
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample T_tWch  #SPLIT66
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TBar_tWch  #SPLIT75
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTTT  #SPLIT100
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTWToLNu #SPLIT50
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTWToQQ #SPLIT10
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTZToLLNuNu #SPLIT50
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTZToLLNuNu_m1to10 #SPLIT18
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTZToQQ #SPLIT50
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTHnobb #SPLIT40
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTHTobb #SPLIT50
 
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --flagTT   --sample TTLep_pow_CP5  #SPLIT212
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --flagTTbb --sample TTbb  #SPLIT20
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample T_tch_pow   #SPLIT200
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample Tbar_tch_pow  #SPLIT100
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample T_tWch  #SPLIT66
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TBar_tWch  #SPLIT75
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTTT  #SPLIT100
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTWToLNu #SPLIT50
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTWToQQ #SPLIT10
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTZToLLNuNu #SPLIT50
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTZToLLNuNu_m1to10 #SPLIT18
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTZToQQ #SPLIT50
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTHnobb #SPLIT40
-#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6 --sample TTHTobb #SPLIT50
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --flagTT   --sample TTLep_pow_CP5  #SPLIT212
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --flagTTbb --sample TTbb  #SPLIT20
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample T_tch_pow   #SPLIT200
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample Tbar_tch_pow  #SPLIT100
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample T_tWch  #SPLIT66
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TBar_tWch  #SPLIT75
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTTT  #SPLIT100
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTWToLNu #SPLIT50
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTWToQQ #SPLIT10
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTZToLLNuNu #SPLIT50
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTZToLLNuNu_m1to10 #SPLIT18
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTZToQQ #SPLIT50
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTHnobb #SPLIT40
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep-ht500 --era UL2016_preVFP --processingEra tttt_v6_2 --sample TTHTobb #SPLIT50
 
