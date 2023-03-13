@@ -26,7 +26,7 @@ argParser.add_argument('--logLevel',           action='store',                  
 argParser.add_argument('--sample',             action='store',      type=str      )
 argParser.add_argument('--lumi',               action='store',      type=int,    default=1     )
 argParser.add_argument('--model_directory',    action='store',      type=str,    default='/groups/hephy/cms/lena.wild/tttt/models/')
-argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/')
+argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/limits_test')
 argParser.add_argument('--input_directory',    action='store',      type=str,    default='/eos/vbc/group/cms/lena.wild/tttt/training-ntuples-tttt_v6/MVA-training/ttbb_2l_dilep-bjet_delphes-met30-njet4p-btag2p/')
 argParser.add_argument('--models',             action='store',      type=str,    nargs='*')
 argParser.add_argument('--theta_range',        action='store',      type=float,    default=10     )
@@ -37,8 +37,6 @@ args = argParser.parse_args()
 
 import ttbb_2l_python3 as config
 
-if (args.combine_models): output_directory = os.path.join(args.output_directory, "2D_limits") 
-else: output_directory = os.path.join(args.output_directory, "1D_limits") 
 
 logging.basicConfig(filename=None,  format='%(asctime)s %(message)s', level=logging.INFO)
 if (args.sample):
@@ -178,7 +176,7 @@ Z = {}
 for j in range (len(args.models)):
     dir_name = models[j]
     logging.info("loading model %s", dir_name)
-    ort_sess = ort.InferenceSession(os.path.join(args.model_directory, str(dir_name)+'.onnx'), providers = ['CPUExecutionProvider'],sess_options=options)
+    ort_sess = ort.InferenceSession(os.path.join(args.model_directory, str(dir_name)+'.onnx'),  sess_options=options)#providers = ['CPUExecutionProvider'],
     z = []
     LSTM = False
     ParticleNet = False
@@ -237,7 +235,7 @@ if not (args.combine_models):
             np_histo_sm  = np_histo_sm[0]
             np_histo_bsm = np_histo_bsm[0]
             
-            histo_bsm.legendText = "#theta="+"{:.1f}".format(theta)
+            histo_bsm.legendText = "#theta="+"{:.2f}".format(theta)
             histo_bsm.style       = styles.lineStyle( color[k%len(color)])
             k = k+1
             if (k == 1): 
@@ -250,19 +248,26 @@ if not (args.combine_models):
             exp_nll_ratio.append(exp_nll_ratio_)
     
         drawObjects = [ ]
+        if (sample == 'TTTT_MS'):
+            down = int(args.sample_weight / nb * 0.5)
+            up = int(args.sample_weight / nb * 5)
+        if (sample == 'TTbb_MS'):
+            down = int(args.sample_weight / nb * 0.9)
+            up = int(args.sample_weight / nb * 1.5)
+            
         subdir = "sample_weight_shape_effects_only" if args.shape_effects_only else "sample_weight"
         plot = Plot.fromHisto( os.path.join(subdir,model+"_test_stat"), [[h] for h in histos], texX = "t_{#theta}", texY = "Entries" )
         plotting.draw( plot,
-                plot_directory = os.path.join(output_directory,EFTCoefficients[model]),
+                plot_directory = os.path.join(args.output_directory,"histograms"),
                 #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
                 logX = False, logY = True, sorting = False,
-                #yRange = (4, 70),
-                legend         = ( (0.15,0.7,0.9,0.92),3),
+                yRange = (down, up),
+                legend         = ( (0.2,0.65,0.92,0.9),3),
                 drawObjects    = drawObjects,
                 copyIndexPHP   = True,
                 extensions     = ["png", "pdf"],
               )
-     
+        copyIndexPHP(os.path.join(args.output_directory, "histograms", subdir) )
         exp_nll_ratios[model] = exp_nll_ratio  
         limits[model] = ROOT.TGraph(len(exp_nll_ratio), array('d',theta_), array('d',exp_nll_ratio))
         limits[model+'_4'] = ROOT.TGraph(len(exp_nll_ratio), array('d',theta_), array('d',np.ones(len(exp_nll_ratio))*4))
@@ -279,6 +284,10 @@ if not (args.combine_models):
         for i in range (len(exp_nll_ratio)-1):
             if exp_nll_ratio[i] <= 4 and exp_nll_ratio[i+1] >= 4: r4 = theta_[i]
             if exp_nll_ratio[i] <= 1 and exp_nll_ratio[i+1] >= 1: r1 = theta_[i]
+        try: 
+            r4
+        except NameError:
+            print("NameError: r4 does not exist. args.range_theta too small?")
         if (r4 < args.theta_range):   
             root1, root2 = optimize.newton(interp_fn4, -r4,maxiter=500), optimize.newton(interp_fn4, r4,maxiter=500)
         else: root1, root2 = -args.theta_range, args.theta_range
@@ -424,9 +433,12 @@ EFT =  [*set(EFT)] #remove duplicates
 for i in range(len(EFT)):
     coeffs = coeffs + "_" + EFT[i]
 
+if (args.combine_models): maindir = "LLR_2D"
+if not (args.combine_models): maindir = "LLR_1D"
+
 subdir = "sample_weight_shape_effects_only" if args.shape_effects_only else "sample_weight"
-c1.Print(os.path.join(output_directory, subdir, sample+coeffs+"_LLR_cont.png"))
-c1.Print(os.path.join(output_directory, subdir, sample+coeffs+"_LLR_cont.pdf"))
-copyIndexPHP(os.path.join(output_directory, sample, subdir) )
+c1.Print(os.path.join(args.output_directory, maindir, subdir, sample+coeffs+"_LLR_cont.png"))
+c1.Print(os.path.join(args.output_directory, maindir, subdir, sample+coeffs+"_LLR_cont.pdf"))
+copyIndexPHP(os.path.join(args.output_directory, maindir, subdir) )
 
 Analysis.Tools.syncer.sync()
