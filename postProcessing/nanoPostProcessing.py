@@ -962,7 +962,7 @@ def filler( event ):
     nominal_bJets       = []
     nominal_nonBJets    = []
     for jet in jets:
-        if not j['isNominal']: continue 
+        if not jet['isNominal']: continue 
         if isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4: #b-tagging abs eta
             nominal_bJets.append(jet)
         else:
