@@ -108,14 +108,16 @@ TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 mc = [ TTLep_bb,TTLep_cc,TTLep_other ] + mc
 
+for sample in mc:
+    sample.scale  = 1
+
 if args.small:
-    for sample in mc:
+    if not args.noData:
+        data_sample.reduceFiles( factor = 100 )
+    for sample in mc :
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
         sample.scale /= sample.normalization
-
-for sample in mc:
-    sample.scale           = 1
 
 #       Text on the plots
 
