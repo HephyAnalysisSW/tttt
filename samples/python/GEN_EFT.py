@@ -37,3 +37,8 @@ TTTT_MS = FWLiteSample.fromDAS("TTTT_MS", "/TTTT_MS_EFTdecay/lwild-TTTT_MS_EFTde
 TTTT_MS.xsec     = 6.232e-03
 TTTT_MS.nEvents  = 9860000
 TTTT_MS.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl"
+
+#TT ttbar powheg 2l MINIAODSIM
+TT_2L   = FWLiteSample.fromDAS("TT_2L", "/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18MiniAODv2-106X_upgrade2018_realistic_v16_L1v1-v1/MINIAODSIM", dbFile = dbFile, overwrite=overwrite, skipCheck=True)
+TT_2L.xsec     = 831.762*((3*0.108)**2)
+TT_2L.nEvents  = 146058000
