@@ -108,14 +108,16 @@ TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 mc = [ TTLep_bb,TTLep_cc,TTLep_other ] + mc
 
+for sample in mc:
+    sample.scale  = 1
+
 if args.small:
-    for sample in mc:
+    if not args.noData:
+        data_sample.reduceFiles( factor = 100 )
+    for sample in mc :
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
         sample.scale /= sample.normalization
-
-for sample in mc:
-    sample.scale           = 1
 
 #       Text on the plots
 
@@ -197,7 +199,7 @@ sequence.append( make_mva_inputs )
 
 # load models
 
-#----------------- MVA configuration
+# MVA configuration
 import tttt.MVA.configs as configs
 config = configs.tttt_2l
 read_variables += config.read_variables
@@ -214,18 +216,21 @@ from keras.models import load_model
 classes = [ts.name for ts in config.training_samples]
 print(classes)
 
-models  = []#]{'name':'tttt_2l', 'has_lstm':False, 'classes':classes, 'model':load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l_v2/regression_model.h5")}]
+models  = []#('tttt_2l', False, load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l/regression_model.h5"))]
 
 def keras_predict( event, sample ):
+
+    # get model inputs assuming lstm
     flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
-    for model in models:
-        if model['has_lstm']:
-            prediction = model['model'].predict( [flat_variables ])#, lstm_jets] )
-        else:
-            prediction = model['model'].predict( [flat_variables] )
-        for i_class_, class_ in enumerate(model['classes']):
-            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
+    for name, has_lstm, model in models:
+        #print has_lstm, flat_variables, lstm_jets
+        prediction = model.predict( flat_variables if not has_lstm else [flat_variables, lstm_jets] )
+
+        for i_val, val in enumerate( prediction[0] ):
+            setattr( event, name+'_'+config.training_samples[i_val].name, val)
+
 sequence.append( keras_predict )
+
 
 read_variables += [
     "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
@@ -311,12 +316,11 @@ for i_mode, mode in enumerate(allModes):
     ))
 
     plots2D = []
-    for name, classes, has_lstm, model, in models:
+    for name, has_lstm, model, in models:
         for i_tr_s, tr_s in enumerate( config.training_samples ):
             #disc_name = name+'_'+config.training_samples[i_tr_s].name
             disc_name = config.training_samples[i_tr_s].name
-
-            print(disc_name)
+            # print(disc_name)
             plots.append(Plot(
                 texX = disc_name, texY = 'Number of Events',
                 name = disc_name,
@@ -330,9 +334,9 @@ for i_mode, mode in enumerate(allModes):
                     continue
                 for i_tr_s2, tr_s2 in enumerate( config.training_samples ):
                     if i_tr_s2<=i_tr_s: continue
-                    disc2_name = name+'_'+config.training_samples[i_tr_s2].name
-                    plot2D_name= name+'_'+sample_name+'_'+config.training_samples[i_tr_s].name+'_vs_'+config.training_samples[i_tr_s2].name
-                    print(plot2D_name)
+                    disc2_name = sample_name+'_'+config.training_samples[i_tr_s2].name
+                    plot2D_name= sample_name+'_'+config.training_samples[i_tr_s].name+'_vs_'+config.training_samples[i_tr_s2].name
+                    # print(plot2D_name)
                     plots2D.append(Plot2D(
                         stack = Stack([sample_]),
                         texX = disc_name,

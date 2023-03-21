@@ -1,6 +1,6 @@
 import ROOT
 import os
-from tWZ.Tools.helpers import getObjFromFile
+from tttt.Tools.helpers import getObjFromFile
 from Analysis.Tools.u_float import u_float
 from math import sqrt
 
