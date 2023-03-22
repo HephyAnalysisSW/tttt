@@ -26,7 +26,7 @@ argParser.add_argument('--logLevel',           action='store',                  
 argParser.add_argument('--sample',             action='store',      type=str      )
 argParser.add_argument('--lumi',               action='store',      type=int,    default=1     )
 argParser.add_argument('--model_directory',    action='store',      type=str,    default='/groups/hephy/cms/lena.wild/tttt/models/')
-argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/limits_test')
+argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/limits_ParticleNettest')
 argParser.add_argument('--input_directory',    action='store',      type=str,    default='/eos/vbc/group/cms/lena.wild/tttt/training-ntuples-tttt_v6/MVA-training/ttbb_2l_dilep-bjet_delphes-met30-njet4p-btag2p/')
 argParser.add_argument('--models',             action='store',      type=str,    nargs='*')
 argParser.add_argument('--theta_range',        action='store',      type=float,    default=10     )
@@ -169,14 +169,16 @@ lumi = args.lumi
 models=args.models
 import onnxruntime as ort
 from scipy import optimize 
+
 options = ort.SessionOptions()
-options.inter_op_num_threads = 1    
+options.inter_op_num_threads = 1
+options.intra_op_num_threads = 1  
 Z = {}
 
 for j in range (len(args.models)):
     dir_name = models[j]
     logging.info("loading model %s", dir_name)
-    ort_sess = ort.InferenceSession(os.path.join(args.model_directory, str(dir_name)+'.onnx'),  sess_options=options)#providers = ['CPUExecutionProvider'],
+    ort_sess = ort.InferenceSession(os.path.join(args.model_directory, str(dir_name)+'.onnx'),  sess_options=options, providers = ['CPUExecutionProvider'])
     z = []
     LSTM = False
     ParticleNet = False
@@ -198,6 +200,7 @@ logging.info("plotting")
 
 nbins = 30
 theta_ = np.linspace(-args.theta_range,args.theta_range,nbins)
+# theta_ = np.linspace(-1,1,nbins)
 exp_nll_ratios = {}
 color = [ROOT.kBlue, ROOT.kPink-7, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta,ROOT.kOrange-2, ROOT.kPink-9, ROOT.kBlue-2, ROOT.kRed-2, ROOT.kGreen-2, ROOT.kCyan-2, ROOT.kMagenta-2, ROOT.kCyan+3, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta]
 if not (args.combine_models):  
@@ -210,11 +213,19 @@ if not (args.combine_models):
         for theta in theta_: 
             w_sm   =   lumi /np.sum(y[:,0]) * args.sample_weight * y[:,0] 
             stack_weights = y[:,0] + theta * y[:,index_lin[model]]+ theta**2 * y[:,index_quad[model]]
-            if args.shape_effects_only: w_bsm  =   lumi /np.sum(stack_weights) * args.sample_weight * stack_weights
-            else: w_bsm  =   lumi /np.sum(y[:,0]) * args.sample_weight * stack_weights
             
-            if (ParticleNet): t_theta = 1 + theta * Z[model][:,0] * 1e+06 + theta**2 * Z[model][:,1] * 1e+06*0.5
-            else: t_theta = 1 + theta * Z[model][:,0]  + theta**2 * Z[model][:,1] * 0.5
+            # if (Z[model+"_label"]=='ParticleNet'): 
+                # w_sm   =   lumi /np.sum(y[:,0]*1e+06) * args.sample_weight * y[:,0] * 1e+06
+                # stack_weights = y[:,0]*1e+06 + theta * y[:,index_lin[model]]+ theta**2 * y[:,index_quad[model]]
+                
+            if args.shape_effects_only: w_bsm  =   lumi /np.sum(stack_weights) * args.sample_weight * stack_weights
+            else: 
+                w_bsm  =   lumi /np.sum(y[:,0]) * args.sample_weight * stack_weights
+                # if (Z[model+"_label"]=='ParticleNet'):
+                        # w_bsm  =   lumi /np.sum(y[:,0]*1e+06) * args.sample_weight * stack_weights
+            # if (Z[model+"_label"]=='ParticleNet'): t_theta = 1 + theta * Z[model][:,0] * 1e+06 + theta**2 * Z[model][:,1] * 1e+06* 0.5
+            # else: t_theta = 1 + theta * Z[model][:,0]  + theta**2 * Z[model][:,1] * 0.5
+            t_theta = 1 + theta * Z[model][:,0]  + theta**2 * Z[model][:,1] * 0.5
             
             t_theta_argsort     = np.argsort(t_theta)
             t_theta_argsort_inv = np.argsort(t_theta_argsort)
@@ -231,9 +242,10 @@ if not (args.combine_models):
             
             histo_sm     = make_TH1F(np_histo_sm)
             histo_bsm    = make_TH1F(np_histo_bsm)
-            
             np_histo_sm  = np_histo_sm[0]
             np_histo_bsm = np_histo_bsm[0]
+            
+            print(np_histo_sm )
             
             histo_bsm.legendText = "#theta="+"{:.2f}".format(theta)
             histo_bsm.style       = styles.lineStyle( color[k%len(color)])
@@ -246,7 +258,8 @@ if not (args.combine_models):
             
             exp_nll_ratio_ =2*np.sum(np_histo_sm - np_histo_bsm - np_histo_bsm*np.log(np_histo_sm/np_histo_bsm))
             exp_nll_ratio.append(exp_nll_ratio_)
-    
+            print(exp_nll_ratio)
+            print()
         drawObjects = [ ]
         if (sample == 'TTTT_MS'):
             down = int(args.sample_weight / nb * 0.5)
@@ -341,11 +354,13 @@ else:
             
             w_sm   =   lumi /np.sum(y[:,0]) * args.sample_weight * y[:,0] 
             t_theta = 1
+         
             stack_weights = y[:,0] #SM weight
             for idx, model in enumerate(args.models):
                 stack_weights = stack_weights + theta__[idx] * y[:,index_lin[model]] + theta__[idx]**2 * y[:,index_quad[model]]
            
-                if (ParticleNet): t_theta = t_theta + theta__[idx] * Z[model][:,0] * 1e+06 + theta__[idx]**2 * Z[model][:,1] * 1e+06*0.5
+                if (Z[model+'_label']=='ParticleNet'): 
+                    t_theta = t_theta + theta__[idx] * Z[model][:,0] * 1e+06 + theta__[idx]**2 * Z[model][:,1] * 1e+06 * 0.5
                 else: t_theta = t_theta + theta__[idx] * Z[model][:,0]  + theta__[idx]**2 * Z[model][:,1] * 0.5
             
             stack_weights = stack_weights + theta_0*theta_1 * y[:,index_mixed]
