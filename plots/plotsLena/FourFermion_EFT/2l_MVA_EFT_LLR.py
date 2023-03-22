@@ -359,9 +359,10 @@ else:
             for idx, model in enumerate(args.models):
                 stack_weights = stack_weights + theta__[idx] * y[:,index_lin[model]] + theta__[idx]**2 * y[:,index_quad[model]]
            
-                if (Z[model+'_label']=='ParticleNet'): 
-                    t_theta = t_theta + theta__[idx] * Z[model][:,0] * 1e+06 + theta__[idx]**2 * Z[model][:,1] * 1e+06 * 0.5
-                else: t_theta = t_theta + theta__[idx] * Z[model][:,0]  + theta__[idx]**2 * Z[model][:,1] * 0.5
+                # if (Z[model+'_label']=='ParticleNet'): 
+                    # t_theta = t_theta + theta__[idx] * Z[model][:,0] * 1e+06 + theta__[idx]**2 * Z[model][:,1] * 1e+06 * 0.5
+                # else: t_theta = t_theta + theta__[idx] * Z[model][:,0]  + theta__[idx]**2 * Z[model][:,1] * 0.5
+                t_theta = t_theta + theta__[idx] * Z[model][:,0]  + theta__[idx]**2 * Z[model][:,1] * 0.5
             
             stack_weights = stack_weights + theta_0*theta_1 * y[:,index_mixed]
             if args.shape_effects_only: w_bsm  =   lumi /np.sum(stack_weights) * args.sample_weight * stack_weights 
