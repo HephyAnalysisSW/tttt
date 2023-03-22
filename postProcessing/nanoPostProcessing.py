@@ -962,7 +962,7 @@ def filler( event ):
     nominal_bJets       = []
     nominal_nonBJets    = []
     for jet in jets:
-        if not jet['isNominal']: continue 
+        if not jet['isNominal']: continue
         if isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4: #b-tagging abs eta
             nominal_bJets.append(jet)
         else:
@@ -983,7 +983,7 @@ def filler( event ):
 
     # Filling jets (satisfying the nomianl pt cut)
     maxNJet = 100
-    store_jets = [j for j in jets if j['isNominal']] 
+    store_jets = [j for j in jets if j['isNominal']]
     store_jets = store_jets[:maxNJet]
     store_jets.sort( key = lambda j:-j['pt'])
     event.nJetGood   = len(store_jets)
@@ -1027,13 +1027,13 @@ def filler( event ):
     #nom        = [ j['pt'] for j in jets ]
     #jesTotUp   = [ j['pt_jesTotalUp'] for j in jets ]
     #jesTotDown = [ j['pt_jesTotalDown'] for j in jets ]
-    #print "pt", nom 
-    #print "jesTotUp", jesTotUp 
-    #print "jesTotDown", jesTotDown 
+    #print "pt", nom
+    #print "jesTotUp", jesTotUp
+    #print "jesTotDown", jesTotDown
     #len_nom  = len(nom)
     #len_up   = len(filter(lambda p:p>25, jesTotUp))
     #len_down = len(filter(lambda p:p>25, jesTotDown))
-    #print len_nom, len_up, len_down 
+    #print len_nom, len_up, len_down
     #print
 
     if addSystematicVariations:
@@ -1222,9 +1222,11 @@ def filler( event ):
             #btagEff.addBTagEffToJet(j)
 
         for k in bTagVariations.keys():
+            finalWeight = 1.
             for j in jets:
                 btagRes.getbtagSF(j)
-                setattr( event, 'reweightBTagSF_'+k, reduce(mul, [(j["jetSF"][k] if j["jetSF"].has_key(k) else 1)], 1))
+                finalWeight *= j["jetSF"][k] if j["jetSF"].has_key(k) else j["jetSF"]["central"]
+            setattr( event, 'reweightBTagSF_'+k, finalWeight)
 
             #Comment 1a method (tbc)
             # for var in btagEff.btagWeightNames:
