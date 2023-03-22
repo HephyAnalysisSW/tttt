@@ -20,7 +20,11 @@ TTbb_MS.reweight_pkl = "/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTbb
 TTbb_MS.color = color.TTbb
 TTbb_MS.objects = ['t']
 
-allSamples = [ TTTT_MS, TTbb_MS ]
+TT_2L = Sample.fromDirectory("TT_2L", os.path.join( dir, "TT_2L" ))
+TT_2L.color = color.TT
+TT_2L.objects = ['t']
+
+allSamples = [ TTTT_MS, TTbb_MS, TT_2L ]
 
 for s in allSamples:
   s.isData  = False
