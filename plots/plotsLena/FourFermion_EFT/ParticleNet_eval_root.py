@@ -28,9 +28,9 @@ argParser.add_argument('--lumi',               action='store',      type=int,   
 argParser.add_argument('--predict_directory',  action='store',      type=str,    default='/scratch-cbe/users/lena.wild/FourFermion/predictions/')
 argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/ParticleNet')
 #argParser.add_argument('--input_directory',    action='store',      type=str,    default='/eos/vbc/group/cms/lena.wild/tttt/training-ntuples-tttt_v6/MVA-training/ttbb_2l_dilep-bjet_delphes-met30-njet4p-btag2p/')
-argParser.add_argument('--model',              action='store',      type=str,    nargs='*')
+argParser.add_argument('--model',              action='store',      type=str)
 argParser.add_argument('--EFT_coeff',          action='store',      type=str,    default = 'ctt')
-argParser.add_argument('--epoch_name',         action='store',      type=str,    default = 'best')
+argParser.add_argument('--epoch_name',         action='store',      type=str)
 
 args = argParser.parse_args()
 
@@ -46,18 +46,26 @@ vector_branches  = ["mva_Jet_%s" % varname for varname in config.lstm_jetVarName
 max_target = 2 # lin quad training target
 
 # import training data
-logging.info("loading dnn data from %s", os.path.join( args.predict_directory, sample, "predict.root" )) #HARDCODED
-upfile_name = os.path.join( args.predict_directory, sample, "output.root" ) #HARDCODED
+logging.info("loading dnn data from %s", os.path.join( args.predict_directory, sample, args.model+".root" )) #HARDCODED
+upfile_name = os.path.join( args.predict_directory, sample, args.model+".root") #HARDCODED
 xx     = uproot.open( upfile_name ) 
 xx     = xx["Events"].arrays( mva_variables )
 x      = np.array( [ xx[branch] for branch in list(xx.keys()) ] ).transpose() 
 
-logging.info("loading training from %s", os.path.join( args.predict_directory, sample, "predict.root" )) #HARDCODED
+logging.info("loading training from %s", os.path.join( args.predict_directory, sample, args.model+".root" )) #HARDCODED
 vec_br_f  = {}
 vec_br_y  = {}
 
 with uproot.open( upfile_name ) as upfile:
-    for name, branch in upfile["Events"].arrays( "ctt_"+args.epoch_name ).items(): #HARDCODED
+    if not args.epoch_name:
+        ttree = list(upfile.keys())[0]
+        inhalt = list(upfile[ttree].keys())
+        epoch = list(filter(lambda x: b'epoch' in x, inhalt))[0]
+        epoch = str(epoch, 'ascii')
+        logging.info("Found epochs {} in file {}".format(epoch, os.path.join( args.predict_directory, sample, args.model+".root" )) )
+    else: epoch = "ctt_"+args.epoch_name
+    logging.info("Working on epoch {}".format(epoch))    
+    for name, branch in upfile["Events"].arrays( epoch ).items(): 
         branch = np.array(branch)
         for i in range ( branch.shape[0] ):
             branch[i]=np.pad( branch[i][:max_target], (0, max_target - len(branch[i][:max_target])) )
@@ -67,7 +75,7 @@ with uproot.open( upfile_name ) as upfile:
 z = np.column_stack( [np.stack( vec_br_f[name] ) for name in vec_br_f.keys()] ).reshape( len(x[:,0]), 1, max_target ).transpose((0,2,1))
 
 # load target weight
-logging.info("loading truth from %s", os.path.join( args.predict_directory, sample, "predict.root" )) #HARDCODED
+logging.info("loading truth from %s", os.path.join( args.predict_directory, sample, args.model+".root")) #HARDCODED
 with uproot.open(upfile_name) as upfile:
     for name, branch in upfile["Events"].arrays( "ctt").items(): 
         branch = np.array(branch)
@@ -120,8 +128,8 @@ def eval_truth ( var_evaluation ):
         for ind in range ( x_eval.shape[0] ):
             val = x_eval[ind]
             if ( val > bins[b-1] and val<= bins[b] ):
-                truth_lin[b] +=y[ind,1]
-                truth_quad[b]+=y[ind,2] 
+                truth_lin[b] +=y[ind,1]*y[ind,0]
+                truth_quad[b]+=y[ind,2]*y[ind,0]
     i = plotvars.index( var_evaluation )   
     plots[var_evaluation+'truelin']  = make_TH1F(truth_lin[:,0], bins)
     plots[var_evaluation+'truequad'] = make_TH1F(truth_quad[:,0], bins)
@@ -136,10 +144,10 @@ plotvars=list(config.plot_mva_variables.keys())
 plots = {}   
 logging.info("       plotting truth for %i variables ", len(plotvars))
 for i in range (len(plotvars)):
-        eval_truth(plotvars[i])
+    eval_truth(plotvars[i])
 logging.info("       plotting train for %i variables ", len(plotvars))        
 for i in range (len(plotvars)):
-        eval_train(plotvars[i]) 
+    eval_train(plotvars[i]) 
 
 c1 = ROOT.TCanvas()
 c1.SetCanvasSize(2000, 2000);
@@ -155,7 +163,7 @@ for idx, var in enumerate(plotvars):
     plots[var+'truequad'].Draw("SAME")
     plots[var+'trainlin'].Draw("SAME")
     plots[var+'trainquad'].Draw("SAME")
-savename = args.model+"_"+args.epoch_name+"_lin_quad" if args.model else args.epoch_name+"_lin_quad"
+savename = args.model+"_"+epoch+"_lin_quad" if args.model else args.epoch_name+"_lin_quad"
 c1.Print(os.path.join(args.output_directory, savename+".png"))
 c1.Print(os.path.join(args.output_directory, savename+".pdf"))
 copyIndexPHP(os.path.join(args.output_directory) )
