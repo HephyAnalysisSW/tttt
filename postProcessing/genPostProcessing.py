@@ -74,7 +74,7 @@ else:
 maxEvents = -1
 if args.small: 
     args.targetDir += "_small"
-    maxEvents       = 500 
+    maxEvents       = 48000 
     sample.files=sample.files[:1]
     
 if (args.reduce):
@@ -175,7 +175,7 @@ variables = []
 variables += ["lumiweight1fb/F"]
 
 # EDM standard variables
-variables  += ["run/I", "lumi/I", "evt/l"]
+variables  += ["run/I", "lumi/I", "evt/l", "genWeight/F"]
 
 # MET
 variables += ["genMet_pt/F", "genMet_phi/F"]
@@ -385,7 +385,10 @@ def filler( event ):
     event.lumiweight1fb = lumiweight1fb
     event.run, event.lumi, event.evt = fwliteReader.evt
     if fwliteReader.position % 100==0: logger.info("At event %i/%i", fwliteReader.position, fwliteReader.nEvents)
-
+    gen_weight = fwliteReader.products['gen'].weight()
+    event.genWeight = gen_weight
+    #print event.genWeight
+    #assert False
     if args.addReweights:
         event.nweight = weightInfo.nid
         lhe_weights = fwliteReader.products['lhe'].weights()
