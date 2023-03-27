@@ -34,6 +34,7 @@ import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--small',              action='store_true', help='Run only on a small subset of the data?')#, default = True)
+argParser.add_argument('--reduce',             action='store_true', help='Reduce data to 1/10?')#, default = True)
 argParser.add_argument('--miniAOD',            action='store_true', help='Run on miniAOD?')#, default = True)
 argParser.add_argument('--overwrite',          action='store',      nargs='?', choices = ['none', 'all', 'target'], default = 'none', help='Overwrite?')#, default = True)
 argParser.add_argument('--targetDir',          action='store',      default='v1')
@@ -75,6 +76,9 @@ if args.small:
     args.targetDir += "_small"
     maxEvents       = 500 
     sample.files=sample.files[:1]
+    
+if (args.reduce):
+    sample.reduceFiles( factor = 10 )
 
 xsec = sample.xsec if hasattr( sample, "xsec" ) else sample.xSection 
 nEvents = sample.nEvents
@@ -290,8 +294,9 @@ if args.add_training_vars:
             variables.append("%s/I"%var )   
 
     # for each Wilson coefficient listed in args.trainingCoefficients, store a separate length-3 ntuple of ('w0'*10**6, 'w1', 'w2') to facilitate particle-net training 
-    for coefficient in args.trainingCoefficients:    
-        variables += [VectorTreeVariable.fromString("%s[coeff/F]"%coefficient, nMax=3 )]            
+    if args.addReweights:
+        for coefficient in args.trainingCoefficients:    
+            variables += [VectorTreeVariable.fromString("%s[coeff/F]"%coefficient, nMax=3 )]            
         
 
 
@@ -429,13 +434,14 @@ def filler( event ):
         event.ref_lumiweight1fb = event.lumiweight1fb / coeff[0]
     
     if args.add_training_vars:
-        for coefficient in args.trainingCoefficients:
-            setattr(event, "n"+coefficient, 3)
-            getattr(event, coefficient+"_coeff")[0] = event.p_C[0]*10**6
-            index_lin  = weightInfo.combinations.index((coefficient, ))
-            index_quad = weightInfo.combinations.index((coefficient, coefficient))
-            getattr(event, coefficient+"_coeff")[1] = event.p_C[index_lin]/event.p_C[0] 
-            getattr(event, coefficient+"_coeff")[2] = event.p_C[index_quad]/event.p_C[0]
+        if args.addReweights:
+            for coefficient in args.trainingCoefficients:
+                setattr(event, "n"+coefficient, 3)
+                getattr(event, coefficient+"_coeff")[0] = event.p_C[0]*10**6
+                index_lin  = weightInfo.combinations.index((coefficient, ))
+                index_quad = weightInfo.combinations.index((coefficient, coefficient))
+                getattr(event, coefficient+"_coeff")[1] = event.p_C[index_lin]/event.p_C[0] 
+                getattr(event, coefficient+"_coeff")[2] = event.p_C[index_quad]/event.p_C[0]
             
     # parton x1 x2
     event.x1 = fwliteReader.products['gen'].pdf().x.first

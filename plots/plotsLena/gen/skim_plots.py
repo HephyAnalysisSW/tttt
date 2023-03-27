@@ -28,8 +28,8 @@ argParser.add_argument('--logLevel',           action='store',      default='INF
 argParser.add_argument('--plot_directory',     action='store',      default='gen')
 argParser.add_argument('--selection',          action='store',      default=None)
 argParser.add_argument('--sample',             action='store',      default='TTTT_MS')
-argParser.add_argument('--WC',                 action='store',      nargs = '*',             default=['ctt'], type=str)
-argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    default=[1.0],  help='Values of the Wilson coefficient')
+argParser.add_argument('--WC',                 action='store',      nargs = '*',             type=str)
+argParser.add_argument('--WCval',              action='store',      nargs = '*',             type=float,    help='Values of the Wilson coefficient')
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
 argParser.add_argument('--scaling',                                 action='store_true',     help='Scale the eft to SM?')
 args = argParser.parse_args()
@@ -49,22 +49,25 @@ sample = eval(args.sample)
 objects = sample.objects if hasattr( sample, "objects") else []
 
 # WeightInfo
-w = WeightInfo(sample.reweight_pkl)
-w.set_order(2)
+if hasattr(sample, "reweight_pkl"):
+    w = WeightInfo(sample.reweight_pkl)
+    w.set_order(2)
 
 colors = [ROOT.kBlue, ROOT.kPink-7, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta,ROOT.kOrange-2, ROOT.kPink-9, ROOT.kBlue-2, ROOT.kRed-2, ROOT.kGreen-2, ROOT.kCyan-2, ROOT.kMagenta-2, ROOT.kCyan+3]
 # define which Wilson coefficients to plot
 
 params =  [ {'legendText':'SM',  'color':ROOT.kBlack, 'WC':{}} ] 
-for i in range (len(args.WC)):
-    params += [ {'legendText':'%s %3.2f'%(args.WC[i], wc), 'color':colors[i]+(i_wc*10),  'WC':{args.WC[i]:wc} } for i_wc, wc in enumerate(args.WCval)]
+if (args.WC is not None):
+    for i in range (len(args.WC)):
+        params += [ {'legendText':'%s %3.2f'%(args.WC[i], wc), 'color':colors[i]+(i_wc*10),  'WC':{args.WC[i]:wc} } for i_wc, wc in enumerate(args.WCval)]
 for i_param, param in enumerate(params):
     params[i_param]['sample'] = sample
     params[i_param]['style']  = styles.lineStyle( params[i_param]['color'] )
 params[0]['style']  = styles.lineStyle( params[0]['color'], 2 )
 stack = Stack(*[ [ param['sample'] ] for param in params ] )
-weight= [ [ w.get_weight_func(**param['WC']) ] for param in params ]
-
+if hasattr(sample, "reweight_pkl"):
+    weight= [ [ w.get_weight_func(**param['WC']) ] for param in params ]
+else: weight = [[lambda event,sample: 1]]
 # Read variables and sequences
 read_variables = [
     "genMet_pt/F", "genMet_phi/F", 
@@ -240,16 +243,14 @@ def coeff_getter( coeff):
         return event.p_C[coeff]
     return getter_
 
-
-    
+   
 # Use some defaults
 Plot.setDefaults(stack = stack, weight = weight, addOverFlowBin=None)
   
 plots        = []
 
 
-l = ''.join(args.WC)
-if (len(args.WC)>4): l = 'multi'
+l = ''.join(args.WC) if args.WC is not None else ''
 postfix = '_'+l
 if (args.scaling): postfix += "_scaled"
 
@@ -639,7 +640,7 @@ def drawPlots(plots, subDirectory=''):
       print scale      
       plotting.draw(plot,
 	    plot_directory = plot_directory_,
-	    ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)},
+	    ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)} if args.WC is not None else None,
 	    logX = False, logY = log, sorting = False,
 	    yRange = (1.0e-03,"auto") if log else (0,"auto"),
 	    scaling = scale,
@@ -661,3 +662,4 @@ for plot in plots:
 drawPlots(plots, subDirectory = subDirectory)
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
+syncer.sync()
