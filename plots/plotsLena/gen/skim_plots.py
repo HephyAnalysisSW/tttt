@@ -143,7 +143,7 @@ def addInvariantMass ( event, sample ):
     
 sequence.append( addInvariantMass )
 
-
+ 
         
 def makeJets( event, sample ):
     ''' Add a list of filtered all jets to the event
@@ -250,7 +250,7 @@ Plot.setDefaults(stack = stack, weight = weight, addOverFlowBin=None)
 plots        = []
 
 
-l = ''.join(args.WC) if args.WC is not None else ''
+l = ''.join(args.WC) if args.WC is not None else 'SM'
 postfix = '_'+l
 if (args.scaling): postfix += "_scaled"
 
@@ -640,7 +640,7 @@ def drawPlots(plots, subDirectory=''):
       print scale      
       plotting.draw(plot,
 	    plot_directory = plot_directory_,
-	    ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)} if args.WC is not None else None,
+	    ratio = {'histos':[(i,0) for i in range(1,len(plot.histos)-len_FI)], 'yRange':(0.1,1.9)} if args.WC is not None else {'histos':[(0,0) ], 'yRange':(0.1,1.9)},
 	    logX = False, logY = log, sorting = False,
 	    yRange = (1.0e-03,"auto") if log else (0,"auto"),
 	    scaling = scale,
