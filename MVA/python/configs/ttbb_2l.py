@@ -117,7 +117,6 @@ all_mva_variables = {
      "mt2blbl"               :(lambda event, sample : event.mt2blbl),
      }
 
-
 ## Using all variables
 mva_variables_ = all_mva_variables.keys()
 mva_variables_.sort()
@@ -133,13 +132,17 @@ def copy_p(event, sample):
     p_C = [ getObjDict( event, 'p_', "C", i) for i in range(int(event.np)) ]
     return p_C
     
-# for the filler (ParticleNet coeff targets are added according to sample in make_ntuples.py)
+# for the filler 
 mva_vector_variables    =   {
     "mva_Jet":  {"func":lstm_jets,  "name":"Jet", "vars":lstm_jetVars, "varnames":lstm_jetVarNames},
-    "p":        {"func":copy_p,     "name":"p", "vars":["C/F"], "varnames":"C", "nMax":200},
+    #"p":        {"func":copy_p,     "name":"p", "vars":["C/F"], "varnames":"C", "nMax":200},
     #"ctt":      {"func":copy_coeff, "name":"ctt", "vars":eft_coeff, "varnames":eft_VarNames, "nMax":3}
 }
 
+# separate p_C from mva_vector_variables because not every sample has EFT weight vector
+mva_target_variables = {
+    "p":        {"func":copy_p,     "name":"p", "vars":["C/F"], "varnames":"C", "nMax":200}
+}    
 
 sequence = []
 
@@ -218,4 +221,8 @@ sequence.append( MT2 )
 
 
 import tttt.samples.GEN_EFT_postProcessed as samples
-training_samples = [samples.TTTT_MS, samples.TTbb_MS]
+training_samples = [samples.TTTT_MS, samples.TTbb_MS, samples.TT_2L]
+
+import tttt.samples.GEN_EFT_postProcessed_weights as samples_weights
+weightsum_samples = [samples_weights.TTTT_MS, samples_weights.TTbb_MS, samples_weights.TT_2L]
+

@@ -54,12 +54,19 @@ if args.small: plot_directory += "_small"
 import tttt.samples.GEN_EFT_postProcessed as samples
     
 signal = getattr( samples, args.signal)
- 
-# WeightInfo
-signal.weightInfo = WeightInfo(signal.reweight_pkl)
-signal.weightInfo.set_order(2)
-signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
+# WeightInfo
+if hasattr(signal, "reweight_pkl"):
+    signal.weightInfo = WeightInfo(signal.reweight_pkl)
+    signal.weightInfo.set_order(2)
+    signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
+
+
+if (args.signal =='TT_2L'):
+    eft_configs = [
+        {'color':ROOT.kBlack,       'param':{},              'tex':"SM"},
+    ]
+    
 if (args.signal =='TTTT_MS'):
     eft_configs = [
         {'color':ROOT.kBlack,       'param':{},              'tex':"SM"},
@@ -171,8 +178,11 @@ if (args.signal=='TTbb_MS'):
         ]    
  
 for eft in eft_configs:
-    eft['func'] = signal.weightInfo.get_weight_func(**eft['param']) 
     eft['name'] = "_".join( ["signal"] + ( ["SM"] if len(eft['param'])==0 else [ "_".join([key, str(val)]) for key, val in sorted(eft['param'].iteritems())] ) ) 
+    if hasattr(signal, "reweight_pkl"):
+        eft['func'] = signal.weightInfo.get_weight_func(**eft['param']) 
+    else:
+        eft['func'] = lambda event,sample: event.genWeight
     
     
 if not args.show_derivatives:
@@ -185,16 +195,20 @@ for der in eft_derivatives:
 lumi  = 300
 
 sequence = []
+
+
+
 def make_eft_weights( event, sample):
     if sample.name!=signal.name:
         return
-    SM_ref_weight         = event.lumiweight1fb*lumi
-    # SM_ref_weight         = eft_configs[0]['func'](event, sample)*lumi
-    #print SM_ref_weight, event.lumiweight1fb*300
-    event.eft_weights     = [eft['func'](event, sample)/SM_ref_weight for eft in eft_configs]
-    #event.eft_weights     = [1] + [eft['func'](event, sample)/SM_ref_weight for eft in eft_configs[1:]]
-    event.eft_derivatives = [der['func'](event, sample)/SM_ref_weight for der in eft_derivatives]
-
+    
+    if (args.signal == "TT_2L"):
+        SM_ref_weight = event.genWeight * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    if not (args.signal == "TT_2L"):
+        SM_ref_weight = event.p_C[0] * lumi * signal.xsec * 1000 / signal.total_genWeight  
+    event.eft_weights     = [SM_ref_weight]+[eft['func'](event, sample)/eft_configs[0]['func'](event, sample)*SM_ref_weight for eft in eft_configs[1:]]
+    event.eft_derivatives = [der['func'](event, sample)*SM_ref_weight for der in eft_derivatives]
+    
 stack = Stack( )
 
 sequence.append( make_eft_weights )
@@ -223,8 +237,9 @@ def weight_getter( branches ):
 
 
 
-import tttt.MVA.configs.ttbb_2l as config 
-read_variables = []
+import tttt.MVA.configs as configs 
+config = getattr(configs, 'ttbb_2l')
+read_variables = ["genWeight/F"] if args.signal=="TT_2L" else []
 read_variables+=config.read_variables
 
 preselection = [ 
@@ -556,7 +571,7 @@ def drawPlots(plots, subDirectory=''):
             plotting.draw(plot,
               plot_directory = plot_directory_,
               #ratio =  None,
-              ratio = {'histos':[(i,0) for i in range(1,len(plot.histos))], 'yRange':(0.1,1.9)},
+              ratio = {'histos':[(i,0) for i in range(1,len(plot.histos))], 'yRange':(0.1,1.9)} if not args.signal=='TT_2L' else {'histos':[(0,0) ], 'yRange':(0.1,1.9)},
               logX = False, logY = log, sorting = False,
               yRange = (0.03, "auto") if log else "auto",
               scaling = scale,
