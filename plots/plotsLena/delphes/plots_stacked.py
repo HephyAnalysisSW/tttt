@@ -79,7 +79,7 @@ if (args.signal =='TTTT_MS'):
         {'color':ROOT.kRed,       'param':{'cQt1': 1},     'tex':"c_{Qt1}=1",       'binning':[20,0,1.5]},
         {'color':ROOT.kGreen,     'param':{'cQt8': 1},     'tex':"c_{Qt8}=1",       'binning':[20,0,1.5]},
         {'color':ROOT.kCyan,      'param':{'ctHRe': 1},    'tex':"c_{tHRe}=1",      'binning':[20,0,1.5]},
-        {'color':ROOT.kMagenta,   'param':{'ctHIm': 1},    'tex':"c_{tHIm}=1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kMagenta,   'param':{'ctHIm': 1},    'tex':"c_{tHIm}=1",      'binning':[20,0,1.5]},#
         # {'color':ROOT.kBlue-4,      'param':{'ctt':-1},      'tex':"c_{tt}=-1",       'binning':[20,0,1.5]},
         # {'color':ROOT.kPink-7-4,    'param':{'cQQ1':-1},     'tex':"c_{QQ1}=-1",      'binning':[20,0,1.5]},
         # {'color':ROOT.kOrange-4,    'param':{'cQQ8':-1},     'tex':"c_{QQ8}=-1",      'binning':[20,0,1.5]},
@@ -206,23 +206,23 @@ def make_weights( event, sample):
 sequence.append( make_weights )
 
 def make_eft_weights( event, sample):
-    event.eft_weights     = [event.weight]+[eft['func'](event, sample)/eft_configs[0]['func'](event, sample)*event.weight for eft in eft_configs[1:]]
+    event.eft_weights     = [eft['func'](event, sample)/eft_configs[0]['func'](event, sample)*event.weight for eft in eft_configs]
     event.eft_derivatives = [der['func'](event, sample)*event.weight for der in eft_derivatives]
 sequence.append( make_eft_weights )
-
-signal_eft_ = {}
-for i_eft, eft in enumerate(eft_configs):
-    signal_eft_[str(i_eft)] = copy.deepcopy(signal)
-    signal_eft_[str(i_eft)].name = "EFT_"+str(i_eft)
-
 stack = Stack([bkg,signal])
+
+
+
 stack_eft = []
+eft_weights = []
+#eft_weights.append( [lambda event, sample: event.weight] )
+eft_weights.append( [lambda event, sample: event.weight, lambda event, sample: event.weight] )
 for i_eft, eft in enumerate(eft_configs):
-  
-   stack.append( [signal_eft_[str(i_eft)]])
+   eft_weights.append( [lambda event, sample, i_eft=i_eft: event.eft_weights[i_eft]] )
+   stack.append( [signal] )
    
 
-weight_ = lambda event, sample: event.weight if str(sample.name).find('EFT')==-1 else event.eft_weights[int(sample.name[-1])]
+#weight_ = lambda event, sample: event.weight if str(sample.name).find('EFT')==-1 else event.eft_weights[int(sample.name[-1])]
 
 weight_branches = ["lumiweight1fb"]
 
@@ -257,7 +257,7 @@ for sample in stack.samples:
         sample.addSelectionString( selectionString )
     if args.small:
         #sample.reduceFiles( factor = 30 )
-        sample.reduceFiles( to = 2 )
+        sample.reduceFiles( to = 1 )
 
 bits = []
 
@@ -287,7 +287,7 @@ sequence.append( make_mva_inputs )
 
 
 # Use some defaults
-Plot.setDefaults(stack = stack, weight =  staticmethod(weight_), addOverFlowBin="upper")
+Plot.setDefaults(stack = stack, weight =  eft_weights, addOverFlowBin="upper")
 # Plot.setDefaults(stack = stack, weight = eft_weights, addOverFlowBin="upper")
  
 plots        = []
