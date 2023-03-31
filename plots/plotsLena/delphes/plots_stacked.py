@@ -53,19 +53,22 @@ if args.small: plot_directory += "_small"
 # Import samples
 import tttt.samples.GEN_EFT_postProcessed as samples
     
-signal = getattr( samples, args.signal)
+signal = getattr( samples, args.signal )
+signal.name = args.signal
+signal.color = signal.color
+bkg    = getattr( samples, "TT_2L" )
+bkg.name = "TT_2L"
+bkg.color   = ROOT.kRed - 3 
+all_samples = [bkg, signal]
 
 # WeightInfo
+
 if hasattr(signal, "reweight_pkl"):
     signal.weightInfo = WeightInfo(signal.reweight_pkl)
     signal.weightInfo.set_order(2)
     signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
 
-if (args.signal =='TT_2L'):
-    eft_configs = [
-        {'color':ROOT.kBlack,       'param':{},              'tex':"SM"},
-    ]
     
 if (args.signal =='TTTT_MS'):
     eft_configs = [
@@ -76,7 +79,7 @@ if (args.signal =='TTTT_MS'):
         {'color':ROOT.kRed,       'param':{'cQt1': 1},     'tex':"c_{Qt1}=1",       'binning':[20,0,1.5]},
         {'color':ROOT.kGreen,     'param':{'cQt8': 1},     'tex':"c_{Qt8}=1",       'binning':[20,0,1.5]},
         {'color':ROOT.kCyan,      'param':{'ctHRe': 1},    'tex':"c_{tHRe}=1",      'binning':[20,0,1.5]},
-        {'color':ROOT.kMagenta,   'param':{'ctHIm': 1},    'tex':"c_{tHIm}=1",      'binning':[20,0,1.5]},
+        {'color':ROOT.kMagenta,   'param':{'ctHIm': 1},    'tex':"c_{tHIm}=1",      'binning':[20,0,1.5]},#
         # {'color':ROOT.kBlue-4,      'param':{'ctt':-1},      'tex':"c_{tt}=-1",       'binning':[20,0,1.5]},
         # {'color':ROOT.kPink-7-4,    'param':{'cQQ1':-1},     'tex':"c_{QQ1}=-1",      'binning':[20,0,1.5]},
         # {'color':ROOT.kOrange-4,    'param':{'cQQ8':-1},     'tex':"c_{QQ8}=-1",      'binning':[20,0,1.5]},
@@ -176,14 +179,11 @@ if (args.signal=='TTbb_MS'):
             {'der':('cQtQb8Im',),             'color':ROOT.kCyan+3-4,       'tex':"c_{QtQb8Im}"},
             {'der':('cQtQb8Im','cQtQb8Im'),   'color':ROOT.kCyan+3+2,       'tex':"c_{QtQb8Im}^2"}, 
         ]    
- 
+
 for eft in eft_configs:
-    eft['name'] = "_".join( ["signal"] + ( ["SM"] if len(eft['param'])==0 else [ "_".join([key, str(val)]) for key, val in sorted(eft['param'].iteritems())] ) ) 
-    if hasattr(signal, "reweight_pkl"):
-        eft['func'] = signal.weightInfo.get_weight_func(**eft['param']) 
-    else:
-        eft['func'] = lambda event,sample: event.genWeight
-    
+    eft['name'] = "_".join( ["signal"] + ( ["SM"] if len(eft['param'])==0 else [ "_".join([key, str(val)]) for key, val in sorted(eft['param'].iteritems())] ) )
+    eft['func'] = signal.weightInfo.get_weight_func(**eft['param']) 
+
     
 if not args.show_derivatives:
     eft_derivatives = []
@@ -196,34 +196,33 @@ lumi  = 300
 
 sequence = []
 
-
+def make_weights( event, sample):
+    if (sample.name == "TT_2L"):
+        SM_ref_weight = event.genWeight * lumi * bkg.xsec * 1000 / bkg.total_genWeight 
+    if not (sample.name == "TT_2L"):
+        SM_ref_weight = event.p_C[0] * lumi * signal.xsec * 1000 / signal.total_genWeight  
+    event.weight          = SM_ref_weight
+    # if sample.name not in ["TTTT_MS", "TT_2L"]: print int(sample.name[-1])
+sequence.append( make_weights )
 
 def make_eft_weights( event, sample):
-    if sample.name!=signal.name:
-        return
-    
-    if (args.signal == "TT_2L"):
-        SM_ref_weight = event.genWeight * lumi * signal.xsec * 1000 / signal.total_genWeight 
-    if not (args.signal == "TT_2L"):
-        SM_ref_weight = event.p_C[0] * lumi * signal.xsec * 1000 / signal.total_genWeight  
-    event.eft_weights     = [SM_ref_weight]+[eft['func'](event, sample)/eft_configs[0]['func'](event, sample)*SM_ref_weight for eft in eft_configs[1:]]
-    event.eft_derivatives = [der['func'](event, sample)*SM_ref_weight for der in eft_derivatives]
-    
-stack = Stack( )
-
+    event.eft_weights     = [eft['func'](event, sample)/eft_configs[0]['func'](event, sample)*event.weight for eft in eft_configs]
+    event.eft_derivatives = [der['func'](event, sample)*event.weight for der in eft_derivatives]
 sequence.append( make_eft_weights )
+stack = Stack([bkg,signal])
 
-eft_weights = [] 
 
+
+stack_eft = []
+eft_weights = []
+#eft_weights.append( [lambda event, sample: event.weight] )
+eft_weights.append( [lambda event, sample: event.weight, lambda event, sample: event.weight] )
 for i_eft, eft in enumerate(eft_configs):
-    stack.append( [signal] )
-    #eft_weights.append( [get_eft_reweight(eft, signal.weightInfo)] )
-    eft_weights.append( [lambda event, sample, i_eft=i_eft: event.eft_weights[i_eft]] )
+   eft_weights.append( [lambda event, sample, i_eft=i_eft: event.eft_weights[i_eft]] )
+   stack.append( [signal] )
+   
 
-for i_eft, eft in enumerate(eft_derivatives):
-    stack.append( [signal] )
-    #eft_weights.append( [get_eft_reweight(eft, signal.weightInfo)] )
-    eft_weights.append( [lambda event, sample, i_eft=i_eft: event.eft_derivatives[i_eft]] )
+#weight_ = lambda event, sample: event.weight if str(sample.name).find('EFT')==-1 else event.eft_weights[int(sample.name[-1])]
 
 weight_branches = ["lumiweight1fb"]
 
@@ -239,7 +238,7 @@ def weight_getter( branches ):
 
 import tttt.MVA.configs as configs 
 config = getattr(configs, 'ttbb_2l')
-read_variables = ["genWeight/F"] if args.signal=="TT_2L" else []
+read_variables = ["genWeight/F"] if bkg.name=="TT_2L" else []
 read_variables+=config.read_variables
 
 preselection = [ 
@@ -248,16 +247,17 @@ preselection = [
 
 selectionString  = "&&".join( [ c[1] for c in preselection] + ([cutInterpreter.cutString(args.selection)] if args.selection is not None else []))
 subDirectory     =  '-'.join( [ c[0] for c in preselection] + ([args.selection] if args.selection is not None else []))
-print subDirectory, selectionString
+#print subDirectory, selectionString
 if subDirectory  == '': 
     subDirectory = 'inc'
 
 for sample in stack.samples:
+    
     if selectionString != "":
         sample.addSelectionString( selectionString )
     if args.small:
         #sample.reduceFiles( factor = 30 )
-        sample.reduceFiles( to = 10 )
+        sample.reduceFiles( to = 1 )
 
 bits = []
 
@@ -287,142 +287,149 @@ sequence.append( make_mva_inputs )
 
 
 # Use some defaults
-Plot.setDefaults(stack = stack, weight = eft_weights, addOverFlowBin="upper")
+Plot.setDefaults(stack = stack, weight =  eft_weights, addOverFlowBin="upper")
+# Plot.setDefaults(stack = stack, weight = eft_weights, addOverFlowBin="upper")
  
 plots        = []
 plots2D      = []
 
 postfix = "_scaled" if args.scaling else ""
+for sample in [signal, bkg]: sample.style = styles.fillStyle(sample.color)
 
 
+# plots.append(Plot( name = "b0_pt",
+  # texX = 'p_{T}(b_{0}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.recoBj0_pt,
+  # binning=[20,0,600],
+# ))
 
-plots.append(Plot( name = "b0_pt",
-  texX = 'p_{T}(b_{0}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.recoBj0_pt,
-  binning=[20,0,600],
-))
+# plots.append(Plot( name = "b1_pt",
+  # texX = 'p_{T}(b_{1}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.recoBj1_pt,
+  # binning=[20,0,600],
+# ))
 
-plots.append(Plot( name = "b1_pt",
-  texX = 'p_{T}(b_{1}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.recoBj1_pt,
-  binning=[20,0,600],
-))
+# plots.append(Plot( name = 'l1_pt',
+  # texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events' ,
+  # attribute = lambda event, sample:event.l1_pt,
+  # binning=[15,0,300],
+# ))
 
-plots.append(Plot( name = 'l1_pt',
-  texX = 'p_{T}(l_{1}) (GeV)', texY = 'Number of Events' ,
-  attribute = lambda event, sample:event.l1_pt,
-  binning=[15,0,300],
-))
+# plots.append(Plot( name = 'l2_pt',
+  # texX = 'p_{T}(l_{2}) (GeV)', texY = 'Number of Events' ,
+  # attribute = lambda event, sample:event.l2_pt,
+  # binning=[15,0,300],
+# ))
 
-plots.append(Plot( name = 'l2_pt',
-  texX = 'p_{T}(l_{2}) (GeV)', texY = 'Number of Events' ,
-  attribute = lambda event, sample:event.l2_pt,
-  binning=[15,0,300],
-))
+# plots.append(Plot( name = 'l1_eta',
+  # texX = '#eta(l_{1})', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.l1_eta,
+  # binning=[20,-3,3],
+# ))
 
-plots.append(Plot( name = 'l1_eta',
-  texX = '#eta(l_{1})', texY = 'Number of Events',
-  attribute = lambda event, sample: event.l1_eta,
-  binning=[20,-3,3],
-))
+# plots.append(Plot( name = 'l2_eta',
+  # texX = '#eta(l_{2})', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.l2_eta,
+  # binning=[20,-3,3],
+# ))
 
-plots.append(Plot( name = 'l2_eta',
-  texX = '#eta(l_{2})', texY = 'Number of Events',
-  attribute = lambda event, sample: event.l2_eta,
-  binning=[20,-3,3],
-))
+# plots.append(Plot( name = 'mT_l1',
+  # texX = 'm_{T}(l_{1})', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.mT_l1,
+  # binning=[20,0,800],
+# ))
 
-plots.append(Plot( name = 'mT_l1',
-  texX = 'm_{T}(l_{1})', texY = 'Number of Events',
-  attribute = lambda event, sample: event.mT_l1,
-  binning=[20,0,800],
-))
+# plots.append(Plot( name = 'mT_l2',
+  # texX = 'm_{T}(l_{2})', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.mT_l2,
+  # binning=[20,0,800],
+# ))
 
-plots.append(Plot( name = 'mT_l2',
-  texX = 'm_{T}(l_{2})', texY = 'Number of Events',
-  attribute = lambda event, sample: event.mT_l2,
-  binning=[20,0,800],
-))
+# plots.append(Plot( name = 'ml_l2',
+  # texX = 'm_{2l}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.ml_12,
+  # binning=[20,0,1500],
+# ))
 
-plots.append(Plot( name = 'ml_l2',
-  texX = 'm_{2l}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.ml_12,
-  binning=[20,0,1500],
-))
+# plots.append(Plot( name = "j0_pt"+postfix,
+  # texX = 'p_{T}(j_{0}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet0_pt,
+  # binning=[20,0,600],
+# ))
 
-plots.append(Plot( name = "j0_pt"+postfix,
-  texX = 'p_{T}(j_{0}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet0_pt,
-  binning=[20,0,600],
-))
+# plots.append(Plot( name = "j1_pt"+postfix,
+  # texX = 'p_{T}(j_{1}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet1_pt,
+  # binning=[20,0,600],
+# ))
 
-plots.append(Plot( name = "j1_pt"+postfix,
-  texX = 'p_{T}(j_{1}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet1_pt,
-  binning=[20,0,600],
-))
+# plots.append(Plot( name = "j2_pt"+postfix,
+  # texX = 'p_{T}(j_{2}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet2_pt,
+  # binning=[20,0,600],
+# ))
 
-plots.append(Plot( name = "j2_pt"+postfix,
-  texX = 'p_{T}(j_{2}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet2_pt,
-  binning=[20,0,600],
-))
-
-plots.append(Plot( name = "j3_pt"+postfix,
-  texX = 'p_{T}(j_{3}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet3_pt,
-  binning=[20,0,600],
-))
-plots.append(Plot( name = "j4_pt"+postfix,
-  texX = 'p_{T}(j_{4}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet4_pt,
-  binning=[20,0,600],
-))
-plots.append(Plot( name = "j5_pt"+postfix,
-  texX = 'p_{T}(j_{5}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet5_pt,
-  binning=[20,0,600],
-))
-plots.append(Plot( name = "j6_pt"+postfix,
-  texX = 'p_{T}(j_{6}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet6_pt,
-  binning=[20,0,600],
-))
-plots.append(Plot( name = "j7_pt"+postfix,
-  texX = 'p_{T}(j_{7}) (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet7_pt,
-  binning=[20,0,600],
-))
+# plots.append(Plot( name = "j3_pt"+postfix,
+  # texX = 'p_{T}(j_{3}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet3_pt,
+  # binning=[20,0,600],
+# ))
+# plots.append(Plot( name = "j4_pt"+postfix,
+  # texX = 'p_{T}(j_{4}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet4_pt,
+  # binning=[20,0,600],
+# ))
+# plots.append(Plot( name = "j5_pt"+postfix,
+  # texX = 'p_{T}(j_{5}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet5_pt,
+  # binning=[20,0,600],
+# ))
+# plots.append(Plot( name = "j6_pt"+postfix,
+  # texX = 'p_{T}(j_{6}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet6_pt,
+  # binning=[20,0,600],
+# ))
+# plots.append(Plot( name = "j7_pt"+postfix,
+  # texX = 'p_{T}(j_{7}) (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet7_pt,
+  # binning=[20,0,600],
+# ))
 
 
-plots.append(Plot( name = "j0_eta"+postfix,
-  texX = '#eta(j_{0})', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet0_eta,
-  binning=[20,-3,3],
-))
+# plots.append(Plot( name = "j0_eta"+postfix,
+  # texX = '#eta(j_{0})', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet0_eta,
+  # binning=[20,-3,3],
+# ))
 
-plots.append(Plot( name = "j1_eta"+postfix,
-  texX = '#eta(j_{1})', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet1_eta,
-  binning=[20,-3,3],
-))
+# plots.append(Plot( name = "j1_eta"+postfix,
+  # texX = '#eta(j_{1})', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet1_eta,
+  # binning=[20,-3,3],
+# ))
 
-plots.append(Plot( name = "j2_eta"+postfix,
-  texX = '#eta(j_{2})', texY = 'Number of Events',
-  attribute = lambda event, sample: event.jet2_eta,
-  binning=[20,-3,3],
-))
+# plots.append(Plot( name = "j2_eta"+postfix,
+  # texX = '#eta(j_{2})', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.jet2_eta,
+  # binning=[20,-3,3],
+# ))
 
-plots.append(Plot( name = 'Met_pt'+postfix,
-  texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.met_pt,
-  binning=[20,0,400],
-))
+# plots.append(Plot( name = 'Met_pt'+postfix,
+  # texX = 'E_{T}^{miss} (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.met_pt,
+  # binning=[20,0,400],
+# ))
 
 plots.append(Plot( name = 'nJet'+postfix,
   texX = 'jet multiplicity', texY = 'Number of Events',
   attribute = lambda event, sample: event.nrecoJet,
-  binning=[8,0,8],
+  binning=[14,0,14],
+))
+
+plots.append(Plot( name = 'nBTag'+postfix,
+  texX = 'N_{btag}', texY = 'Number of Events',
+  attribute = lambda event, sample: event.nBTag,
+  binning=[7,0,7],
 ))
 
 plots.append(Plot( name = 'ht'+postfix,
@@ -431,115 +438,116 @@ plots.append(Plot( name = 'ht'+postfix,
   binning=[20,0,3000],
 ))
 
-plots.append(Plot( name = "m_4b",
-  texX = 'm_{4b} (GeV)', texY = 'Number of Events',
-  attribute = lambda event, sample: event.m_4b,
-  binning=[20,0,2500],
-))
+# plots.append(Plot( name = "m_4b",
+  # texX = 'm_{4b} (GeV)', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.m_4b,
+  # binning=[20,0,2500],
+# ))
 
-plots.append(Plot( name = 'htb'+postfix,
-  texX = 'H_{T,b-jets}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.htb,
-  binning=[20,0,2500],
-))
+# plots.append(Plot( name = 'htb'+postfix,
+  # texX = 'H_{T,b-jets}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.htb,
+  # binning=[20,0,2500],
+# ))
 
-plots.append(Plot( name = 'ht_ratio'+postfix,
-  texX = '#Delta H_{T}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.ht_ratio,
-  binning=[20,0,1],
-))
+# plots.append(Plot( name = 'ht_ratio'+postfix,
+  # texX = '#Delta H_{T}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.ht_ratio,
+  # binning=[20,0,1],
+# ))
 
-plots.append(Plot( name = 'dEta_jj'+postfix,
-  texX = '#Delta#eta_{2j}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.dEtaj_12,
-  binning=[20,0,6],
-))
+# plots.append(Plot( name = 'dEta_jj'+postfix,
+  # texX = '#Delta#eta_{2j}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.dEtaj_12,
+  # binning=[20,0,6],
+# ))
 
-plots.append(Plot( name = 'dEta_ll'+postfix,
-  texX = '#Delta#eta_{2l}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.dEtal_12,
-  binning=[20,0,6],
-))
+# plots.append(Plot( name = 'dEta_ll'+postfix,
+  # texX = '#Delta#eta_{2l}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.dEtal_12,
+  # binning=[20,0,6],
+# ))
 
-plots.append(Plot( name = 'dPhi_jj'+postfix,
-  texX = '#Delta#phi_{2j}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.dPhij_12,
-  binning=[20,0,3.5],
-))
+# plots.append(Plot( name = 'dPhi_jj'+postfix,
+  # texX = '#Delta#phi_{2j}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.dPhij_12,
+  # binning=[20,0,3.5],
+# ))
 
-plots.append(Plot( name = 'dPhi_l'+postfix,
-  texX = '#Delta#phi_{2l}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.dPhil_12,
-  binning=[20,0,3.5],
-))
+# plots.append(Plot( name = 'dPhi_l'+postfix,
+  # texX = '#Delta#phi_{2l}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.dPhil_12,
+  # binning=[20,0,3.5],
+# ))
 
-plots.append(Plot( name = 'min_dR_0'+postfix,
-  texX = '#Delta R_{0}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.dR_min0,
-  binning=[20,0,3.5],
-))
+# plots.append(Plot( name = 'min_dR_0'+postfix,
+  # texX = '#Delta R_{0}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.dR_min0,
+  # binning=[20,0,3.5],
+# ))
 
-plots.append(Plot( name = 'min_dR_1'+postfix,
-  texX = '#Delta R_{1}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.dR_min1,
-  binning=[20,0,3.5],
-))
+# plots.append(Plot( name = 'min_dR_1'+postfix,
+  # texX = '#Delta R_{1}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.dR_min1,
+  # binning=[20,0,3.5],
+# ))
 
-plots.append(Plot( name = 'min_dR_bb'+postfix,
-  texX = '#Delta R_{b-jet,b-jet}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.min_dR_bb,
-  binning=[20,0,3.5],
-))
+# plots.append(Plot( name = 'min_dR_bb'+postfix,
+  # texX = '#Delta R_{b-jet,b-jet}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.min_dR_bb,
+  # binning=[20,0,3.5],
+# ))
 
-plots.append(Plot( name = 'min_dR_2l'+postfix,
-  texX = '#Delta R_{2l}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.dR_2l,
-  binning=[20,0,3.5],
-))
+# plots.append(Plot( name = 'min_dR_2l'+postfix,
+  # texX = '#Delta R_{2l}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.dR_2l,
+  # binning=[20,0,3.5],
+# ))
 
 
-plots.append(Plot( name = 'mj_12'+postfix,
-  texX = 'm_{2j}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.mj_12,
-  binning=[20,0,2500],
-))
+# plots.append(Plot( name = 'mj_12'+postfix,
+  # texX = 'm_{2j}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.mj_12,
+  # binning=[20,0,2500],
+# ))
 
-plots.append(Plot( name = 'mlj_l1'+postfix,
-  texX = 'm_{l1, j1}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.mlj_11,
-  binning=[20,0,2500],
-))
+# plots.append(Plot( name = 'mlj_l1'+postfix,
+  # texX = 'm_{l1, j1}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.mlj_11,
+  # binning=[20,0,2500],
+# ))
 
-plots.append(Plot( name = 'mlj_l2'+postfix,
-  texX = 'm_{l1, j2}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.mlj_12,
-  binning=[20,0,2500],
-))
+# plots.append(Plot( name = 'mlj_l2'+postfix,
+  # texX = 'm_{l1, j2}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.mlj_12,
+  # binning=[20,0,2500],
+# ))
 
-plots.append(Plot( name = 'mt2ll'+postfix,
-  texX = 'm2_{T,ll}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.mt2ll,
-  binning=[20,0,1200],
-))
+# plots.append(Plot( name = 'mt2ll'+postfix,
+  # texX = 'm2_{T,ll}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.mt2ll,
+  # binning=[20,0,1200],
+# ))
 
-plots.append(Plot( name = 'mt2bb'+postfix,
-  texX = 'm2_{T,bb}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.mt2bb,
-  binning=[20,0,1200],
-))
+# plots.append(Plot( name = 'mt2bb'+postfix,
+  # texX = 'm2_{T,bb}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.mt2bb,
+  # binning=[20,0,1200],
+# ))
 
-plots.append(Plot( name = 'mt2blbl'+postfix,
-  texX = 'm2_{T,blbl}', texY = 'Number of Events',
-  attribute = lambda event, sample: event.mt2blbl,
-  binning=[20,0,1200],
-))
+# plots.append(Plot( name = 'mt2blbl'+postfix,
+  # texX = 'm2_{T,blbl}', texY = 'Number of Events',
+  # attribute = lambda event, sample: event.mt2blbl,
+  # binning=[20,0,1200],
+# ))
 
+tex = ROOT.TLatex()
+tex.SetNDC()
+tex.SetTextSize(0.04)
+tex.SetTextAlign(11)
 # Text on the plots
 def drawObjects( hasData = False ):
-    tex = ROOT.TLatex()
-    tex.SetNDC()
-    tex.SetTextSize(0.04)
-    tex.SetTextAlign(11) # align right
+     # align right
     lines = [
       (0.15, 0.95, 'CMS Preliminary' if hasData else "Delphes Simulation"), 
       #(0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV) Scale %3.2f'% ( lumi_scale, dataMCScale ) ) if plotData else (0.45, 0.95, 'L=%3.1f fb{}^{-1} (13 TeV)' % lumi_scale)
@@ -552,40 +560,32 @@ def drawPlots(plots, subDirectory=''):
     plot_directory_ = os.path.join(plot_directory, subDirectory)
     plot_directory_ = os.path.join(plot_directory_, "log") if log else os.path.join(plot_directory_, "lin")
     for plot in plots:
-        if  type(plot)==Plot2D:
-            plotting.draw2D( plot,
-                       plot_directory = plot_directory_,
-                       logX = False, logY = False, logZ = log,
-                       drawObjects = drawObjects(),
-                       copyIndexPHP = True,
-#                       oldColors = True,
-                       ) 
-        else:
-            if not max(l[0].GetMaximum() for l in plot.histos): continue # Empty plot
-            subtr = 0 #if args.show_derivatives else len(eft_configs)
-            
-            scale = {}
-            if (args.scaling):
-              for i in range(1,len(plot.histos)):
-                  scale.update({i: 0})
-            plotting.draw(plot,
-              plot_directory = plot_directory_,
-              #ratio =  None,
-              ratio = {'histos':[(i,0) for i in range(1,len(plot.histos))], 'yRange':(0.1,1.9)} if not args.signal=='TT_2L' else {'histos':[(0,0) ], 'yRange':(0.1,1.9)},
-              logX = False, logY = log, sorting = False,
-              yRange = (0.03, "auto") if log else "auto",
-              scaling = scale,
-              legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2), 
-              drawObjects = drawObjects( ),
-              copyIndexPHP = True,  
-            )
+       
+        if not max(l.GetMaximum() for l in sum(plot.histos, [])): continue # Empty plot
+        #subtr = 0 #if args.show_derivatives else len(eft_configs)
+        
+        scale = {}
+        if (args.scaling):
+          for i in range(1,len(plot.histos)):
+              scale.update({i: 0})
+        plotting.draw(plot,
+          plot_directory = plot_directory_,
+          #ratio =  None,
+          ratio = {'histos':[(i,1) for i in range(2,len(plot.histos))], 'yRange':(0.1,1.9)} if not args.signal=='TT_2L' else {'histos':[(0,0) ], 'yRange':(0.1,1.9)},
+          logX = False, logY = log, sorting = False,
+          yRange = (0.001, "auto") if log else "auto",
+          scaling = scale,
+          legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2), 
+          drawObjects = drawObjects( ),
+          copyIndexPHP = True,  
+        )
 
-plotting.fill(plots+plots2D, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
+plotting.fill(plots, read_variables = read_variables, sequence = sequence, max_events = -1 if args.small else -1)
 
 
 
-#color EFT
-offset = 0 
+# color EFT
+offset = 1
 for plot in plots:
     for i_eft, eft in enumerate(eft_configs):
         plot.histos[i_eft+offset][0].legendText = eft['tex']
@@ -602,7 +602,7 @@ for plot in plots:
 
 #plot_phi_subtr.histos = plot_phi_subtr.histos[1:]
 
-drawPlots(plots+plots2D, subDirectory = subDirectory)
+drawPlots(plots, subDirectory = subDirectory)
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
 
