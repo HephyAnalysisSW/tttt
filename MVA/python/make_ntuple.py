@@ -24,6 +24,9 @@ argParser.add_argument('--output_directory',          action='store', type=str, 
 argParser.add_argument('--small',                     action='store_true')
 argParser.add_argument('--delphesCutInterpreter',     action='store_true', default=False, help="Use delphesCutInterpreter?")
 argParser.add_argument('--coeff_ParticleNet',         action='store_true', default=False, help="write weight vector for ParticleNet target?")
+argParser.add_argument('--add_target_EFTweights',     action='store_true', default=False, help="write weight vector for pytorch target?")
+argParser.add_argument('--store_genWeight',           action='store_true', default=False, help="write genWeight to training sample?")
+
 
 args = argParser.parse_args()
 
@@ -85,7 +88,8 @@ coeff_variables = []
 if args.coeff_ParticleNet:
     for coefficient in config.WC[args.sample]:    
             coeff_variables += [VectorTreeVariable.fromString("%s[coeff/F]"%coefficient, nMax=3 )]            
-
+if args.store_genWeight:
+    coeff_variables.append("genWeight/F")
 # add eft-weights for ParticleNet training (if needed)
 # this way the same training data can be used for ParticleNet too!
 mva_vector_variables_coeff = {}
@@ -130,21 +134,33 @@ def filler( event ):
     for name, vector_var in mva_vector_variables_coeff.iteritems():
         objs = vector_var["func"]( r, sample=None , coefficient = vector_var['name'])
         fill_vector_collection( event, name, vector_var['varnames'], objs, maxN = vector_var['nMax'] if vector_var.has_key('nMax') else 100)    
-    
+    if args.add_target_EFTweights:
+        for name, vector_var in config.mva_target_variables.iteritems():
+            objs = vector_var["func"]( r, sample=None )
+            fill_vector_collection( event, name, vector_var['varnames'], objs, maxN = vector_var['nMax'] if vector_var.has_key('nMax') else 100)
+        
     # fill FIs
     if hasattr(config, "FIs"):
         for FI_name, FI in config.FIs.iteritems():
             #print( event, 'mva_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] ) )
             setattr( event, 'FI_'+FI_name, FI['func']( [r.p_C[i] for i in range(r.np) ] )[1][0][0] )
     
+    if args.store_genWeight: setattr( event, "genWeight", r.genWeight )
+    #print r.genWeight
+    
 # Create a maker. Maker class will be compiled.
 
 # scalar variables
 mva_variables = ["%s/F"%var for var in config.all_mva_variables.keys()]
+if args.store_genWeight: mva_variables.append("genWeight/F")
 
 # vector variables, if any
 for name, vector_var in config.mva_vector_variables.iteritems():
     mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var["nMax"] if vector_var.has_key("nMax") else None) )
+if args.add_target_EFTweights:
+    for name, vector_var in config.mva_target_variables.iteritems():
+        mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var["nMax"] if vector_var.has_key("nMax") else None) )
+
 for name, vector_var in mva_vector_variables_coeff.iteritems():
     mva_variables.append( VectorTreeVariable.fromString(name+'['+','.join(vector_var['vars'])+']', nMax = vector_var["nMax"] if vector_var.has_key("nMax") else None) )
         

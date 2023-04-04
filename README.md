@@ -10,7 +10,6 @@ cmsenv
 git clone https://github.com/cms-nanoAOD/nanoAOD-tools.git PhysicsTools/NanoAODTools
 git clone git@github.com:HephyAnalysisSW/tttt.git
 git clone git@github.com:HephyAnalysisSW/TMB
-git clone git@github.com:HephyAnalysisSW/tWZ --branch UL
 git clone git@github.com:HephyAnalysisSW/Analysis
 git clone git@github.com:HephyAnalysisSW/Samples
 git clone git@github.com:HephyAnalysisSW/RootTools

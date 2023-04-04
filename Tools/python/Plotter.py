@@ -17,6 +17,7 @@ class Plotter:
         self.name = name
         self.plot_dir = plot_directory
         self.legend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
+	self.otherLegend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
         self.xTitle = "something"
         self.yTitle = "Number of Events"
         self.ratioTitle = "Data/MC"
@@ -26,6 +27,7 @@ class Plotter:
         self.yMax = 0
         self.yMin = 0.9
         self.yFactor = 1.7
+	self.yC = 1.05
         self.samples = []
         self.systDeltas = []
         self.systNames = []
@@ -39,6 +41,7 @@ class Plotter:
         self.ratio = False
         self.noData = True
         self.noSyst = True
+	self.comparisonPlots = False
 
 #---Public funtions ------------------------------------------------------------
 
@@ -71,17 +74,24 @@ class Plotter:
 
     #Add each systematic error for each sample
     #+Creat a list of systematics names
-    def addSystematic(self, sampleName, sysName, upHist, downHist):
+    def addSystematic(self, sampleName, sysName, upHist, downHist, color):
 
         for smp in self.samples:
             if smp["name"] == sampleName:
                 delta = upHist.Clone()
                 delta.Add(downHist, -1)
-                self.systDeltas.append((sampleName, sysName, delta))
-                self.systNames.append(sysName)
+		for i in range(delta.GetNbinsX()):
+		    delta.SetBinContent(i,abs(delta.GetBinContent(i)))
+		scaledHist = smp["hist"].Clone()
+		scaledHist.Add(delta, 0.5)
+		self.systDeltas.append((sampleName, sysName, delta, scaledHist))
+                syst= {}
+		syst["name"] = sysName
+		syst["color"] = color
+		if not syst in self.systNames:
+			self.systNames.append(syst)
 
         self.noSyst = False
-
 
 #---Private functions-----------------------------------------------------------
 
@@ -122,16 +132,12 @@ class Plotter:
             self.totalError.SetPoint(binNumber, binCenter, binContent)
 
             Err2 = pow(10, -20)
-            #downErr2 = pow(10, -20)
             for sys in self.systNames:
                 shift = 0
-                #shiftDown = 0
-                for sampleName, sysName, delta in self.systDeltas:
-                    if sys == sysName:
-                        shift   += abs(delta.GetBinContent(binNumber))
-                        #shiftDown += deltaDown.GetBinContent(binNumber)
+                for sampleName, sysName, delta, scaledHist in self.systDeltas:
+                    if sys["name"] == sysName:
+                        shift   += delta.GetBinContent(binNumber)
                 Err2   += pow(shift,2)
-                #downErr2 += pow(shiftDown,2)
             xE  = (binXUp - binXLow)/2
             self.totalError.SetPointError(binNumber, xE, sqrt(Err2)/2)
 
@@ -169,14 +175,11 @@ class Plotter:
             errorgraph.GetPoint(point, d1, d2)
             Xval = float(d1)
             Yval = float(d2)
-            #eX_hi = errorgraph.GetErrorXhigh(point)
             eX = errorgraph.GetErrorXlow(point)
 
             if Yval==0:
-                #eY_hi = 0
                 eY = 0
             else:
-                #eY_hi = errorgraph.GetErrorYhigh(point)/Yval
                 eY = errorgraph.GetErrorYlow(point)/Yval
 
             ratio.SetPoint(point, Xval, 1.0)
@@ -266,10 +269,50 @@ class Plotter:
 
         return cmsText, lumiText
 
+    def buildComparisonPlots(self):
+	
+	for sys in self.systNames:
+	    firstHist = True
+            for sampleName, sysName, delta, scaledHist in self.systDeltas:
+                 if sys["name"] == sysName:
+			if firstHist:
+				sys["totalScaledHist"] = scaledHist.Clone()
+				firstHist = False	
+			else:
+			 	sys["totalScaledHist"].Add(scaledHist)
+
+	    sys["totalScaledHist"].Divide(self.totalHist)
+	    self.otherLegend.AddEntry(sys["totalScaledHist"], sys["name"])
+	    if sys["totalScaledHist"].GetMaximum() > self.yC:
+            		self.yC = sys["totalScaledHist"].GetMaximum()
+	   
+    def setComparisonDrawOptions(self):
+	
+	for sys in self.systNames:
+		sys["totalScaledHist"].SetFillColor(0)
+		sys["totalScaledHist"].SetLineColor(sys["color"])
+		sys["totalScaledHist"].GetXaxis().SetTitle(self.xTitle)
+        	sys["totalScaledHist"].GetYaxis().SetTitle("Events/0.01")
+        	sys["totalScaledHist"].SetStats(False)
+        	sys["totalScaledHist"].SetTitle(self.name+"_syst")
+        	# precision 3 fonts. see https://root.cern.ch/root/htmldoc//TAttText.html#T5
+        	sys["totalScaledHist"].GetXaxis().SetTitleFont(43)
+        	sys["totalScaledHist"].GetYaxis().SetTitleFont(43)
+        	sys["totalScaledHist"].GetXaxis().SetLabelFont(43)
+        	sys["totalScaledHist"].GetYaxis().SetLabelFont(43)
+        	sys["totalScaledHist"].GetXaxis().SetTitleSize(24)
+        	sys["totalScaledHist"].GetYaxis().SetTitleSize(24)
+        	sys["totalScaledHist"].GetXaxis().SetLabelSize(20)
+        	sys["totalScaledHist"].GetYaxis().SetLabelSize(20)
+            	sys["totalScaledHist"].GetYaxis().SetTitleOffset( 1.3 )
+
+		
+
+
 #---Public function ------------------------------------------------------------
 
     #Draw and store plots
-    def draw(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False):
+    def draw(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False, comparisonPlots = False):
 
         ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
         ROOT.setTDRStyle()
@@ -278,6 +321,7 @@ class Plotter:
         self.xTitle = texX
         self.yTitle = texY
         self.ratio = ratio
+	self.comparisonPlots = comparisonPlots
         c1 = ROOT.TCanvas("c1","c1",200,10, 500, 500)
 
         if self.ratio:
@@ -312,7 +356,7 @@ class Plotter:
 
         if self.totalHist.GetMaximum()==0:
             self.buildStack()
-            if not self.noSyst:
+	    if not self.noSyst:
                 self.legend.AddEntry(self.totalError, "Systematic Uncertainty")
                 self.buildUncertainty()
 
@@ -351,6 +395,37 @@ class Plotter:
                 ratio_data.Draw("P SAME")
             ROOT.gPad.RedrawAxis()
 
+	#Draw Comparison Plots
+	if self.comparisonPlots and not log:
+	    self.buildComparisonPlots()
+	    self.setComparisonDrawOptions()
+	    c2 = ROOT.TCanvas("c2","c2",200,10, 500, 500)
+            pad = c2
+            pad.SetBottomMargin(0.13)
+            pad.SetLeftMargin(0.15)
+            pad.SetTopMargin(0.07)
+            pad.SetRightMargin(0.05)
+	    pad.cd()
+            pad.SetTitle(self.name+"_syst")
+	    
+	    isFirstHere = True
+	    for sys in self.systNames:
+		    if isFirstHere:
+			    sys["totalScaledHist"].GetYaxis().SetRangeUser(1, self.yC*1.3)
+			    sys["totalScaledHist"].Draw("hist")
+			    isFirstHere = False)
+		    else:
+			    sys["totalScaledHist"].Draw("hist same")
+ 
+	    self.otherLegend.SetFillStyle(0)
+            self.otherLegend.SetShadowColor(ROOT.kWhite)
+            self.otherLegend.SetBorderSize(0)
+            self.otherLegend.SetNColumns(2)	    
+	    self.otherLegend.Draw()
+	    cmsText, subLabel = self.setLabel()
+            pad.RedrawAxis()
+
+
 
         #save the plot
         if not os.path.exists(plot_directory):
@@ -364,3 +439,6 @@ class Plotter:
         for extension in extensions:
             plotname = os.path.join(plot_directory, self.name+".%s"%extension)
             c1.Print(plotname)
+	    if self.comparisonPlots and not log:
+	    	compraisonPlotname = os.path.join(plot_directory, self.name+"_syst.%s"%extension)
+	    	c2.Print(compraisonPlotname)

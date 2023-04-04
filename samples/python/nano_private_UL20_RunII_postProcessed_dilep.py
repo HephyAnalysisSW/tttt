@@ -19,6 +19,8 @@ TTLep       = Sample.combine( "TTLep", [Summer16_preVFP.TTLep, Summer16.TTLep, F
 TTLepbb       = Sample.combine( "TTLepbb", [Summer16_preVFP.TTLepbb, Summer16.TTLepbb, Fall17.TTLepbb, Autumn18.TTLepbb], texName = "t#bar{t}")
 TTbb        = Sample.combine( "TTbb", [Summer16_preVFP.TTbb, Summer16.TTbb, Fall17.TTbb, Autumn18.TTbb], texName = "t#bar{t}b#bar{b}")
 ST          = Sample.combine( "ST",    [Summer16_preVFP.ST, Summer16.ST, Fall17.ST, Autumn18.ST],             texName = "t/tW")
+ST_tch      = Sample.combine( "ST_tch",     [Summer16_preVFP.ST_tch, Summer16.ST_tch, Fall17.ST_tch, Autumn18.ST_tch],             texName = "t")
+ST_twch     = Sample.combine( "ST_twch",    [Summer16_preVFP.ST_twch, Summer16.ST_twch, Fall17.ST_twch, Autumn18.ST_twch],             texName = "tW")
 TTTT        = Sample.combine( "TTTT",  [Summer16_preVFP.TTTT, Summer16.TTTT, Fall17.TTTT, Autumn18.TTTT],     texName = "t#bar{t}t#bar{t}")
 TTW         = Sample.combine( "TTW",   [Summer16_preVFP.TTW, Summer16.TTW, Fall17.TTW, Autumn18.TTW],         texName = "t#bar{t}W" )
 TTZ         = Sample.combine( "TTZ",   [Summer16_preVFP.TTZ, Summer16.TTZ, Fall17.TTZ, Autumn18.TTZ],         texName = "t#bar{t}Z")
