@@ -147,7 +147,7 @@ if isInclusive:
 maxN = 1 if options.small else None
 if options.small:
     options.job = 0
-    options.nJobs = 1000 # set high to just run over 1 input file
+    #options.nJobs = 1000 # set high to just run over 1 input file
 
 if options.central:
     if options.era == "UL2016":
@@ -956,17 +956,24 @@ def filler( event ):
 
     #SPOSTA QUESTA PARTE PRIMA DELLA SELEZIONE DI ANALYSISJETS
     # Now create cleaned jets, b jets, ...
+    #if r.event == 262 and r.luminosityBlock == 1939:
+    #    print ( "Number of jets before cleaning: %i b-tags: %i " % ( len(analysis_jets), len(filter( lambda jet: isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4, analysis_jets )) ))
     jets, unclean_jets = cleanJetsAndLeptons( analysis_jets, [l for l in leptons if l['isFO']] )
+    #if r.event == 262 and r.luminosityBlock == 1939:
+    #    print ( "Number of jets after cleaning:  %i b-tags: %i " % ( len(jets), len(filter( lambda jet: isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4, jets)) ))
+    #    print ( "Number of nominal jets:  %i b-tags: %i " % ( len(filter( lambda j:j['isNominal'], jets)), len(filter( lambda jet: jet['isNominal'] and isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4, jets)) ))
     #clean_jets_acc = filter(lambda j:abs(j['eta'])<2.4, clean_jets) #Both requirements are already satisfied
     #jets         = filter(lambda j:j['pt']>minJetPt, clean_jets_acc)
     nominal_bJets       = []
     nominal_nonBJets    = []
     for jet in jets:
-        if not j['isNominal']: continue 
+        if not jet['isNominal']: continue 
         if isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4: #b-tagging abs eta
             nominal_bJets.append(jet)
         else:
             nominal_nonBJets.append(jet)
+    #if r.event == 262 and r.luminosityBlock == 1939:
+    #    print ("nominal_nonBJets", len(nominal_nonBJets), "nominal_bJets", len(nominal_bJets), nominal_bJets)
 
     fill_vector_collection( event, "lep", lepVarNames, leptons)
     event.nlep = len(leptons)
