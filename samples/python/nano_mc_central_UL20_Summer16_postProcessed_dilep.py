@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 from tttt.samples.color import color
 
 import tttt.samples.config as config
-directory_ = config.location_mc_UL2016_central
+directory_ = config.location_mc_UL2016
 
 def make_dirs( dirs ):
     return [ os.path.join( directory_, dir_ ) for dir_ in dirs ]
