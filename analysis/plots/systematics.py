@@ -158,7 +158,7 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 #Merge simulated background samples
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, T, TW, TTW, TTH, TTZ, TTTT]
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT]
 #Add the data
 if not args.noData:
     from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
@@ -778,8 +778,8 @@ for plot in allPlots[allModes[0]]:
             if "TTLep_bb" in histname: process = "TTLep_bb"
             elif "TTLep_cc" in histname: process = "TTLep_cc"
             elif "TTLep_other" in histname: process = "TTLep_other"
-            elif "T" in histname: process = "T"
-	    elif "TW" in histname: process = "TW"
+            elif "ST_tch" in histname: process = "ST_tch"
+	    elif "ST_twch" in histname: process = "ST_twch"
             elif "TTTT" in histname: process = "TTTT"
             elif "TTW" in histname: process = "TTW"
             elif "TTZ" in histname: process = "TTZ"
