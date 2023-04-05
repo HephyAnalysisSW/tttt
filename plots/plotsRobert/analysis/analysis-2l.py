@@ -367,7 +367,7 @@ for i_mode, mode in enumerate(allModes):
 
     plots.append(Plot(
         name = 'l2_mvaTOPWP',
-        texX = 'MVA_{TOP}(l_{1}) WP', texY = 'Number of Events',
+        texX = 'MVA_{TOP}(l_{2}) WP', texY = 'Number of Events',
         attribute = lambda event, sample: event.l2_mvaTOPWP,
         binning=[5,0,5],
     ))
