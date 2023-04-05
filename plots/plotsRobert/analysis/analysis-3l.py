@@ -149,7 +149,7 @@ read_variables += [
     "l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
     "l3_pt/F", "l3_eta/F" , "l3_phi/F", "l3_mvaTOP/F", "l3_mvaTOPWP/I", "l3_index/I",
     "JetGood[%s]"%(",".join(jetVars)),
-    "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I,mvaTOP/F]",
+    "nlep/I", "lep[pt/F,eta/F,phi/F,pdgId/I,muIndex/I,eleIndex/I,mvaTOP/F]",
     "Z1_l1_index/I", "Z1_l2_index/I",  
     "Z1_phi/F", "Z1_pt/F", "Z1_mass/F", "Z1_cosThetaStar/F", "Z1_eta/F", "Z1_lldPhi/F", "Z1_lldR/F",
     "Muon[pt/F,eta/F,phi/F,dxy/F,dz/F,ip3d/F,sip3d/F,jetRelIso/F,miniPFRelIso_all/F,pfRelIso03_all/F,mvaTTH/F,pdgId/I,segmentComp/F,nStations/I,nTrackerLayers/I]",
@@ -520,6 +520,12 @@ for i_mode, mode in enumerate(allModes):
       texX = 'N_{jets}', texY = 'Number of Events',
       attribute = TreeVariable.fromString( "nJetGood/I" ), #nJetSelected
       binning=[8,3.5,11.5],
+    ))
+
+    plots.append(Plot(
+      texX = 'N_{l}', texY = 'Number of Events',
+      attribute = TreeVariable.fromString( "nlep/I" ), #nJetSelected
+      binning=[5,2,7],
     ))
 
     plots.append(Plot(
