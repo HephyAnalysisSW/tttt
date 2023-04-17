@@ -187,15 +187,37 @@ read_variables_MC = [
 
 sequence       = []
 
-def make_jets( event, sample ):
-    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
-    event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+# MVA configuration
+import tttt.MVA.configs as configs
+config = configs.tttt_2l
+read_variables += config.read_variables
 
-sequence.append( make_jets )
+sequence += config.sequence
 
-# #----------------- MVA configuration
-# import tttt.MVA.configs as configs
-# from keras.models import load_model
+# Add sequence that computes the MVA inputs
+def make_mva_inputs( event, sample ):
+    for mva_variable, func in config.mva_variables:
+        setattr( event, mva_variable, func(event, sample) )
+sequence.append( make_mva_inputs )
+
+from keras.models import load_model
+classes = [ts.name for ts in config.training_samples]
+
+models  = [{'name':'tttt_2l', 'has_lstm':False, 'classes':classes, 'model':load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l/regression_model.h5")}]
+
+def keras_predict( event, sample ):
+    flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
+    for model in models:
+        if model['has_lstm']:
+            prediction = model['model'].predict( [flat_variables ])#, lstm_jets] )
+        else:
+            prediction = model['model'].predict( [flat_variables] )
+        for i_class_, class_ in enumerate(model['classes']):
+            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
+sequence.append( keras_predict )
+
+
+
 #
 # config = configs.tttt_2l
 # read_variables += config.read_variables
@@ -271,7 +293,7 @@ ttreeFormulas = { "bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_btag
                   "nBTag_tight_pt40"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>40)"  ,
                   "nBTag_loose_pt50"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>50)",
                   "nBTag_medium_pt50"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>50)" ,
-                  "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)" 
+                  "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)"
 		 }
 
 yields     = {}
@@ -281,7 +303,7 @@ for i_mode, mode in enumerate(allModes):
     yields[mode] = {}
 
     # "event.weight" is 0/1 for data, depending on whether it is from a certified lumi section. For MC, it corresponds to the 1/fb*cross-section/Nsimulated. So we multiply with the lumi in /fb.
-    
+
 # This weight goes to the plot. DO NOT apply it again to the samples
     weight_ = lambda event, sample: event.weight if sample.isData else event.weight
 
@@ -294,7 +316,7 @@ for i_mode, mode in enumerate(allModes):
     for sample in mc:
       sample.read_variables = read_variables_MC
       sample.weight = lambda event, sample: event.reweightBTagSF_central*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger*event.reweightLeptonSF*event.reweightTopPt
-     
+
     #Stack : Define what we want to see.
     if not args.noData:
         stack = Stack(mc, [data_sample])
@@ -313,10 +335,21 @@ for i_mode, mode in enumerate(allModes):
       binning=[3, 0, 3],
     ))
 
+    for model in models:
+        for class_ in model['classes']:
+            model_name = model['name']+'_'+class_
+            plots.append(Plot(
+                name = model_name,
+                texX = model_name, texY = 'Number of Events',
+                attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
+                binning=[10,0,1],
+                addOverFlowBin='upper',
+            ))
+
     plots.append(Plot( name = 'bbtag_discriminator' , texX = 'max(bb_over_blepb)' , texY = 'Number of Events',
         attribute = lambda event, sample: event.bbTag_max_value,
         binning = [30,0,3],
-    ))    
+    ))
 
     plots.append(Plot( name = 'bbTag_value_leadingJet' , texX = 'DeepFlavbb-jet0' , texY = 'Number of Events',
         attribute = lambda event, sample: event.JetGood_btagDeepFlavbb[0],
@@ -553,7 +586,7 @@ for i_mode, mode in enumerate(allModes):
       attribute = lambda event, sample:event.nJetGood_pt50, #nJetSelected_pt>50
       binning=[8,3.5,11.5],
     ))
- 
+
     plots.append(Plot(
       name = "nBTag_loose_pt30",
       texX = 'N_{jets}', texY = 'Number of Events',
@@ -580,7 +613,7 @@ for i_mode, mode in enumerate(allModes):
       texX = 'N_{jets}', texY = 'Number of Events',
       attribute = lambda event, sample:event.nBTag_medium_pt30, #nJetSelected_pt>30
       binning=[5,1.5,6.5],
-    )) 
+    ))
 
     plots.append(Plot(
       name = "nBTag_medium_pt40",
@@ -594,7 +627,7 @@ for i_mode, mode in enumerate(allModes):
       texX = 'N_{jets}', texY = 'Number of Events',
       attribute = lambda event, sample:event.nBTag_medium_pt50, #nJetSelected_pt>50
       binning=[5,1.5,6.5],
-    )) 
+    ))
 
     plots.append(Plot(
       name = "nBTag_tight_pt30",
@@ -622,7 +655,7 @@ for i_mode, mode in enumerate(allModes):
       texX = 'N_{jets}', texY = 'Number of Events',
       attribute = lambda event, sample:event.nBTag_loose, #nBJetLoose
       binning=[5, 1.5,6.5],
-    ))  
+    ))
 
     plots.append(Plot(
       texX = 'N_{b-tag}', texY = 'Number of Events',
@@ -712,10 +745,10 @@ for i_mode, mode in enumerate(allModes):
             #   texX = 'mvaTTH(%s_{%i}) (GeV)'%(lep_name, index), texY = 'Number of Events',
             #   name = '%s%i_mvaTTH'%(lep_name, index), attribute = lep_getter("mvaTTH", index, abs_pdg),
             #   binning=[24,-1.2,1.2],
-            # )) 
+            # ))
 
 
-    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas) 
+    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
 
     #Get normalization yields from yield histogram
     for plot in plots:
