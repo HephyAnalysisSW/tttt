@@ -108,6 +108,10 @@ plots = [{"name" : "nJetGood" ,     "texX": "nJet", "texY" : 'Number of Events'}
          {"name" : "Z1_lldR",       "texX" : '#Delta R(Z_{1}(ll))', "texY" : 'Number of Events'},
          {"name" : "ht",            "texX" : 'H_{T} (GeV)', "texY" : 'Number of Events / 30 GeV'},
          {"name" : 'jet0_pt',       "texX" : 'p_{T}(leading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
+	 {"name" : "2l_4t"   "texX" : "tttt_2l_TTTT", "texY" : "Number of Events"},
+	 {"name" : "2l_ttbb"   "texX" : "tttt_2l_TTLep_bb", "texY" : "Number of Events"},
+	 {"name" : "2l_ttcc"   "texX" : "tttt_2l_TTLep_cc", "texY" : "Number of Events"},
+	 {"name" : "2l_ttlight"   "texX" : "tttt_2l_TTLep_other", "texY" : "Number of Events"},
 
         ]
 

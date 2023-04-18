@@ -413,7 +413,7 @@ class Plotter:
 		    if isFirstHere:
 			    sys["totalScaledHist"].GetYaxis().SetRangeUser(1, self.yC*1.3)
 			    sys["totalScaledHist"].Draw("hist")
-			    isFirstHere = False)
+			    isFirstHere = False
 		    else:
 			    sys["totalScaledHist"].Draw("hist same")
  
