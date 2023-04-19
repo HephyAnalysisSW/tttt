@@ -201,7 +201,6 @@ x1 = main_scan['crossings'][1][0]['lo']
 x2 = main_scan['crossings'][1][0]['hi']
 x3 = main_scan['crossings'][4][0]['lo']
 x4 = main_scan['crossings'][4][0]['hi']
-print (x1, x2,x3, x4)
 box1 = ROOT.TBox(x1, 0, x2, args.y_max)            		
 box1.SetFillColorAlpha(ROOT.kCyan-2, 0.5)
 box1.Draw()
