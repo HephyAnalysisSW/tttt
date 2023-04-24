@@ -229,6 +229,37 @@ read_variables_MC = [
 
 sequence = []
 
+# MVA configuration
+import tttt.MVA.configs as configs
+config = configs.tttt_2l
+read_variables += config.read_variables
+
+sequence += config.sequence
+
+# Add sequence that computes the MVA inputs
+def make_mva_inputs( event, sample ):
+    for mva_variable, func in config.mva_variables:
+        setattr( event, mva_variable, func(event, sample) )
+sequence.append( make_mva_inputs )
+
+from keras.models import load_model
+classes = [ts.name for ts in config.training_samples]
+
+models  = [{'name':'tttt_2l', 'has_lstm':False, 'classes':classes, 'model':load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l/regression_model.h5")}]
+
+def keras_predict( event, sample ):
+    flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
+    for model in models:
+        if model['has_lstm']:
+            prediction = model['model'].predict( [flat_variables ])#, lstm_jets] )
+        else:
+            prediction = model['model'].predict( [flat_variables] )
+        for i_class_, class_ in enumerate(model['classes']):
+            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
+sequence.append( keras_predict )
+
+
+
 #Jet Selection modifier
 def jetSelectionModifier( sys, returntype = "func"):
   variiedJetObservables = ['nJetGood', 'nBTag', 'ht']
@@ -397,6 +428,21 @@ for i_mode, mode in enumerate(allModes):
       attribute = lambda event, sample: 0.5 + i_mode,
       binning=[3, 0, 3],
     ))
+
+    for model in models:
+        for class_ in model['classes']:
+	    if "TTTT" in class_ : plot_name = "2l_4t"
+	    if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
+	    if "TTLep_cc" in class_: plot_name = "2l_ttcc"
+	    if "TTLep_other" in class_: plot_name = "2l_ttlight"
+	    model_name = model['name']+'_'+class_
+            plots.append(Plot(
+                name = plot_name,
+                texX = model_name, texY = 'Number of Events',
+                attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
+                binning=[10,0,1],
+                addOverFlowBin='upper',
+            ))
 
     plots.append(Plot( name = 'Btagging_discriminator_value_l1' , texX = 'DeepB l1' , texY = 'Number of Events',
         attribute = lambda event, sample: event.JetGood_btagDeepFlavB[0],
@@ -780,11 +826,11 @@ for plot in allPlots[allModes[0]]:
             elif "TTLep_other" in histname: process = "TTLep_other"
             elif "ST_tch" in histname: process = "ST_tch"
 	    elif "ST_twch" in histname: process = "ST_twch"
-            elif "TTTT" in histname: process = "TTTT"
             elif "TTW" in histname: process = "TTW"
             elif "TTZ" in histname: process = "TTZ"
             elif "TTH" in histname: process = "TTH"
             elif "data" in histname: process = "data"
+	    elif "TTTT" in histname: process = "TTTT"
             h.Write(plot.name+"__"+process)
 outfile.Close()
 
