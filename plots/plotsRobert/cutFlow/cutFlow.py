@@ -8,7 +8,7 @@ from tttt.Tools.cutInterpreter import cutInterpreter
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--selection',      action='store',      default='2lSS', nargs='?', choices=['2lSS', '3l', '4l'], help="which selection?")
+argParser.add_argument('--selection',      action='store',      default='3l', nargs='?', choices=['2lSS', '3l', '4l'], help="which selection?")
 argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?')
 #argParser.add_argument('--sorting',                           action='store', default=None, choices=[None, "forDYMB"],  help='Sort histos?', )
 args = argParser.parse_args()
@@ -20,16 +20,36 @@ logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 # Simulated samples
-import tttt.samples.nano_private_UL20_RunII_postProcessed_dilep as allsamples
+
+if args.selection == '2lSS':
+    import tttt.samples.nano_private_UL20_RunII_postProcessed_trilep as allsamples
+else:
+    import tttt.samples.nano_private_UL20_RunII_postProcessed_dilep as allsamples
 
 weight_string = 'weight' #*reweightTopPt*reweightBTag_SF*reweightLeptonSF*reweightDilepTriggerBackup*reweightPU36fb'
 
-# tight selection AN-2021-182 v7 Table 4
-def ele_string( pT = 10):
-    return "lep_pt>=%3.2f&&abs(lep_pdgId)==11&&abs(lep_eta)<2.5&&abs(lep_dxy)<0.05&&abs(lep_dz)<0.1&&lep_sip3d<8&&lep_miniPFRelIso_all<0.4&&lep_convVeto&&lep_eleIndex>=0&&Electron_tightCharge[lep_eleIndex]>=2&&lep_lostHits<=1&&lep_mvaTOP>0.81"%pT
-# tight selection AN-2021-182 v7 Table 4
-def mu_string( pT=10 ):
-    return "lep_pt>=%3.2f&&abs(lep_pdgId)==13&&abs(lep_eta)<2.4&&abs(lep_dxy)<0.05&&abs(lep_dz)<0.1&&lep_sip3d<8&&lep_miniPFRelIso_all<0.4&&lep_muIndex>=0&&Muon_mediumId[lep_muIndex]&&lep_mvaTOP>0.64"%pT
+mvaWP = {'FO':0, 'VL':1, 'L':2, 'M':3, 'T':4}
+
+def lepString( eleMu = None, WP = 'VL', idx = None, pT=10):
+    idx_str = "[%s]"%idx if idx is not None else ""
+    if eleMu=='ele':
+        return "lep_pt{idx_str}>{pT}&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11&&lep_mvaTOPWP{idx_str}>={mvaWP}".format( mvaWP = mvaWP[WP], idx_str=idx_str, pT=pT )
+    elif eleMu=='mu':
+        return "lep_pt{idx_str}>{pT}&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13&&lep_mvaTOPWP{idx_str}>={mvaWP}".format( mvaWP = mvaWP[WP], idx_str=idx_str, pT=pT )
+    else:
+        return '('+lepString( 'ele', WP, idx=idx) + ')||(' + lepString( 'mu', WP, idx=idx) + ')'
+
+def mu_string(pT):
+    return lepString( 'mu', WP='M', pT=pT)
+def ele_string(pT):
+    return lepString( 'mu', WP='T', pT=pT)
+
+## tight selection AN-2021-182 v7 Table 4
+#def ele_string( pT = 10):
+#    return "lep_pt>=%3.2f&&abs(lep_pdgId)==11&&abs(lep_eta)<2.5&&abs(lep_dxy)<0.05&&abs(lep_dz)<0.1&&lep_sip3d<8&&lep_miniPFRelIso_all<0.4&&lep_convVeto&&lep_eleIndex>=0&&Electron_tightCharge[lep_eleIndex]>=2&&lep_lostHits<=1&&lep_mvaTOP>0.81"%pT
+## tight selection AN-2021-182 v7 Table 4
+#def mu_string( pT=10 ):
+#    return "lep_pt>=%3.2f&&abs(lep_pdgId)==13&&abs(lep_eta)<2.4&&abs(lep_dxy)<0.05&&abs(lep_dz)<0.1&&lep_sip3d<8&&lep_miniPFRelIso_all<0.4&&lep_muIndex>=0&&Muon_mediumId[lep_muIndex]&&lep_mvaTOP>0.64"%pT
 
 def same_sign_leptons (pT=10 ):
     return "Sum$(lep_charge*(%s||%s))"%(mu_string(pT),ele_string(pT))+"&&Sum$(%s)+Sum$(%s)==2"%(mu_string(pT),ele_string(pT))
@@ -48,11 +68,11 @@ def n4leptons( pT1=25, pT2=20, pT3=10):
 
 #Define chains for signals and backgrounds
 samples = [
-  allsamples.TTTT, 
+#  allsamples.TTTT, 
   allsamples.TTLep, 
-  allsamples.TTW, 
-  allsamples.TTZ,
-  allsamples.TTH,
+#  allsamples.TTW, 
+#  allsamples.TTZ,
+#  allsamples.TTH,
 ]
 
 if args.small:
@@ -73,8 +93,9 @@ if args.selection == '2lSS':
 elif args.selection == '3l':
     # 3l
     cuts=[
-      #("3l",                "$3l",                              "Sum$"), 
+      ("Trigger",           "Trigger",                          "triggerDecision"), 
       ("l1,l2,l3>25/20/10", "p_{T}(l_1}>25, p_{T}(l_2)>20, p_{T}(l_3)>10",     n3leptons(25,20,10)),
+      ("N(lep,FO)==3",      "N_{lep,FO}==3",                    "nlep==3"),
       ("min(m(ll))>12",     "min(m(ll))>12",                    "minDLmass>12"),
       ("Z veto (SF)",       "Z veto",                            "(!(abs(Z1_mass-91.2)<15))"),
       ("Nj>=3",             "N_{jet}>=3",                       "nJetGood>=3"),
@@ -104,6 +125,7 @@ with open(cutFlowFile, "w") as cf:
         for sample in samples:
             selection = "&&".join(c[2] for c in cuts[:i+1])
             #selection = "&&".join(c[2] for c in cuts)
+            print (selection)
             if selection=="":selection="(1)"
             y = sample.getYieldFromDraw(selection, weight_string+("*%f"%sample.scale if hasattr(sample, "scale") else ""))
             n = sample.getYieldFromDraw(selection, '(1)')
