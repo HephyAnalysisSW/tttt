@@ -49,7 +49,7 @@ special_cuts = {
 
     "trg":             "triggerDecision",
     
-    "leptonveto":      "(Sum$(lep_isFO))==3&&(Sum$(lep_isTight))==3",
+    #"leptonveto":      "(Sum$(lep_isFO))==3&&(Sum$(lep_isTight))==3",
     
     "onZ1"   :         "abs(Z1_mass-91.2)<10",
     "offZ1"  :         "(!(abs(Z1_mass-91.2)<15))",
@@ -59,7 +59,7 @@ special_cuts = {
 
 
 continous_variables = [ ('ht','Sum$(JetGood_pt*(JetGood_pt>25&&abs(JetGood_eta)<2.4))'), ("met", "met_pt"), ("Z2mass", "Z2_mass"), ("Z1pt", "Z1_pt"), ("Z2pt", "Z2_pt"), ("Z1mass", "Z1_mass"), ("minDLmass", "minDLmass"), ("mT", "mT"), ("ptG", "photon_pt")]
-discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag")]
+discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag") ,("nlepFO", "Sum$(lep_isFO)")]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.
@@ -81,8 +81,8 @@ class cutInterpreter:
         # special cuts
         if string in special_cuts.keys(): return special_cuts[string]
         # lepton veto
-        if string.startswith("nlep"):
-            num_lep = int(string.replace('nlep', ''))
+        if string.startswith("lepVeto"):
+            num_lep = int(string.replace('lepVeto', ''))
             return "Sum$(lep_isFO)==%i&&Sum$(lep_isTight)==%i" % (num_lep, num_lep)
 
         # continous Variables and discrete variables with "To"
