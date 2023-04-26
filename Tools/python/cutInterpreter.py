@@ -40,9 +40,13 @@ special_cuts = {
     "quadlepM":        "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3&&l4_mvaTOPWP>=3",
     "quadlepM":        "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4&&l4_mvaTOPWP>=4",
     
-    "OS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0)",
-    "SS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0)",
+    #"OS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0)",
+    #"SS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0)",
  
+    "OS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0)",
+    "SS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0)",
+
+
     "trg":             "triggerDecision",
     
     "leptonveto":      "(Sum$(lep_isFO))==3&&(Sum$(lep_isTight))==3",
@@ -55,7 +59,7 @@ special_cuts = {
 
 
 continous_variables = [ ('ht','Sum$(JetGood_pt*(JetGood_pt>25&&abs(JetGood_eta)<2.4))'), ("met", "met_pt"), ("Z2mass", "Z2_mass"), ("Z1pt", "Z1_pt"), ("Z2pt", "Z2_pt"), ("Z1mass", "Z1_mass"), ("minDLmass", "minDLmass"), ("mT", "mT"), ("ptG", "photon_pt")]
-discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag"), ("nlep", "nlep")]
+discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag")]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.
@@ -76,6 +80,10 @@ class cutInterpreter:
            return "l1_miniRelIso<%3.2f&&l2_miniRelIso<%3.2f"%( iso, iso )
         # special cuts
         if string in special_cuts.keys(): return special_cuts[string]
+        # lepton veto
+        if string.startswith("nlep"):
+            num_lep = int(string.replace('nlep', ''))
+            return "Sum$(lep_isFO)==%i&&Sum$(lep_isTight)==%i" % (num_lep, num_lep)
 
         # continous Variables and discrete variables with "To"
         for var, tree_var in continous_variables + discrete_variables:
