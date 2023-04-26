@@ -214,10 +214,12 @@ class Plotter:
    	        Yval = float(d2)
    	        eX = h1.GetErrorXlow(bin)
    
-                r = Yval/h2.GetBinContent(bin)
-   	    #print d2, Yval, h2.GetBinContent(bin), r
-                eY = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
-            ratio.SetPoint(bin,Xval,r)
+   		X = h2.GetBinCenter(bin)
+                r = h1.Eval(h2.GetBinCenter(bin))/h2.GetBinContent(bin)
+   	        #print h1.GetErrorYlow(bin), d2, Yval, h2.GetBinContent(bin), r
+                print Xval, X , h2.GetBinCenter(bin), h1.Eval(h2.GetBinCenter(bin)),h2.GetBinContent(bin), r
+		eY = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
+            ratio.SetPoint(bin,X,r)
            
 	return ratio
    
@@ -272,7 +274,7 @@ class Plotter:
         ratio.SetTitle('')
         ratio.GetYaxis().SetTitle(self.ratioTitle)
 	if self.hasPostFitUnc:
-        	ratio.GetYaxis().SetRangeUser(0.9,1.1)
+        	ratio.GetYaxis().SetRangeUser(0,2)
 	else:   ratio.GetYaxis().SetRangeUser(0,2)
         ratio.GetYaxis().SetNdivisions(505)
         ratio.GetYaxis().CenterTitle()
@@ -416,7 +418,7 @@ class Plotter:
 	    self.postFitUnc.Draw("E2 same")
 	    
         if not self.noData :
-            self.data["hist"].Draw("E1 X0 hist p same")
+            self.data["hist"].Draw("X0 E0 p same")
 
         self.legend.SetFillStyle(0)
         self.legend.SetShadowColor(ROOT.kWhite)
@@ -449,7 +451,7 @@ class Plotter:
                     self.setRatioDrawOptions(ratio_data)
                     ratio_data.Draw("P SAME")
 		else:
-		    ratio_data = self.getPostFitDataRatio(self.data["hist"], self.totalHist)
+		    ratio_data = self.getPostFitDataRatio(self.data["hist"], self.postFitUnc)
 		    self.setRatioDrawOptions(ratio_data)
 		    ratio_data.Draw("X0 E1 P SAME")
             ROOT.gPad.RedrawAxis()
