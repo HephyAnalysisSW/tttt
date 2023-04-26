@@ -174,13 +174,16 @@ def get_index_str( index ):
 # mvaTOP = {'mu':{'VL':-0.45, 'L':0.05, 'M':0.65, 'T':0.90}, 'ele':{'VL':-0.55, 'L':0.00, 'M':0.60, 'T':0.90}} # EOY
 mvaTOP = {'mu':{'VL': 0.20, 'L':0.41, 'M':0.64, 'T':0.81}, 'ele':{'VL': 0.20, 'L':0.41, 'M':0.64, 'T':0.81}} # UL
 mvaTOPv2 = {'mu':{'VL': 0.59, 'L':0.81, 'M':0.90, 'T':0.94}, 'ele':{'VL': 0.59, 'L':0.81, 'M':0.90, 'T':0.94}} # ULv2
+mvaTOPWP = {'mu':{'VL': 1, 'L': 2, 'M': 3, 'T': 4 }, 'ele' :{'VL': 1, 'L': 2, 'M': 3, 'T': 4 }}
 
 def lepString( eleMu = None, WP = 'VL', idx = None):
     idx_str = "[%s]"%idx if idx is not None else ""
     if eleMu=='ele':
-        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11&&lep_mvaTOP{idx_str}>{threshold}".format( threshold = mvaTOP['ele'][WP], idx_str=idx_str )
+        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11&&lep_mvaTOPWP{idx_str}>={threshold}".format( threshold = mvaTOPWP['ele'][WP], idx_str=idx_str )
+        #return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.5&&abs(lep_pdgId{idx_str})==11&&lep_mvaTOP{idx_str}>{threshold}".format( threshold = mvaTOP['ele'][WP], idx_str=idx_str )
     elif eleMu=='mu':
-        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13&&lep_mvaTOP{idx_str}>{threshold}".format( threshold = mvaTOP['mu'][WP], idx_str=idx_str )
+        return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13&&lep_mvaTOPWP{idx_str}>={threshold}".format( threshold = mvaTOPWP['mu'][WP], idx_str=idx_str )
+        #return "lep_pt{idx_str}>10&&abs(lep_eta{idx_str})<2.4&&abs(lep_pdgId{idx_str})==13&&lep_mvaTOP{idx_str}>{threshold}".format( threshold = mvaTOP['mu'][WP], idx_str=idx_str )
     else:
         return '('+lepString( 'ele', WP, idx=idx) + ')||(' + lepString( 'mu', WP, idx=idx) + ')'
 
@@ -196,31 +199,7 @@ def lepStringNoMVA(eleMu = None, idx = None):
 ## MUONS ##
 def muonSelector( lepton_selection, year, ptCut = 10):
     # tigher isolation applied on analysis level
-    if lepton_selection == 'loose':
-        def func(l):
-            return \
-                l["pt"]                 >= ptCut \
-                and abs(l["eta"])       < 2.4 \
-                and abs(l["dxy"])       < 0.05 \
-                and abs(l["dz"])        < 0.1 \
-                and l['looseId']
-    elif lepton_selection == 'medium':
-        def func(l):
-            return \
-                l["pt"]                 >= ptCut \
-                and abs(l["eta"])       < 2.4 \
-                and abs(l["dxy"])       < 0.05 \
-                and abs(l["dz"])        < 0.1 \
-                and l['mediumId']
-    elif lepton_selection == 'tight':
-        def func(l):
-            return \
-                l["pt"]                 >= ptCut \
-                and abs(l["eta"])       < 2.4 \
-                and abs(l["dxy"])       < 0.05 \
-                and abs(l["dz"])        < 0.1 \
-                and l['tightId']
-    elif lepton_selection == 'FOmvaTOPT':
+    if lepton_selection == 'FOmvaTOPT':
         def func(l):
             return \
                 l["pt"]                 >= ptCut \
@@ -231,7 +210,7 @@ def muonSelector( lepton_selection, year, ptCut = 10):
                 and l['miniPFRelIso_all'] < 0.40 \
                 and l['mediumId']\
                 and ( (l['mvaTOP'] > 0.64) or ((1/(l['jetRelIso']+1))> 0.45 and (l['jetBTag'] <  0.025 if l['jetIdx'] >= 0 else True)) )
-
+    # our tight ID
     elif lepton_selection == 'mvaTOPT':
         def func(l):
             return \
@@ -390,41 +369,8 @@ def electronVIDSelector( l, idVal, removedCuts=[] ):
     return all( [ cut >= idVal for cut in vidDict.values() ] )
 
 def eleSelector( lepton_selection, year, ptCut = 10):
-    # tigher isolation applied on analysis level. cutBased corresponds to Fall17V2 ID for all 2016-2018.
-    if lepton_selection == 'CBtight':
-        cbEleSelector_ = cbEleSelector( 'tight')
-        def func(l):
-            return \
-                l["pt"]                 >= ptCut \
-                and abs(l["eta"])       < 2.4 \
-                and passECALGap(l)\
-                and abs(l["dxy"])       < 0.05 \
-                and abs(l["dz"])        < 0.1 \
-                and cbEleSelector_(l['vidNestedWPBitmap'])
 
-    elif lepton_selection == 'CBmedium':
-        cbEleSelector_ = cbEleSelector( 'medium')
-        def func(l):
-            return \
-                l["pt"]                 >= ptCut \
-                and abs(l["eta"])       < 2.4 \
-                and passECALGap(l)\
-                and abs(l["dxy"])       < 0.05 \
-                and abs(l["dz"])        < 0.1 \
-                and cbEleSelector_(l['vidNestedWPBitmap'])
-
-    elif lepton_selection == 'CBloose':
-        cbEleSelector_ = cbEleSelector( 'loose')
-        def func(l):
-            return \
-                l["pt"]                 >= ptCut \
-                and abs(l["eta"])       < 2.4 \
-                and passECALGap(l)\
-                and abs(l["dxy"])       < 0.05 \
-                and abs(l["dz"])        < 0.1 \
-                and cbEleSelector_(l['vidNestedWPBitmap'])
-
-    elif lepton_selection == 'FOmvaTOPT':
+    if lepton_selection == 'FOmvaTOPT':
 
         def func(l):
             if year == 2016:
