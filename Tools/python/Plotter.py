@@ -318,14 +318,14 @@ class Plotter:
         return cmsText, lumiText
 
     def buildComparisonPlots(self):
-	
+
 	for sys in self.systNames:
 	    firstHist = True
             for sampleName, sysName, delta, scaledHist in self.systDeltas:
                  if sys["name"] == sysName:
 			if firstHist:
 				sys["totalScaledHist"] = scaledHist.Clone()
-				firstHist = False	
+				firstHist = False
 			else:
 			 	sys["totalScaledHist"].Add(scaledHist)
 
@@ -333,9 +333,9 @@ class Plotter:
 	    self.otherLegend.AddEntry(sys["totalScaledHist"], sys["name"])
 	    if sys["totalScaledHist"].GetMaximum() > self.yC:
             		self.yC = sys["totalScaledHist"].GetMaximum()
-	   
+
     def setComparisonDrawOptions(self):
-	
+
 	for sys in self.systNames:
 		sys["totalScaledHist"].SetFillColor(0)
 		sys["totalScaledHist"].SetLineColor(sys["color"])
@@ -354,7 +354,7 @@ class Plotter:
         	sys["totalScaledHist"].GetYaxis().SetLabelSize(20)
             	sys["totalScaledHist"].GetYaxis().SetTitleOffset( 1.3 )
 
-		
+
 
 
 #---Public function ------------------------------------------------------------
@@ -468,7 +468,7 @@ class Plotter:
             pad.SetRightMargin(0.05)
 	    pad.cd()
             pad.SetTitle(self.name+"_syst")
-	    
+
 	    isFirstHere = True
 	    for sys in self.systNames:
 		    if isFirstHere:
@@ -477,11 +477,11 @@ class Plotter:
 			    isFirstHere = False
 		    else:
 			    sys["totalScaledHist"].Draw("hist same")
- 
+
 	    self.otherLegend.SetFillStyle(0)
             self.otherLegend.SetShadowColor(ROOT.kWhite)
             self.otherLegend.SetBorderSize(0)
-            self.otherLegend.SetNColumns(2)	    
+            self.otherLegend.SetNColumns(2)
 	    self.otherLegend.Draw()
 	    cmsText, subLabel = self.setLabel()
             pad.RedrawAxis()
@@ -494,7 +494,7 @@ class Plotter:
                 os.makedirs(plot_directory)
             except OSError: # Resolve rare race condition
                 pass
-        
+
         plot_helpers.copyIndexPHP(plot_directory)
 
         for extension in extensions:
