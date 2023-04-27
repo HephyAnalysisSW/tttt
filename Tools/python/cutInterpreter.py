@@ -16,41 +16,41 @@ ele_string = lepString('ele','T')
 special_cuts = {
 
     "example":         "l1_pt>50",
-    
+
     "singlelep":       "l1_pt>20",
     "singlelepVL":     "l1_pt>20",
     "singlelepL":      "l1_pt>20&&l1_mvaTOPWP>=2",
     "singlelepM":      "l1_pt>20&&l1_mvaTOPWP>=3",
     "singlelepT":      "l1_pt>20&&l1_mvaTOPWP>=4",
-    
+
     "dilep":           "Sum$({mu_string})+Sum$({ele_string})==2&&l1_pt>40&&l2_pt>20".format(mu_string=mu_string,ele_string=ele_string),
     "dilepVL":         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20",
     "dilepL" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
     "dilepM" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
     "dilepT" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
-    
+
     "trilep":          "Sum$({mu_string})+Sum$({ele_string})==3&&l1_pt>25&&l2_pt>20&&l3_pt>10".format(mu_string=mu_string,ele_string=ele_string),
     "trilepVL":        "(Sum$(lep_pt>=10)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10",
     "trilepL":         "(Sum$(lep_pt>=10)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
     "trilepM":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
     "trilepT":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
-    
+
     "quadlep":         "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10",
     "quadlepVL":       "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2&&l4_mvaTOPWP>=2",
     "quadlepM":        "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3&&l4_mvaTOPWP>=3",
     "quadlepM":        "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4&&l4_mvaTOPWP>=4",
-    
+
     #"OS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0)",
     #"SS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0)",
- 
-    "OS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0)",
-    "SS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0)",
+
+    "OS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0",
+    "SS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0",
 
 
     "trg":             "triggerDecision",
-    
+
     #"leptonveto":      "(Sum$(lep_isFO))==3&&(Sum$(lep_isTight))==3",
-    
+
     "onZ1"   :         "abs(Z1_mass-91.2)<10",
     "offZ1"  :         "(!(abs(Z1_mass-91.2)<15))",
     "offZ2"  :         "(!(abs(Z2_mass-91.2)<15))",
