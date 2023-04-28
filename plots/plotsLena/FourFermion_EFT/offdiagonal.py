@@ -24,8 +24,8 @@ ROOT.setTDRStyle()
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',                   default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--sample',             action='store',      type=str      )
-argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/eft-weights/')
-argParser.add_argument('--input_directory',    action='store',      type=str,    default='/eos/vbc/group/cms/lena.wild/tttt/training-ntuples-tttt_v6/MVA-training/ttbb_2l_dilep-bjet_delphes-met30-njet4p-btag2p/')
+argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/eft-weights_v2/')
+argParser.add_argument('--input_directory',    action='store',      type=str,    default='/eos/vbc/group/cms/lena.wild/tttt/training-ntuples-tttt_v6_1/MVA-training/ttbb_2l_dilep2-bjet_delphes-met30-njet4p-btag2p/')
 
 args = argParser.parse_args()
 
@@ -89,7 +89,7 @@ limits = {}
 exp_nll_ratios = {}
 color = [ROOT.kBlue, ROOT.kPink-7, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta,ROOT.kOrange-2, ROOT.kPink-9, ROOT.kBlue-2, ROOT.kRed-2, ROOT.kGreen-2, ROOT.kCyan-2, ROOT.kMagenta-2, ROOT.kCyan+3, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta]
 
-logging.info("plotting")
+logging.info("plotting mixed")
 exp_nll_ratio = []
 
 for coeff1 in EFTCoefficients:
@@ -117,7 +117,8 @@ for coeff1 in EFTCoefficients:
 
     drawObjects = [ ]
     subdir = sample
-    plot = Plot.fromHisto( os.path.join(subdir, "mixed_eft_coeffs_"+coeff1), [[h] for h in histos], texX = "w_{%s, i}"%coeff1, texY = "Entries" )
+    subdir_ = "mixed_eft_weights"
+    plot = Plot.fromHisto( os.path.join(subdir, subdir_, coeff1), [[h] for h in histos], texX = "w_{%s, i}"%coeff1, texY = "Entries" )
     plotting.draw( plot,
             plot_directory = args.output_directory,
             #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
@@ -128,6 +129,75 @@ for coeff1 in EFTCoefficients:
             copyIndexPHP   = True,
             extensions     = ["png"],
           )
+copyIndexPHP(os.path.join(args.output_directory, subdir, subdir_))          
+k = 0
+histos = []
+logging.info("plotting quad")
+for coeff1 in EFTCoefficients:
+    coeff2 = coeff1
+    nbins=10
+    print (coeff1, coeff2)
+    binning = np.linspace(-1, 8, 30)
+    try: 
+        index = weightInfo.combinations.index( (coeff1,coeff2) )
+    except:
+        index = weightInfo.combinations.index( (coeff2,coeff1) )
+    np_histo  = np.histogram(y[:,index]*1e06, bins=binning) 
+    
+    histo    = make_TH1F(np_histo)
+    
+    histo.legendText = coeff1+", "+coeff2
+    histo.style       = styles.lineStyle( color[k%len(color)])
+    k = k+1
+    histos.append( histo )
+
+drawObjects = [ ]
+subdir = sample
+subdir_ = "lin_quad_eft_weights"
+plot = Plot.fromHisto( os.path.join(subdir, subdir_, "quad"), [[h] for h in histos], texX = "w_2", texY = "Entries" )
+plotting.draw( plot,
+        plot_directory = args.output_directory,
+        #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+        logX = False, logY = True, sorting = False,
+        yRange = ('auto', 'auto'),
+        legend         = ( (0.15,0.7,0.9,0.92),3),
+        drawObjects    = drawObjects,
+        copyIndexPHP   = True,
+        extensions     = ["png"],
+      )  
+
+k = 0
+histos = []
+logging.info("plotting lin")
+for coeff1 in EFTCoefficients:
+    nbins=10
+    print (coeff1, coeff2)
+    binning = np.linspace(-3, 3, 30)
+    index = weightInfo.combinations.index( (coeff1,) )
+    np_histo  = np.histogram(y[:,index]*1e06, bins=binning) 
+    
+    histo    = make_TH1F(np_histo)
+    
+    histo.legendText = coeff1
+    histo.style       = styles.lineStyle( color[k%len(color)])
+    k = k+1
+    histos.append( histo )
+
+drawObjects = [ ]
+subdir = sample
+subdir_ = "lin_quad_eft_weights"
+plot = Plot.fromHisto( os.path.join(subdir, subdir_, "lin"), [[h] for h in histos], texX = "w_1", texY = "Entries" )
+plotting.draw( plot,
+        plot_directory = args.output_directory,
+        #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
+        logX = False, logY = True, sorting = False,
+        yRange = ('auto', 'auto'),
+        legend         = ( (0.15,0.7,0.9,0.92),3),
+        drawObjects    = drawObjects,
+        copyIndexPHP   = True,
+        extensions     = ["png"],
+      )        
  
+copyIndexPHP(os.path.join(args.output_directory, subdir, subdir_))     
 Analysis.Tools.syncer.sync()
 
