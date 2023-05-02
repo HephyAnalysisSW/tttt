@@ -24,16 +24,12 @@ ROOT.setTDRStyle()
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',                   default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--sample',             action='store',      type=str      )
-argParser.add_argument('--lumi',               action='store',      type=int,    default=300     )
+argParser.add_argument('--lumi',               action='store',      type=int,    default=1     )
 argParser.add_argument('--model_directory',    action='store',      type=str,    default='/groups/hephy/cms/lena.wild/tttt/models/')
 argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/limits_ParticleNettest2')
-#argParser.add_argument('--PN_directory',       action='store',      type=str,    default='/scratch-cbe/users/lena.wild/FourFermion/predictions/')
 argParser.add_argument('--input_directory',    action='store',      type=str,    default='/eos/vbc/group/cms/lena.wild/tttt/training-ntuples-tttt_v6_1/MVA-training/PN_ttbb_2l_dilep2-bjet_delphes-met30-njet4p-btag2p/')
 argParser.add_argument('--models',             action='store',      type=str,    nargs='*')
-#argParser.add_argument('--models_PN',          action='store',      type=str,    nargs='*', default=None)
-#argParser.add_argument('--EFT_PN',             action='store',      type=str,    nargs='*', default=None)
 argParser.add_argument('--labels',             action='store',      type=str,    nargs='*', default=None, help="labels for models in plot")
-#argParser.add_argument('--labels_PN',          action='store',      type=str,    nargs='*', default=None, help="labels for PN models in plot")
 argParser.add_argument('--filename',           action='store',      type=str,    default=None, help="filename")
 argParser.add_argument('--theta_range',        action='store',      type=float,    default=10     )
 argParser.add_argument('--sample_weight',      action='store',      type=float,  default=100)
@@ -154,8 +150,6 @@ if (reduce):
     c = c[0:red, :, :]
     logging.info("using only small dataset of 1/%s of total events -> %s events for signal %s", args.reduce, red, args.sample)
 
-half = int(len(x[:,0])*0.8)
-
 # reshape inputs for models
 X_pn = np.reshape(x,(x[:,0].size, 1, x[0].size, 1))# global features
 V_pn = np.reshape(v,(v[:,0,0].size, 1, v[0,0,:].size, v[0,:,0].size ))# eflow_features
@@ -167,7 +161,7 @@ V = np.reshape(v,(v[:,0,0].size, 1, v[0,:,0].size, v[0,0,:].size)) # LSTM featur
 
 def make_cdf_map( x, y ):
     import scipy.interpolate
-    map__ = scipy.interpolate.interp1d(x, y, 'linear', fill_value="extrapolate")
+    map__ = scipy.interpolate.interp1d(x, y, 'linear', )#fill_value="extrapolate")
     max_x, min_x = max(x), min(x)
     max_y, min_y = max(y), min(y)
     def map_( x_ ):
@@ -226,21 +220,21 @@ for j in range (len(args.models)):
         ParticleNet = True
         for i in range (len(y)):
             z.append( ort_sess.run(["output"], {"global_features": X_pn[i].astype(np.float32), "constituents_points": C_pn[i].astype(np.float32), "eflow_features": V_pn[i].astype(np.float32), "eflow_mask": M_pn.astype(np.float32),})[0][0] )
-    Z[dir_name] = np.array(z)[int(len(z)*0.8):]
+    Z[dir_name] = np.array(z)
     # Z[dir_name] = np.array(z)
     Z[dir_name+"_label"] = args.labels[j] if args.labels != None else ('LSTM' if (LSTM) else ('ParticleNet' if (ParticleNet) else 'DNN') )
     
 
 # read from PN file
 logging.info("plotting")
-y = y[int(len(y)*0.8):]
-nbins = 24
+nbins = 20
 theta_ = np.linspace(-args.theta_range,args.theta_range,nbins)
 # theta_ = np.linspace(-1,1,nbins)
 exp_nll_ratios = {}
 color = [ROOT.kBlue, ROOT.kPink-7, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta,ROOT.kOrange-2, ROOT.kPink-9, ROOT.kBlue-2, ROOT.kRed-2, ROOT.kGreen-2, ROOT.kCyan-2, ROOT.kMagenta-2, ROOT.kCyan+3, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta]
 if not (args.combine_models):  
     limits = {}
+    nbins = nbins+1
     logging.info("plotting 1D LLR")
     for idx, model in enumerate(allmodels):
         exp_nll_ratio = []
@@ -252,11 +246,9 @@ if not (args.combine_models):
             if args.shape_effects_only: w_bsm  =   lumi /np.sum(stack_weights) * args.sample_weight * stack_weights
             else: 
                 w_bsm  =   lumi /np.sum(y[:,0]) * args.sample_weight * stack_weights
-                # if (Z[model+"_label"]=='ParticleNet'):
-                        # w_bsm  =   lumi /np.sum(y[:,0]*1e+06) * args.sample_weight * stack_weights
-            # if (Z[model+"_label"]=='ParticleNet'): t_theta = 1 + theta * Z[model][:,0] * 1e+06 + theta**2 * Z[model][:,1] * 1e+06* 0.5
-            # else: t_theta = 1 + theta * Z[model][:,0]  + theta**2 * Z[model][:,1] * 0.5
-            t_theta = 1 + theta * Z[model][:,0]  + theta**2 * Z[model][:,1] * 0.5
+               
+            # t_theta = 1 + theta * Z[model][:,0]  + theta**2 * Z[model][:,1] * 0.5
+            t_theta = Z[model][:,0]  + theta * Z[model][:,1] * 0.5
             
             t_theta_argsort     = np.argsort(t_theta)
             t_theta_argsort_inv = np.argsort(t_theta_argsort)
@@ -273,14 +265,14 @@ if not (args.combine_models):
             
             if args.plot_histos:
                 histo_sm     = make_TH1F(np_histo_sm)
-                histo_bsm    = make_TH1F(np_histo_bsm)
-                histo_bsm.legendText = "#theta="+"{:.2f}".format(theta)
-                histo_bsm.style       = styles.lineStyle( color[k%len(color)])
                 k = k+1
                 if (k == 1): 
                     histo_sm.legendText  = "SM"
                     histo_sm.style       = styles.lineStyle( ROOT.kBlack, dashed = True)
                     histos.append( histo_sm )
+                histo_bsm    = make_TH1F(np_histo_bsm)
+                histo_bsm.legendText = "#theta="+"{:.2f}".format(theta)
+                histo_bsm.style       = styles.lineStyle( color[k%len(color)])
                 histos.append( histo_bsm )
                 
             np_histo_sm  = np_histo_sm[0]
@@ -292,27 +284,21 @@ if not (args.combine_models):
             exp_nll_ratio.append(exp_nll_ratio_)
             
         drawObjects = [ ]
-        if (sample == 'TTTT_MS'):
-            down = int(args.sample_weight / nb * 0.5)
-            up = int(args.sample_weight / nb * 5)
-        if (sample == 'TTbb_MS'):
-            down = int(args.sample_weight / nb * 0.9)
-            up = int(args.sample_weight / nb * 1.5)
          
         if args.plot_histos:
-            subdir = "sample_weight_shape_effects_only" if args.shape_effects_only else "sample_weight"
-            plot = Plot.fromHisto( os.path.join(subdir,model+"_test_stat"), [[h] for h in histos], texX = "t_{#theta}", texY = "Entries" )
+            subdir = "shape_effects_only" if args.shape_effects_only else "full_information"
+            plot = Plot.fromHisto( os.path.join(subdir, EFTCoefficients[model]+"_test_stat"), [[h] for h in histos], texX = "t_{#theta}", texY = "Entries" )
             plotting.draw( plot,
-                    plot_directory = os.path.join(args.output_directory,"histograms"),
+                    plot_directory = os.path.join(args.output_directory,sample, "histograms"),
                     #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
                     logX = False, logY = True, sorting = False,
-                    yRange = (down, up),
+                    yRange = (args.lumi*args.sample_weight/nb*0.95, args.lumi*args.sample_weight/nb*1.1),
                     legend         = ( (0.2,0.65,0.92,0.9),3),
                     drawObjects    = drawObjects,
                     copyIndexPHP   = True,
                     extensions     = ["png", "pdf"],
                   )
-            copyIndexPHP(os.path.join(args.output_directory, "histograms", subdir) )
+            copyIndexPHP(os.path.join(args.output_directory, sample, "histograms", subdir) )
         exp_nll_ratios[model] = exp_nll_ratio  
         limits[model] = ROOT.TGraph(len(exp_nll_ratio), array('d',theta_), array('d',exp_nll_ratio))
         limits[model+'_4'] = ROOT.TGraph(len(exp_nll_ratio), array('d',theta_), array('d',np.ones(len(exp_nll_ratio))*4))
@@ -349,9 +335,9 @@ if not (args.combine_models):
     c1 = ROOT.TCanvas()
     c1.SetCanvasSize(1300, 1700);
     c1.SetWindowSize(1,2);
-    limits[args.models[0]].Draw("AL")
+    limits[args.models[0]].Draw("AC")
     for model in allmodels:
-        limits[model].Draw("SAME")
+        limits[model].Draw("SAMEC")
         limits[model].SetTitle()
         limits[model].SetMarkerStyle(0)
         limits[model].GetXaxis().SetTitle("#theta")
@@ -390,17 +376,12 @@ else:
             stack_weights = y[:,0] #SM weight
             for idx, model in enumerate(allmodels):
                 stack_weights = stack_weights + theta__[idx] * y[:,index_lin[model]] + theta__[idx]**2 * y[:,index_quad[model]]
-           
-                # if (Z[model+'_label']=='ParticleNet'): 
-                    # t_theta = t_theta + theta__[idx] * Z[model][:,0] * 1e+06 + theta__[idx]**2 * Z[model][:,1] * 1e+06 * 0.5
-                # else: t_theta = t_theta + theta__[idx] * Z[model][:,0]  + theta__[idx]**2 * Z[model][:,1] * 0.5
                 t_theta = t_theta + theta__[idx] * Z[model][:,0]  + theta__[idx]**2 * Z[model][:,1] * 0.5
             
             stack_weights = stack_weights + theta_0*theta_1 * y[:,index_mixed]
             if args.shape_effects_only: w_bsm  =   lumi /np.sum(stack_weights) * args.sample_weight * stack_weights 
             else: w_bsm  =   lumi /np.sum(y[:,0]) * args.sample_weight * stack_weights
             
-            # t_theta =  z[:,0] + theta * z[:,1] * 0.5
             t_theta_argsort     = np.argsort(t_theta)
             t_theta_argsort_inv = np.argsort(t_theta_argsort)
             cdf_sm = np.cumsum(w_sm[t_theta_argsort])
@@ -456,8 +437,7 @@ else:
     limits.GetYaxis().SetTitle(EFTCoefficients[allmodels[1]])
 
     limits.GetZaxis().SetRangeUser(0.5*1e-04,1e+03 )
-    # limits.GetZaxis().SetTicks('-')
-    # limits.GetYaxis().SetTicks('-')
+
     c1.RedrawAxis()
     c1.RedrawAxis()
     palette = limits.GetListOfFunctions().FindObject("palette")
@@ -484,15 +464,15 @@ for i in range(len(EFT)):
 if (args.combine_models): maindir = "LLR_2D"
 if not (args.combine_models): maindir = "LLR_1D"
 
-subdir = "sample_weight_shape_effects_only" if args.shape_effects_only else "sample_weight"
+subdir = "shape_effects_only" if args.shape_effects_only else "full_information"
 filename = args.filename+"_"+sample+coeffs+"_LLR" if args.filename is not None else sample+coeffs+"_LLR"
-c1.Print(os.path.join(args.output_directory, maindir, subdir, filename+".png"))
-c1.Print(os.path.join(args.output_directory, maindir, subdir, filename+".pdf"))
-copyIndexPHP(os.path.join(args.output_directory, maindir, subdir) )
+c1.Print(os.path.join(args.output_directory, sample, maindir, subdir, filename+".png"))
+c1.Print(os.path.join(args.output_directory, sample, maindir, subdir, filename+".pdf"))
+copyIndexPHP(os.path.join(args.output_directory, sample, maindir, subdir) )
 
 
-if args.plot_histos: logging.info("histos dir link: %s", os.path.join('https://lwild.web.cern.ch/tttt/plots/', os.path.basename(os.path.normpath(args.output_directory)), "histograms" )) 
-logging.info("LLR plot link:   %s", os.path.join('https://lwild.web.cern.ch/tttt/plots/', os.path.basename(os.path.normpath(args.output_directory)), maindir, subdir, filename+".png")) 
+if args.plot_histos: logging.info("histos dir link: %s", os.path.join('https://lwild.web.cern.ch/tttt/plots/', os.path.basename(os.path.normpath(args.output_directory)), sample, "histograms" )) 
+logging.info("LLR plot link:   %s", os.path.join('https://lwild.web.cern.ch/tttt/plots/', os.path.basename(os.path.normpath(args.output_directory)), sample, maindir, subdir, filename+".png")) 
    
 
 Analysis.Tools.syncer.sync()
