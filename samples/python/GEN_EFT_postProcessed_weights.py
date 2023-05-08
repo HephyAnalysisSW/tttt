@@ -20,7 +20,10 @@ TTbb_MS = Sample.fromDirectory("TTbb_MS", os.path.join( dir, "TTbb_MS" ))
 TT_2L   = Sample.fromDirectory("TT_2L", os.path.join( dir, "TT_2L" ))
 
 
-allSamples = [ TTTT_MS, TTbb_MS, TT_2L ]
+TT_2L_full = Sample.fromDirectory("TT_2L_full", os.path.join( dir, "TT_2L_full" ))
+
+
+allSamples = [ TTTT_MS, TTbb_MS, TT_2L, TT_2L_full ]
 
 for s in allSamples:
   s.isData  = False

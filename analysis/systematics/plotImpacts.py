@@ -57,10 +57,11 @@ parser.add_argument('--POI', default=None, help='Specify a POI to draw')
 parser.add_argument("--sort", "-s", choices=["impact", "constraint", "pull"], default="impact", help="The metric to sort the list of parameters")
 parser.add_argument("--relative", "-r", action="store_true", help="Show impacts relative to the uncertainty on the POI")
 parser.add_argument("--summary", action="store_true", help="Produce additional summary page, named [output]_summary.pdf")
+parser.add_argument("--selection", action="store", default='combined')
 args = parser.parse_args()
 
 #plot_directory_ = os.path.join(plot_directory, 'test/limit-plots/')
-plot_directory_ = os.path.join(plot_directory, 'analysisPlots', '4t-limits', 'RunII', 'combined')
+plot_directory_ = os.path.join(plot_directory, 'analysisPlots', '4t-limits', 'RunII', args.selection)
 plot_helpers.copyIndexPHP(plot_directory_)
 plotName = plot_directory_ +"/"+ args.output
 

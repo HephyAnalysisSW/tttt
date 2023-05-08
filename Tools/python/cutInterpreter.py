@@ -1,6 +1,6 @@
 ''' Class to interpret string based cuts
 '''
-
+from objectSelection          import lepString
 import logging
 logger = logging.getLogger(__name__)
 
@@ -9,38 +9,57 @@ bJetSelectionM  = "nBTag"
 
 mIsoWP = { "VT":5, "T":4, "M":3 , "L":2 , "VL":1, 0:"None" }
 
+
+mu_string  = lepString('mu','M')
+ele_string = lepString('ele','T')
+
 special_cuts = {
 
     "example":         "l1_pt>50",
+
     "singlelep":       "l1_pt>20",
     "singlelepVL":     "l1_pt>20",
     "singlelepL":      "l1_pt>20&&l1_mvaTOPWP>=2",
     "singlelepM":      "l1_pt>20&&l1_mvaTOPWP>=3",
     "singlelepT":      "l1_pt>20&&l1_mvaTOPWP>=4",
+
+    "dilep":           "Sum$({mu_string})+Sum$({ele_string})==2&&l1_pt>40&&l2_pt>20".format(mu_string=mu_string,ele_string=ele_string),
+    "dilepVL":         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20",
+    "dilepL" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
+    "dilepM" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
+    "dilepT" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
+
+    "trilep":          "Sum$({mu_string})+Sum$({ele_string})==3&&l1_pt>25&&l2_pt>20&&l3_pt>10".format(mu_string=mu_string,ele_string=ele_string),
+    "trilepVL":        "(Sum$(lep_pt>=10)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10",
+    "trilepL":         "(Sum$(lep_pt>=10)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
+    "trilepM":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
+    "trilepT":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
+
+    "quadlep":         "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10",
+    "quadlepVL":       "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2&&l4_mvaTOPWP>=2",
+    "quadlepM":        "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3&&l4_mvaTOPWP>=3",
+    "quadlepM":        "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4&&l4_mvaTOPWP>=4",
+
+    #"OS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0)",
+    #"SS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0)",
+
+    "OS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0",
+    "SS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0",
+
+
     "trg":             "triggerDecision",
-    "dilepVL":         "(Sum$(lep_pt>10)==2)&&l1_pt>25&&l2_pt>20",
-    "dilepL" :         "(Sum$(lep_pt>10)==2)&&l1_pt>25&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
-    "dilepM" :         "(Sum$(lep_pt>10)==2)&&l1_pt>25&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
-    "dilepT" :         "(Sum$(lep_pt>10)==2)&&l1_pt>25&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
-    "dilep":           "(Sum$(lep_pt>20&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=1)&&(Sum$(lep_pt>10&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=2)",
-    "trilepVL":        "(Sum$(lep_pt>10)==3)&&l1_pt>25&&l2_pt>20&&l3_pt>10",
-    "trilepL":         "(Sum$(lep_pt>10)==3)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
-    "trilepM":         "(Sum$(lep_pt>10)==3)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
-    "trilepT":         "(Sum$(lep_pt>10)==3)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
-    "trilep":          "(Sum$(lep_pt>25&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=1)&&(Sum$(lep_pt>20&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=2)&&(Sum$(lep_pt>10&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=3)",
-    #"veto3l":          "Sum$(lep_pt>10&&(abs(lep_pdgId)==11&&lep_mvaTOPWP>=4))==3",
-    "quadlep":         "(Sum$(lep_pt>10)==4)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l4_pt>10",
-    "quadlepVL":       "(Sum$(lep_pt>10)==4)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2&&l4_mvaTOPWP>=2",
-    "quadlepM":        "(Sum$(lep_pt>10)==4)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3&&l4_mvaTOPWP>=3",
-    "quadlepM":        "(Sum$(lep_pt>10)==4)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4&&l4_mvaTOPWP>=4",
-    "OS":              "(Sum$(lep_isTight)==2&&Sum$(lep_pdgId/abs(lep_pdgId)*lep_isTight)==0)",
+
+    #"leptonveto":      "(Sum$(lep_isFO))==3&&(Sum$(lep_isTight))==3",
+
     "onZ1"   :         "abs(Z1_mass-91.2)<10",
     "offZ1"  :         "(!(abs(Z1_mass-91.2)<15))",
     "offZ2"  :         "(!(abs(Z2_mass-91.2)<15))",
   }
 
+
+
 continous_variables = [ ('ht','Sum$(JetGood_pt*(JetGood_pt>25&&abs(JetGood_eta)<2.4))'), ("met", "met_pt"), ("Z2mass", "Z2_mass"), ("Z1pt", "Z1_pt"), ("Z2pt", "Z2_pt"), ("Z1mass", "Z1_mass"), ("minDLmass", "minDLmass"), ("mT", "mT"), ("ptG", "photon_pt")]
-discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag"), ("nlepFO", "nlep")]
+discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag") ,("nlepFO", "Sum$(lep_isFO)")]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.
@@ -61,6 +80,10 @@ class cutInterpreter:
            return "l1_miniRelIso<%3.2f&&l2_miniRelIso<%3.2f"%( iso, iso )
         # special cuts
         if string in special_cuts.keys(): return special_cuts[string]
+        # lepton veto
+        if string.startswith("lepVeto"):
+            num_lep = int(string.replace('lepVeto', ''))
+            return "Sum$(lep_isFO)==%i&&Sum$(lep_isTight)==%i" % (num_lep, num_lep)
 
         # continous Variables and discrete variables with "To"
         for var, tree_var in continous_variables + discrete_variables:

@@ -35,23 +35,27 @@ class Plotter:
         self.totalHist = ROOT.TH1F()
         self.totalError = ROOT.TGraphErrors()
         self.stack = ROOT.THStack()
-        self.padSize = {"yWidth" : 500 , "xWidth": 500}
-
+	self.postFitUnc = ROOT.TH1F()
+        
         self.log = False
         self.ratio = False
         self.noData = True
         self.noSyst = True
 	self.comparisonPlots = False
+	self.hasPostFitUnc = False
 
 #---Public funtions ------------------------------------------------------------
 
     #Add a new sample
     #+ Creat a list of all histograms
-    def addSample(self, sampleName, hist, sampleText):
+    def addSample(self, sampleName, hist, sampleText, color=None):
 
         sample = {}
         sample["name"] = sampleName
         sample["hist"] = hist
+	if not color==None: 
+		sample["hist"].SetFillColor(color)
+		sample["hist"].SetLineColor(ROOT.kBlack)
         sample["text"] = sampleText
         sample["integral"] = sample["hist"].Integral()
         self.samples.append(sample)
@@ -92,6 +96,16 @@ class Plotter:
 			self.systNames.append(syst)
 
         self.noSyst = False
+
+    def addPostFitUnc(self,hist):
+	
+	self.postFitUnc = hist
+	self.postFitUnc.SetFillColorAlpha(13,0.5)
+	self.postFitUnc.SetFillStyle(3245)
+	self.legend.AddEntry(hist, "post-fit unc.")
+
+	self.hasPostFitUnc = True
+	
 
 #---Private functions-----------------------------------------------------------
 
@@ -148,8 +162,6 @@ class Plotter:
 
     def getRatio(self,h1,h2):
 
-        self.padSize["yWidth"] += 200
-
         ratio = h1.Clone()
         Nbins = ratio.GetSize()-2
         for i in range(Nbins):
@@ -187,6 +199,45 @@ class Plotter:
 
         return ratio
 
+    def getPostFitDataRatio(self,h1,h2):
+        ratio = h1.Clone()
+        Nbins = ratio.GetN()
+        for i in range(Nbins):
+            bin=i+1
+            if h2.GetBinContent(bin)==0:
+                r=-1
+                e=0
+            else:
+   	        d1, d2 = ROOT.Double(0.), ROOT.Double(0.)
+   	        h1.GetPoint(bin, d1, d2)
+   	        Xval = float(d1)
+   	        Yval = float(d2)
+   	        eX = h1.GetErrorXlow(bin)
+   
+   		X = h2.GetBinCenter(bin)
+                r = h1.Eval(h2.GetBinCenter(bin))/h2.GetBinContent(bin)
+   	        #print h1.GetErrorYlow(bin), d2, Yval, h2.GetBinContent(bin), r
+                print Xval, X , h2.GetBinCenter(bin), h1.Eval(h2.GetBinCenter(bin)),h2.GetBinContent(bin), r
+		eY = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
+            ratio.SetPoint(bin,X,r)
+           
+	return ratio
+   
+    def getPostFitRatioUnc(self,h1):
+       ratio = h1.Clone()
+       Nbins = ratio.GetSize()-2
+       for i in range(Nbins):
+           bin=i+1
+           if h1.GetBinContent(bin)==0:
+               e=0
+           else:
+               e = h1.GetBinError(bin)/h1.GetBinContent(bin)
+   	   ratio.SetBinContent(bin,1)
+   	   ratio.SetBinError(bin,e)
+   
+       return ratio
+   
+
     def getRatioLine(self, h1):
         line = h1.Clone()
         Nbins = line.GetSize()-2
@@ -222,7 +273,9 @@ class Plotter:
 
         ratio.SetTitle('')
         ratio.GetYaxis().SetTitle(self.ratioTitle)
-        ratio.GetYaxis().SetRangeUser(0,2)
+	if self.hasPostFitUnc:
+        	ratio.GetYaxis().SetRangeUser(0,2)
+	else:   ratio.GetYaxis().SetRangeUser(0,2)
         ratio.GetYaxis().SetNdivisions(505)
         ratio.GetYaxis().CenterTitle()
         ratio.GetYaxis().SetTitleSize(22)
@@ -247,8 +300,7 @@ class Plotter:
         cmsText.SetNDC()
         cmsText.SetTextAlign(33)
         cmsText.SetTextFont(42)
-        if self.ratio: cmsText.SetTextSize(0.05)
-        else:          cmsText.SetTextSize(0.036)
+        cmsText.SetTextSize(0.05)
         cmsText.SetX(0.50)
         cmsText.SetY(0.98)
         cmsText.Draw()
@@ -259,12 +311,8 @@ class Plotter:
         lumiText.SetTextAlign(33)
         lumiText.SetTextFont(42)
         lumiText.SetX(0.94)
-        if self.ratio:
-            lumiText.SetTextSize(0.045)
-            lumiText.SetY(0.98)
-        else:
-            lumiText.SetTextSize(0.0367)
-            lumiText.SetY(0.951)
+        lumiText.SetTextSize(0.045)
+        lumiText.SetY(0.98)
         lumiText.Draw()
 
         return cmsText, lumiText
@@ -316,6 +364,7 @@ class Plotter:
 
         ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
         ROOT.setTDRStyle()
+	ROOT.gStyle.SetErrorX(0.5)
 
         if plot_directory is None : plot_directory = self.plot_dir
         self.xTitle = texX
@@ -365,8 +414,11 @@ class Plotter:
         self.stack.Draw("hist same")
         self.totalError.Draw("E2 hist same")
 
+	if self.hasPostFitUnc : 
+	    self.postFitUnc.Draw("E2 same")
+	    
         if not self.noData :
-            self.data["hist"].Draw("p hist same")
+            self.data["hist"].Draw("X0 E0 p same")
 
         self.legend.SetFillStyle(0)
         self.legend.SetShadowColor(ROOT.kWhite)
@@ -387,12 +439,21 @@ class Plotter:
             ratioline.SetLineColor(13)
             ratioline.SetLineWidth(2)
             ratioline.Draw("hist")
-            ratio_uncert = self.getRatioUncert(self.totalError)
-            ratio_uncert.Draw("E2")
+	    if not self.noSyst:
+            	ratio_uncert = self.getRatioUncert(self.totalError)
+		ratio_uncert.Draw("E2")
+	    elif self.hasPostFitUnc :
+		ratio_uncert = self.getPostFitRatioUnc(self.postFitUnc)
+	        ratio_uncert.Draw("E2 same")
             if not self.noData:
-                ratio_data = self.getRatio(self.data["hist"], self.totalHist)
-                self.setRatioDrawOptions(ratio_data)
-                ratio_data.Draw("P SAME")
+		if not self.hasPostFitUnc :
+		    ratio_data = self.getRatio(self.data["hist"], self.totalHist)
+                    self.setRatioDrawOptions(ratio_data)
+                    ratio_data.Draw("P SAME")
+		else:
+		    ratio_data = self.getPostFitDataRatio(self.data["hist"], self.postFitUnc)
+		    self.setRatioDrawOptions(ratio_data)
+		    ratio_data.Draw("X0 E1 P SAME")
             ROOT.gPad.RedrawAxis()
 
 	#Draw Comparison Plots
