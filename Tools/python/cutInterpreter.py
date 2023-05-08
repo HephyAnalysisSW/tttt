@@ -18,26 +18,29 @@ special_cuts = {
     "singlelepM":      "l1_pt>20&&l1_mvaTOPWP>=3",
     "singlelepT":      "l1_pt>20&&l1_mvaTOPWP>=4",
     "trg":             "triggerDecision",
-    "dilepVL":         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20",
-    "dilepL" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
-    "dilepM" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
-    "dilepT" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
-    "trilepVL":        "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10",
-    "trilepL":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
-    "trilepM":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
-    "trilepT":         "(Sum$(lep_pt>15)==3)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
-    "quadlep":         "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10",
-    "quadlepVL":       "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2&&l4_mvaTOPWP>=2",
-    "quadlepM":        "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3&&l4_mvaTOPWP>=3",
-    "quadlepM":        "(Sum$(lep_pt>15)==4)&&l1_pt>40&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4&&l4_mvaTOPWP>=4",
-    "OS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&Sum$(lep_pdgId*lep_isTight)==0)",
+    "dilepVL":         "(Sum$(lep_pt>10)==2)&&l1_pt>25&&l2_pt>20",
+    "dilepL" :         "(Sum$(lep_pt>10)==2)&&l1_pt>25&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
+    "dilepM" :         "(Sum$(lep_pt>10)==2)&&l1_pt>25&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",
+    "dilepT" :         "(Sum$(lep_pt>10)==2)&&l1_pt>25&&l2_pt>20&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4",
+    "dilep":           "(Sum$(lep_pt>20&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=1)&&(Sum$(lep_pt>10&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=2)",
+    "trilepVL":        "(Sum$(lep_pt>10)==3)&&l1_pt>25&&l2_pt>20&&l3_pt>10",
+    "trilepL":         "(Sum$(lep_pt>10)==3)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2",
+    "trilepM":         "(Sum$(lep_pt>10)==3)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3",
+    "trilepT":         "(Sum$(lep_pt>10)==3)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4",
+    "trilep":          "(Sum$(lep_pt>25&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=1)&&(Sum$(lep_pt>20&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=2)&&(Sum$(lep_pt>10&&((abs(lep_pdgId)==11&&lep_mvaTOPWP>=4)||(abs(lep_pdgId)==13&&lep_mvaTOPWP>=3)))>=3)",
+    #"veto3l":          "Sum$(lep_pt>10&&(abs(lep_pdgId)==11&&lep_mvaTOPWP>=4))==3",
+    "quadlep":         "(Sum$(lep_pt>10)==4)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l4_pt>10",
+    "quadlepVL":       "(Sum$(lep_pt>10)==4)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2&&l3_mvaTOPWP>=2&&l4_mvaTOPWP>=2",
+    "quadlepM":        "(Sum$(lep_pt>10)==4)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3&&l3_mvaTOPWP>=3&&l4_mvaTOPWP>=3",
+    "quadlepM":        "(Sum$(lep_pt>10)==4)&&l1_pt>25&&l2_pt>20&&l3_pt>10&&l4_pt>10&&l1_mvaTOPWP>=4&&l2_mvaTOPWP>=4&&l3_mvaTOPWP>=4&&l4_mvaTOPWP>=4",
+    "OS":              "(Sum$(lep_isTight)==2&&Sum$(lep_pdgId/abs(lep_pdgId)*lep_isTight)==0)",
     "onZ1"   :         "abs(Z1_mass-91.2)<10",
     "offZ1"  :         "(!(abs(Z1_mass-91.2)<15))",
     "offZ2"  :         "(!(abs(Z2_mass-91.2)<15))",
   }
 
 continous_variables = [ ('ht','Sum$(JetGood_pt*(JetGood_pt>25&&abs(JetGood_eta)<2.4))'), ("met", "met_pt"), ("Z2mass", "Z2_mass"), ("Z1pt", "Z1_pt"), ("Z2pt", "Z2_pt"), ("Z1mass", "Z1_mass"), ("minDLmass", "minDLmass"), ("mT", "mT"), ("ptG", "photon_pt")]
-discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag")]
+discrete_variables  = [ ("njet", "nJetGood"), ("btag", "nBTag"), ("nlepFO", "nlep")]
 
 class cutInterpreter:
     ''' Translate var100to200-var2p etc.
