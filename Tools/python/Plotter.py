@@ -449,7 +449,7 @@ class Plotter:
 		if not self.hasPostFitUnc :
 		    ratio_data = self.getRatio(self.data["hist"], self.totalHist)
                     self.setRatioDrawOptions(ratio_data)
-                    ratio_data.Draw("P SAME")
+                    ratio_data.Draw("X0 E0 P SAME")
 		else:
 		    ratio_data = self.getPostFitDataRatio(self.data["hist"], self.postFitUnc)
 		    self.setRatioDrawOptions(ratio_data)
