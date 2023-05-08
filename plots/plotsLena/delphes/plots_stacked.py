@@ -259,6 +259,7 @@ for sample in stack.samples:
         #sample.reduceFiles( factor = 30 )
         sample.reduceFiles( to = 1 )
 
+
 bits = []
 
 keras_models = []
@@ -423,7 +424,7 @@ for sample in [signal, bkg]: sample.style = styles.fillStyle(sample.color)
 plots.append(Plot( name = 'nJet'+postfix,
   texX = 'jet multiplicity', texY = 'Number of Events',
   attribute = lambda event, sample: event.nrecoJet,
-  binning=[14,0,14],
+  binning=[11,3,14],
 ))
 
 plots.append(Plot( name = 'nBTag'+postfix,

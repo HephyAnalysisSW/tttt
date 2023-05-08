@@ -221,8 +221,8 @@ sequence.append( MT2 )
 
 
 import tttt.samples.GEN_EFT_postProcessed as samples
-training_samples = [samples.TTTT_MS, samples.TTbb_MS, samples.TT_2L]
+training_samples = [samples.TTTT_MS, samples.TTbb_MS, samples.TT_2L, samples.TT_2L_full]
 
 import tttt.samples.GEN_EFT_postProcessed_weights as samples_weights
-weightsum_samples = [samples_weights.TTTT_MS, samples_weights.TTbb_MS, samples_weights.TT_2L]
+weightsum_samples = [samples_weights.TTTT_MS, samples_weights.TTbb_MS, samples_weights.TT_2L, samples_weights.TT_2L_full]
 
