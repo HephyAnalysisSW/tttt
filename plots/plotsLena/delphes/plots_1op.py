@@ -14,7 +14,7 @@ import copy
 import operator
 import random
 from math                           import sqrt, cos, sin, pi, isnan, sinh, cosh, log, copysign
-
+import numpy                        as np
 # Analysis
 import Analysis.Tools.syncer        as syncer
 from   Analysis.Tools.WeightInfo    import WeightInfo
@@ -34,6 +34,9 @@ argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',      default='INFO',          nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--plot_directory',     action='store',      default='delphes')
 argParser.add_argument('--selection',          action='store',      default=None)
+argParser.add_argument('--EFTcoeff',           action='store',      type=str)
+argParser.add_argument('--th_range',              action='store',   type=float,   nargs=2, default = [-1,1])
+argParser.add_argument('--thetas',             action='store',      type=int, default = 5)
 argParser.add_argument('--signal',             action='store',      default='TTTT_MS')
 argParser.add_argument('--theta',              action='store',      type=float, default=1.0, help= "w_EFT = w_0 + theta w_1 + theta^2 w_2")
 argParser.add_argument('--small',                                   action='store_true',     help='Run only on a small subset of the data?')
@@ -62,119 +65,23 @@ if hasattr(signal, "reweight_pkl"):
     signal.weightInfo.set_order(2)
     signal.read_variables = [VectorTreeVariable.fromString( "p[C/F]", nMax=200 )]
 
-
-if (args.signal =='TT_2L'):
-    eft_configs = [
-        {'color':ROOT.kBlack,       'param':{},              'tex':"SM"},
-    ]
-    
-if (args.signal =='TTTT_MS'):
-    eft_configs = [
-        {'color':ROOT.kBlack,     'param':{},              'tex':"SM"},
-        {'color':ROOT.kBlue,      'param':{'ctt':   args.theta},    'tex':"c_{tt}="+str(args.theta),        'binning':[20,0,1.5]},
-        {'color':ROOT.kPink-7,    'param':{'cQQ1':  args.theta},    'tex':"c_{QQ1}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kOrange,    'param':{'cQQ8':  args.theta},    'tex':"c_{QQ8}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kRed,       'param':{'cQt1':  args.theta},    'tex':"c_{Qt1}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kGreen,     'param':{'cQt8':  args.theta},    'tex':"c_{Qt8}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kCyan,      'param':{'ctHRe': args.theta},    'tex':"c_{tHRe}="+str(args.theta),      'binning':[20,0,1.5]},
-        {'color':ROOT.kMagenta,   'param':{'ctHIm': args.theta},    'tex':"c_{tHIm}="+str(args.theta),      'binning':[20,0,1.5]},
-        # {'color':ROOT.kBlue-4,      'param':{'ctt':-1},      'tex':"c_{tt}=-1",       'binning':[20,0,1.5]},
-        # {'color':ROOT.kPink-7-4,    'param':{'cQQ1':-1},     'tex':"c_{QQ1}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kOrange-4,    'param':{'cQQ8':-1},     'tex':"c_{QQ8}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kRed-4,       'param':{'cQt1':-1},     'tex':"c_{Qt1}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kGreen-4,     'param':{'cQt8':-1},     'tex':"c_{Qt8}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kCyan-4,      'param':{'ctHRe':-1},    'tex':"c_{tHRe}=-1",     'binning':[20,0,1.5]},
-        # {'color':ROOT.kMagenta-4,   'param':{'ctHIm':-1},    'tex':"c_{tHIm}=-1",     'binning':[20,0,1.5]},
-    ]
-    
-    if args.show_derivatives:
-        eft_derivatives = [   
-            {'der':('ctt',),                  'color':ROOT.kBlue-4,         'tex':"c_{tt}"},     
-            {'der':('ctt','ctt'),             'color':ROOT.kBlue+2,         'tex':"c_{tt}^2"},      
-            {'der':('cQQ1',),                 'color':ROOT.kPink-7-4,       'tex':"c_{QQ1}"},    
-            {'der':('cQQ1','cQQ1'),           'color':ROOT.kPink-7+2,       'tex':"c_{QQ1}^2"},     
-            {'der':('cQQ8',),                 'color':ROOT.kOrange-4,       'tex':"c_{QQ8}"},    
-            {'der':('cQQ8','cQQ8'),           'color':ROOT.kOrange+2,       'tex':"c_{QQ8}^2"},     
-            {'der':('cQt1',),                 'color':ROOT.kRed-4,          'tex':"c_{Qt1}"},    
-            {'der':('cQt1','cQt1'),           'color':ROOT.kRed+2,          'tex':"c_{Qt1}^2"},     
-            {'der':('cQt8',),                 'color':ROOT.kGreen-4,        'tex':"c_{Qt8}"},    
-            {'der':('cQt8','cQt8'),           'color':ROOT.kGreen+2,        'tex':"c_{Qt8}^2"},     
-            {'der':('ctHRe',),                'color':ROOT.kCyan-4,         'tex':"c_{tHRe}"},   
-            {'der':('ctHRe','ctHRe'),         'color':ROOT.kCyan+2,         'tex':"c_{tHRe}^2"},    
-            {'der':('ctHIm',),                'color':ROOT.kMagenta-4,      'tex':"c_{tHIm}"},   
-            {'der':('ctHIm','ctHIm'),         'color':ROOT.kMagenta+2,      'tex':"c_{tHIm}^2"}, 
-        ]    
-    
-if (args.signal=='TTbb_MS'):  
-    eft_configs = [
-        {'color':ROOT.kBlack,       'param':{},              'tex':"SM"},
-        {'color':ROOT.kBlue,      'param':{'ctt':      args.theta}, 'tex':"c_{tt}="+str(args.theta),        'binning':[20,0,1.5]},
-        {'color':ROOT.kPink-7,    'param':{'cQQ1':     args.theta}, 'tex':"c_{QQ1}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kOrange,    'param':{'cQQ8':     args.theta}, 'tex':"c_{QQ8}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kRed,       'param':{'cQt1':     args.theta}, 'tex':"c_{Qt1}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kGreen,     'param':{'cQt8':     args.theta}, 'tex':"c_{Qt8}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kCyan,      'param':{'ctHRe':    args.theta}, 'tex':"c_{tHRe}="+str(args.theta),      'binning':[20,0,1.5]},
-        {'color':ROOT.kMagenta,   'param':{'ctHIm':    args.theta}, 'tex':"c_{tHIm}="+str(args.theta),      'binning':[20,0,1.5]},
-        {'color':ROOT.kOrange-2,  'param':{'ctb1':     args.theta}, 'tex':"c_{tb1}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kPink-9,    'param':{'ctb8':     args.theta}, 'tex':"c_{tb8}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kBlue-2,    'param':{'cQb1':     args.theta}, 'tex':"c_{Qb1}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kRed-2,     'param':{'cQb8':     args.theta}, 'tex':"c_{Qb8}="+str(args.theta),       'binning':[20,0,1.5]},
-        {'color':ROOT.kGreen-2,   'param':{'cQtQb1Re': args.theta}, 'tex':"c_{QtQb1Re}="+str(args.theta),   'binning':[20,0,1.5]},
-        {'color':ROOT.kCyan-2,    'param':{'cQtQb8Re': args.theta}, 'tex':"c_{QtQb8Re}="+str(args.theta),   'binning':[20,0,1.5]},
-        {'color':ROOT.kMagenta-2, 'param':{'cQtQb1Im': args.theta}, 'tex':"c_{QtQb1Im}="+str(args.theta),   'binning':[20,0,1.5]},
-        {'color':ROOT.kCyan+3,    'param':{'cQtQb8Im': args.theta}, 'tex':"c_{QtQb8Im}="+str(args.theta),   'binning':[20,0,1.5]},
-        # {'color':ROOT.kBlue-4,      'param':{'ctt':-10},      'tex':"c_{tt}=-1",       'binning':[20,0,1.5]},
-        # {'color':ROOT.kPink-7-4,    'param':{'cQQ1':-10},     'tex':"c_{QQ1}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kOrange-4,    'param':{'cQQ8':-10},     'tex':"c_{QQ8}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kRed-4,       'param':{'cQt1':-10},     'tex':"c_{Qt1}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kGreen-4,     'param':{'cQt8':-10},     'tex':"c_{Qt8}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kCyan-4,      'param':{'ctHRe':-10},    'tex':"c_{tHRe}=-1",     'binning':[20,0,1.5]},
-        # {'color':ROOT.kMagenta-4,   'param':{'ctHIm':-10},    'tex':"c_{tHIm}=-1",     'binning':[20,0,1.5]},
-        # {'color':ROOT.kOrange-2-4,  'param':{'ctb1':-10},     'tex':"c_{tb1}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kPink-9-4,    'param':{'ctb8':-10},     'tex':"c_{tb8}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kBlue-2-4,    'param':{'cQb1':-10},     'tex':"c_{Qb1}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kRed-2-4,     'param':{'cQb8':-10},     'tex':"c_{Qb8}=-1",      'binning':[20,0,1.5]},
-        # {'color':ROOT.kGreen-2-4,   'param':{'cQtQb1Re':-10}, 'tex':"c_{QtQb1Re}=-1",  'binning':[20,0,1.5]},
-        # {'color':ROOT.kCyan-2-4,    'param':{'cQtQb8Re':-10}, 'tex':"c_{QtQb8Re}=-1",  'binning':[20,0,1.5]},
-        # {'color':ROOT.kMagenta-2-4, 'param':{'cQtQb1Im':-10}, 'tex':"c_{QtQb1Im}=-1",  'binning':[20,0,1.5]},
-        # {'color':ROOT.kCyan+3-4,    'param':{'cQtQb8Im':-10}, 'tex':"c_{QtQb8Im}=-1",  'binning':[20,0,1.5]},
-    ]
+index_lin  = signal.weightInfo.combinations.index( (args.EFTcoeff,) ) 
+index_quad = signal.weightInfo.combinations.index( (args.EFTcoeff,args.EFTcoeff) )
 
 
+color = [ROOT.kBlue, ROOT.kPink-7, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta,ROOT.kOrange-2, ROOT.kPink-9, ROOT.kBlue-2, ROOT.kRed-2, ROOT.kGreen-2, ROOT.kCyan-2, ROOT.kMagenta-2, ROOT.kCyan+3, ROOT.kOrange, ROOT.kRed, ROOT.kGreen, ROOT.kCyan, ROOT.kMagenta]
+eft_configs = []
+eft_configs.append({'color':ROOT.kBlack,     'param':{},              'tex':"SM"})
+theta_ = np.linspace(args.th_range[0], args.th_range[1], args.thetas)
 
-    if args.show_derivatives:
-        eft_derivatives = [   
-            {'der':('ctt',),                  'color':ROOT.kBlue-4,         'tex':"c_{tt}"},     
-            {'der':('ctt','ctt'),             'color':ROOT.kBlue+2,         'tex':"c_{tt}^2"},      
-            {'der':('cQQ1',),                 'color':ROOT.kPink-7-4,       'tex':"c_{QQ1}"},    
-            {'der':('cQQ1','cQQ1'),           'color':ROOT.kPink-7+2,       'tex':"c_{QQ1}^2"},     
-            {'der':('cQQ8',),                 'color':ROOT.kOrange-4,       'tex':"c_{QQ8}"},    
-            {'der':('cQQ8','cQQ8'),           'color':ROOT.kOrange+2,       'tex':"c_{QQ8}^2"},     
-            {'der':('cQt1',),                 'color':ROOT.kRed-4,          'tex':"c_{Qt1}"},    
-            {'der':('cQt1','cQt1'),           'color':ROOT.kRed+2,          'tex':"c_{Qt1}^2"},     
-            {'der':('cQt8',),                 'color':ROOT.kGreen-4,        'tex':"c_{Qt8}"},    
-            {'der':('cQt8','cQt8'),           'color':ROOT.kGreen+2,        'tex':"c_{Qt8}^2"},     
-            {'der':('ctHRe',),                'color':ROOT.kCyan-4,         'tex':"c_{tHRe}"},   
-            {'der':('ctHRe','ctHRe'),         'color':ROOT.kCyan+2,         'tex':"c_{tHRe}^2"},    
-            {'der':('ctHIm',),                'color':ROOT.kMagenta-4,      'tex':"c_{tHIm}"},   
-            {'der':('ctHIm','ctHIm'),         'color':ROOT.kMagenta+2,      'tex':"c_{tHIm}^2"},    
-            {'der':('ctb1',),                 'color':ROOT.kOrange-2-4,     'tex':"c_{tb1}"},    
-            {'der':('ctb1','ctb1'),           'color':ROOT.kOrange-2+2,     'tex':"c_{tb1}^2"},     
-            {'der':('ctb8',),                 'color':ROOT.kPink-9-4,       'tex':"c_{tb8}"},    
-            {'der':('ctb8','ctb8'),           'color':ROOT.kPink-9+2,       'tex':"c_{tb8}^2"},     
-            {'der':('cQb1',),                 'color':ROOT.kBlue-2-4,       'tex':"c_{Qb1}"},    
-            {'der':('cQb1','cQb1'),           'color':ROOT.kBlue-2+2,       'tex':"c_{Qb1}^2"},     
-            {'der':('cQb8',),                 'color':ROOT.kRed-2-4,        'tex':"c_{Qb8}"},    
-            {'der':('cQb8','cQb8'),           'color':ROOT.kRed-2+2,        'tex':"c_{Qb8}^2"},     
-            {'der':('cQtQb1Re',),             'color':ROOT.kGreen-2-4,      'tex':"c_{QtQb1Re}"},
-            {'der':('cQtQb1Re','cQtQb1Re'),   'color':ROOT.kGreen-2+2,      'tex':"c_{QtQb1Re}^2"}, 
-            {'der':('cQtQb8Re',),             'color':ROOT.kCyan-2-4,       'tex':"c_{QtQb8Re}"},
-            {'der':('cQtQb8Re','cQtQb8Re'),   'color':ROOT.kCyan-2+2,       'tex':"c_{QtQb8Re}^2"}, 
-            {'der':('cQtQb1Im',),             'color':ROOT.kMagenta-2-4,    'tex':"c_{QtQb1Im}"},
-            {'der':('cQtQb1Im','cQtQb1Im'),   'color':ROOT.kMagenta-2+2,    'tex':"c_{QtQb1Im}^2"}, 
-            {'der':('cQtQb8Im',),             'color':ROOT.kCyan+3-4,       'tex':"c_{QtQb8Im}"},
-            {'der':('cQtQb8Im','cQtQb8Im'),   'color':ROOT.kCyan+3+2,       'tex':"c_{QtQb8Im}^2"}, 
-        ]    
+for idx, theta in enumerate(theta_):
+    entry = {'color':color[idx],    'param':{args.EFTcoeff: theta },    'tex':'c_'+"{"+args.EFTcoeff[1:]+"}"+str("=")+"%.2f" %theta,       'binning':[20,0,1.5]}
+    eft_configs.append(entry)
+   
+
+if args.show_derivatives:
+    eft_derivatives = [  
+    ]    
  
 for eft in eft_configs:
     eft['name'] = "_".join( ["signal"] + ( ["SM"] if len(eft['param'])==0 else [ "_".join([key, str(val)]) for key, val in sorted(eft['param'].iteritems())] ) ) 
@@ -204,10 +111,27 @@ def make_eft_weights( event, sample):
     if (args.signal == "TT_2L"):
         SM_ref_weight = event.genWeight * lumi * signal.xsec * 1000 / signal.total_genWeight 
     if not (args.signal == "TT_2L"):
-        SM_ref_weight = event.p_C[0] * lumi * signal.xsec * 1000 / signal.total_genWeight  
-    event.eft_weights     = [SM_ref_weight]+[eft['func'](event, sample)/eft_configs[0]['func'](event, sample)*SM_ref_weight for eft in eft_configs[1:]]
-    
-    event.eft_derivatives = [der['func'](event, sample)*SM_ref_weight for der in eft_derivatives]
+        SM_ref_weight = event.p_C[0] * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    event.eft_weights     = [SM_ref_weight]+[eft['func'](event, sample) / event.p_C[0] * SM_ref_weight for eft in eft_configs[1:]]
+    # event.eft_weights     = [SM_ref_weight]+[(event.p_C[0]+eft['param']['cQQ8']*event.p_C[1]+eft['param']['cQQ8']*eft['param']['cQQ8']*event.p_C[8]) / event.p_C[0] * SM_ref_weight for eft in eft_configs[1:]]
+    #print(event.eft_weights)
+    # print(event.eft_weights2)
+    # print()
+    #print(event.p_C[0] + 1.0* event.p_C[1]+1.0**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] + 0.9* event.p_C[1]+0.9**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] + 0.8* event.p_C[1]+0.8**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] + 0.7* event.p_C[1]+0.7**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] + 0.6* event.p_C[1]+0.6**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] - 1.0* event.p_C[1]+1.0**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] - 0.9* event.p_C[1]+0.9**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] - 0.8* event.p_C[1]+0.8**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] - 0.7* event.p_C[1]+0.7**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #print(event.p_C[0] - 0.6* event.p_C[1]+0.6**2*event.p_C[8]) * lumi * signal.xsec * 1000 / signal.total_genWeight 
+    #
+    # print(event.genWeight)
+    event.eft_derivatives = [der['func'](event, sample)/event.p_C[0] for der in eft_derivatives]
+    # print (event.eft_derivatives)
+    # assert False
     
 stack = Stack( )
 
@@ -237,10 +161,10 @@ def weight_getter( branches ):
 
 
 
-import tttt.MVA.configs as configs 
-config = getattr(configs, 'ttbb_2l')
+import ttbb_2l as config
 read_variables = ["genWeight/F"] if args.signal=="TT_2L" else []
 read_variables+=config.read_variables
+
 
 preselection = [ 
     #("debug", "(evt==25857178)") 
@@ -550,7 +474,7 @@ def drawObjects( hasData = False ):
 def drawPlots(plots, subDirectory=''):
   for log in [False, True]:
     plot_directory_ = os.path.join(plot_directory, subDirectory)
-    plot_directory_ = os.path.join(plot_directory_, "log") if log else os.path.join(plot_directory_, "lin")
+    plot_directory_ = os.path.join(plot_directory_, "log", args.EFTcoeff) if log else os.path.join(plot_directory_, "lin", args.EFTcoeff)
     for plot in plots:
         if  type(plot)==Plot2D:
             plotting.draw2D( plot,
@@ -571,9 +495,9 @@ def drawPlots(plots, subDirectory=''):
             plotting.draw(plot,
               plot_directory = plot_directory_,
               #ratio =  None,
-              ratio = {'histos':[(i,0) for i in range(1,len(plot.histos))], 'yRange':(0.1,1.9)} if not args.signal=='TT_2L' else {'histos':[(0,0) ], 'yRange':(0.1,1.9)},
+              ratio = {'histos':[(i,0) for i in range(1,len(plot.histos))], 'yRange':(0.9,1.1)} if args.signal == "TTTT_MS" else {'histos':[(i,0) for i in range(1,len(plot.histos))], 'yRange':(0.95,1.05)} ,
               logX = False, logY = log, sorting = False,
-              yRange = (0.03, "auto") if log else "auto",
+              yRange = (0.03, 5) if log else "auto",
               scaling = scale,
               legend =  ( (0.17,0.9-0.05*sum(map(len, plot.histos))/2,1.,0.9), 2), 
               drawObjects = drawObjects( ),
