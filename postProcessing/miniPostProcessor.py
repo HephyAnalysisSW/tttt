@@ -127,7 +127,9 @@ def filler( event ):
     genJets = list( filter( lambda j:isGoodGenJet( j, max_jet_abseta = max_jet_abseta), allGenJets ) )
     #genJets = filter (lambda j: abs(j.eta())<2.5, fwliteReader.event.genJets)
     #genJets = filter (lambda j: abs(j.eta())<2.5, allgenJets)
-    
+   
+    print (genJets)
+ 
     #print(genJets)
     if len(genJets)>0:
         store_jets = [j for j in genJets]
