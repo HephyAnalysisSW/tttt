@@ -13,18 +13,18 @@ from RootTools.core.standard             import *
 
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.user                     import *
-
+# Hello
 # Arguments
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 #argParser.add_argument('--small',                             action='store_true', help='Run only on a small subset of the data?')
 argParser.add_argument('--overwrite',      action='store_true', help='Overwrite?')
-argParser.add_argument('--source',         action='store', default='/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v7/UL2016/dilep-ht500/')
+argParser.add_argument('--source',         action='store', default='/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v7/UL2016/dilep/')
 argParser.add_argument('--target',         action='store', default='/scratch-cbe/users/$USER/tttt/nanoTuples/tttt_v7/UL2016')
 #argParser.add_argument('--version',        action='store', default='tttt_v7', help='which version to copy to?')
 argParser.add_argument('--target_subdir',  action='store', default=None, help='If specified, will write to "target/target_subdir" instead if "target/source_subdir-selection".')
-argParser.add_argument('--selection',      action='store', default='ht1000')
+argParser.add_argument('--selection',      action='store', default='SS')
 argParser.add_argument('--samples',        action='store',         nargs='*',  type=str, default=[],                  help="List of samples to be post-processed, given as CMG component name" )
 argParser.add_argument('--cores',          action='store',         type=int, default=-1,                  help="How many jobs to parallelize?" )
 args = argParser.parse_args()
