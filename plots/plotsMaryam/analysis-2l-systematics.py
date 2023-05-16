@@ -48,6 +48,7 @@ args = argParser.parse_args()
 
 if args.noData: args.plot_directory += "_noData"
 if args.small: args.plot_directory += "_small"
+if args.sys is not 'central': args.plot_directory += "_%s" %(args.sys)
 
 #Logger
 
@@ -58,68 +59,10 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 
 # Possible Syst variations
-variations = ['LeptonSFDown', 
-              'LeptonSFUp',
-              'PUDown',
-              'PUUp',
-              'L1PrefireDown',
-              'L1PrefireUp',
-              #'TriggerDown',
-              #'TriggerUp',
-              'BTagSFJesDown', 
-              'BTagSFJesUp',
-              'BTagSFHfDown',
-              'BTagSFHfUp',
-              'BTagSFLfDown',
-              'BTagSFLfUp',
-              'BTagSFHfs1Down',
-              'BTagSFHfs1Up',
-              'BTagSFLfs1Down',
-              'BTagSFLfs1Up',
-              'BTagSFHfs2Down',
-              'BTagSFHfs2Up',
-              'BTagSFLfs2Down',
-              'BTagSFLfs2Up',
-              'BTagSFCfe1Down',
-              'BTagSFCfe1Up',
-              'BTagSFCfe2Down',
-              'BTagSFCfe2Up',
-             ]
+variations = ['LeptonSFDown', 'LeptonSFUp']
 
-jesUncertainties = [
-    "Total",
-    "AbsoluteMPFBias",
-    "AbsoluteScale",
-    "AbsoluteStat",
-    "RelativeBal",
-    "RelativeFSR",
-    "RelativeJEREC1",
-    "RelativeJEREC2",
-    "RelativeJERHF",
-    "RelativePtBB",
-    "RelativePtEC1",
-    "RelativePtEC2",
-    "RelativePtHF",
-    "RelativeStatEC",
-    "RelativeStatFSR",
-    "RelativeStatHF",
-    "PileUpDataMC",
-    "PileUpPtBB",
-    "PileUpPtEC1",
-    "PileUpPtEC2",
-    "PileUpPtHF",
-    "PileUpPtRef",
-    "FlavorQCD",
-    "Fragmentation",
-    "SinglePionECAL",
-    "SinglePionHCAL",
-    "TimePtEta",
-]
-    
-jetVariations= ["jes%s%s"%(var, upOrDown) for var in jesUncertainties for upOrDown in ["Up","Down"]]
-variations += jetVariations
 
-# Check if we know the variation if not central don't use data!
+# Check if we know the variation else don't use data!
 if args.sys not in variations:
     if args.sys == "central":
         logger.info( "Running central samples (no sys variation)")
@@ -192,18 +135,15 @@ jetVars     =   ['pt/F',
                  'btagDeepFlavB/F',
                  'btagDeepFlavCvB/F',
                  'btagDeepFlavQG/F',
-                 #'btagDeepFlavb/F',
-                 #'btagDeepFlavbb/F',
-                 #'btagDeepFlavlepb/F',
+                 'btagDeepFlavb/F',
+                 'btagDeepFlavbb/F',
+                 'btagDeepFlavlepb/F',
                  'btagDeepb/F',
                  'btagDeepbb/F',
                  'chEmEF/F',
                  'chHEF/F',
                  'neEmEF/F',
                  'neHEF/F' ]
-
-if args.sys in jetVariations:
-  jetVars += ["pt_"+args.sys+"/F"]
 
 jetVarNames     = [x.split('/')[0] for x in jetVars]
 
@@ -223,39 +163,15 @@ read_variables += [
 
 #MC only
 read_variables_MC = [
-    'reweightBTagSF_central/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
+    'reweightBTag_SF/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
 
 sequence = []
 
-#Jet Selection modifier
-def jetSelectionModifier( sys, returntype = "func"):
-  variiedJetObservables = ['nJetGood', 'nBTag', 'ht']
-  if returntype == "func":
-    def changeCut_( string ):
-      for s in variiedJetObservables:
-        string = string.replace(s, s+'_'+sys)
-        return changeCut_
-  elif returntype == "list":
-    list = []
-    for v in variiedJetObservables:
-      string = v+'_'+sys
-      list.append(string)    
-    return list
-
-#Add a selection selection Modifier
-if args.sys in jetVariations:
-    selectionModifier = jetSelectionModifier(args.sys)
-    read_variables_MC += ["nJetGood_"+args.sys+"/I","nBTag_"+args.sys+"/I","ht_"+args.sys+"/F"]
-else:
-    selectionModifier = None
-
-
 def make_jets( event, sample ):
     event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
-
 
 sequence.append( make_jets )
 
@@ -294,39 +210,16 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
                 return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
     return func_
 
-#TTree formulas
-
-if args.sys in jetVariations:
-  ttreeFormulas = {"ht_"+args.sys :"Sum$(JetGood_pt_"+args.sys+")"}
-else: ttreeFormulas = {} 
+# We don't use tree formulas, but I leave them so you understand the syntax. TTreeFormulas are faster than if we compute things in the event loop.
+ttreeFormulas = { #"bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))"
+#                    "nGenJet_absHF5":"Sum$(abs(GenJet_hadronFlavour)==5&&{genJetSelection})".format(genJetSelection=genJetSelection),
+    }
 
 #list all the reweights
-weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
+weightnames = ['reweightLeptonSF', 'reweightBTag_SF', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
         'LeptonSFUp'    : ('reweightLeptonSF','reweightLeptonSFUp'),
-        'BTagSFJesUp'   : ('reweightBTagSF_central','reweightBTagSF_up_jes'),
-        'BTagSFJesDown' : ('reweightBTagSF_central','reweightBTagSF_down_jes'),
-        'BTagSFHfDown'  : ('reweightBTagSF_central','reweightBTagSF_down_hf'),
-        'BTagSFHfUp'    : ('reweightBTagSF_central','reweightBTagSF_up_hf'),
-        'BTagSFLfdown'  : ('reweightBTagSF_central','reweightBTagSF_down_lf'),
-        'BTagSFLfUp'    : ('reweightBTagSF_central','reweightBTagSF_up_lf'),
-        'BTagSFHfs1Down': ('reweightBTagSF_central','reweightBTagSF_down_hfstats1'),
-        'BTagSFHfs1Up'  : ('reweightBTagSF_central','reweightBTagSF_up_hfstats1'),
-        'BTagSFLfs1Down': ('reweightBTagSF_central','reweightBTagSF_down_lfstats1'),
-        'BTagSFLfs1Up'  : ('reweightBTagSF_central','reweightBTagSF_up_lfstats1'),
-        'BTagSFHfs2Down': ('reweightBTagSF_central','reweightBTagSF_down_hfstats2'),
-        'BTagSFHfs2Up'  : ('reweightBTagSF_central','reweightBTagSF_up_hfstats2'),
-        'BTagSFLfs2Down': ('reweightBTagSF_central','reweightBTagSF_down_lfstats2'),
-        'BTagSFLfs2Up'  : ('reweightBTagSF_central','reweightBTagSF_up_lfstats2'),
-        'BTagSFCfe1Down': ('reweightBTagSF_central','reweightBTagSF_Down_cferr1'),
-        'BTagSFCfe1Up'  : ('reweightBTagSF_central','reweightBTagSF_up_cferr1'),
-        'BTagSFCfe2Down': ('reweightBTagSF_central','reweightBTagSF_Down_cferr2'),
-        'BTagSFCfe2Up'  : ('reweightBTagSF_central','reweightBTagSF_up_cferr2'),
-        'L1PrefireUp'   : ('reweightL1Prefire','reweightL1PrefireUp'),
-        'L1PrefireDown' : ('reweightL1Prefire','reweightL1PrefireDown'),
-        'TriggerUp'     : ('reweightTrigger','reweightTriggerUp'),
-        'TriggerDown'   : ('reweightTrigger','reweightTriggerDown')
     }
 
 if args.sys in sys_weights:
@@ -335,20 +228,6 @@ if args.sys in sys_weights:
         if weight == oldname:
           weightnames[i] = newname
           read_variables_MC += ['%s/F'%(newname)]
-
-
-if args.sys in jetVariations:
-    if "Up" in args.sys:
-      oldname, newname = sys_weights['BTagSFJesUp']
-    elif "Down" in args.sys:
-      oldname, newname = sys_weights['BTagSFJesDown']
-    for i, weight in enumerate(weightnames):
-        if weight == oldname:
-          weightnames[i] = newname
-          read_variables_MC += ['%s/F'%(newname)]
-
-
-
 
 
 
@@ -386,8 +265,7 @@ for i_mode, mode in enumerate(allModes):
         stack = Stack(mc)
 
     # Define everything we want to have common to all plots
-    selection_string = selectionModifier(cutInterpreter.cutString(args.selection)) if selectionModifier is not None else cutInterpreter.cutString(args.selection) 
-    Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+selection_string+")")
+    Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+cutInterpreter.cutString(args.selection)+")")
 
     plots = []
 
@@ -402,6 +280,22 @@ for i_mode, mode in enumerate(allModes):
         attribute = lambda event, sample: event.JetGood_btagDeepFlavB[0],
         binning = [20,0,1],
     ))
+
+    # plots.append(Plot( name = 'reweightLeptonSF' , texX = 'SF' , texY = 'number of events',
+    #     attribute = lambda event, sample: event.reweightLeptonSF,
+    #     binning = [20,0.5,1.5],
+    # ))
+
+    # for model in models:
+    #     for class_ in model['classes']:
+    #         model_name = model['name']+'_'+class_
+    #         plots.append(Plot(
+    #             name = model_name,
+    #             texX = model_name, texY = 'Number of Events',
+    #             attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),
+    #             binning=[50,0,1],
+    #             addOverFlowBin='upper',
+    #         ))
 
     plots.append(Plot(
       name = 'nVtxs', texX = 'vertex multiplicity', texY = 'Number of Events',
@@ -593,11 +487,18 @@ for i_mode, mode in enumerate(allModes):
       binning=[600/30,0,600],
     ))
 
-    plots.append(Plot(
-      texX = 'p_{T}(subleading jet) (GeV)', texY = 'Number of Events / 30 GeV',
-      name = 'jet1_pt', attribute = lambda event, sample: event.JetGood_pt[1],
-      binning=[600/30,0,600],
-    ))
+    # plots.append(Plot(
+    #   texX = 'p_{T}(subleading jet) (GeV)', texY = 'Number of Events / 30 GeV',
+    #   name = 'jet1_pt', attribute = lambda event, sample: (event.JetGood_pt[1] if event.JetGood_btagDeepFlavbb>0.002),
+    #   binning=[600/30,0,600],
+    # ))
+
+
+    # plots.append(Plot(
+    #   texX = 'p_{T}(subleading jet) most bb (GeV)', texY = 'Number of Events / 30 GeV',
+    #   name = 'jet1_ptbb', attribute = lambda event, sample: event.JetGood_pt[1] if (event.JetGood_btagDeepFlavbb[1]=>0.002),
+    #   binning=[600/30,0,600],
+    # ))
 
     for index in range(2):
         for abs_pdg in [11, 13]:
@@ -689,28 +590,7 @@ for i_mode, mode in enumerate(allModes):
                       texX = '%s(%s_{%i}) (GeV)'%(cbIdFlag, lep_name, index), texY = 'Number of Events',
                       name = '%s%i_%s_Flag'%(lep_name, index, cbIdFlag), attribute = lep_getter("vidNestedWPBitmap", index, abs_pdg, functor = cbEleIdFlagGetter(cbIdFlag)),
                       binning=[5,0,5],
-                ))
-
-
-    if args.sys in jetVariations:
-
-      plots.append(Plot(
-        texX = 'N_{jets}_'+args.sys, texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "nJetGood_"+args.sys+"/I" ), #nJet varied 
-        binning=[8,3.5,11.5],
-      )) 
-
-      plots.append(Plot(
-        texX = 'N_{b-tag}_'+args.sys, texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "nBTag_"+args.sys+"/I" ), #nJetSelected
-        binning=[5, 1.5,6.5],
-      ))
-
-      plots.append(Plot(
-        texX = 'H_{T} (GeV)_'+args.sys, texY = 'Number of Events / 30 GeV',
-        name = 'ht_'+args.sys, attribute = TreeVariable.fromString( "ht_"+args.sys+"/F" ),
-        binning=[1500/50,0,1500],
-      ))
+                    ))
 
     plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
 
@@ -767,7 +647,7 @@ if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
     except:
         print 'Could not create', plot_dir
-outfilename = plot_dir+'/tttt_'+args.sys+'.root'
+outfilename = plot_dir+'/Results.root'
 logger.info( "Saving in %s", outfilename )
 outfile = ROOT.TFile(outfilename, 'recreate')
 outfile.cd()
