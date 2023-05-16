@@ -158,7 +158,7 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 #Merge simulated background samples
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT]
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DY, DiBoson]
 #Add the data
 if not args.noData:
     from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
@@ -441,6 +441,21 @@ for i_mode, mode in enumerate(allModes):
                 texX = model_name, texY = 'Number of Events',
                 attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
                 binning=[10,0,1],
+                addOverFlowBin='upper',
+            ))
+
+    for model in models:
+        for class_ in model['classes']:
+	    if "TTTT" in class_ : plot_name = "2l_4t"
+	    if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
+	    if "TTLep_cc" in class_: plot_name = "2l_ttcc"
+	    if "TTLep_other" in class_: plot_name = "2l_ttlight"
+	    model_name = model['name']+'_'+class_
+            plots.append(Plot(
+                name = plot_name+"_course",
+                texX = model_name, texY = 'Number of Events',
+                attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
+                binning=Binning.fromThresholds([0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.82,0.84,0.86,0.88,0.90,0.92,0.94,0.96,0.98,1.0]),
                 addOverFlowBin='upper',
             ))
 
@@ -829,6 +844,8 @@ for plot in allPlots[allModes[0]]:
             elif "TTW" in histname: process = "TTW"
             elif "TTZ" in histname: process = "TTZ"
             elif "TTH" in histname: process = "TTH"
+   	    elif "DY" in histname: process = "DY"
+    	    elif "DiBoson" in histname: process = "DiBoson"
             elif "data" in histname: process = "data"
 	    elif "TTTT" in histname: process = "TTTT"
             h.Write(plot.name+"__"+process)
