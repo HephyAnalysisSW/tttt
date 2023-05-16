@@ -26,6 +26,7 @@ argParser.add_argument('--target',         action='store', default='/scratch-cbe
 argParser.add_argument('--target_subdir',  action='store', default=None, help='If specified, will write to "target/target_subdir" instead if "target/source_subdir-selection".')
 argParser.add_argument('--selection',      action='store', default='ht1000')
 argParser.add_argument('--samples',        action='store',         nargs='*',  type=str, default=[],                  help="List of samples to be post-processed, given as CMG component name" )
+argParser.add_argument('--cores',          action='store',         type=int, default=-1,                  help="How many jobs to parallelize?" )
 args = argParser.parse_args()
 
 # Logger
@@ -39,7 +40,7 @@ if args.target_subdir is not None:
     target = os.path.join( args.target, args.target_subdir)
 else:
     target = os.path.join( args.target, os.path.dirname(args.source).split('/')[-1]+'-'+args.selection)
-
+jobs = []
 for i_entry, entry in enumerate( os.listdir(args.source) ):
     sample_dir = os.path.join(args.source, entry)
     if os.path.isdir(sample_dir):
@@ -48,4 +49,20 @@ for i_entry, entry in enumerate( os.listdir(args.source) ):
         #if entry == args.sample:
         if len(args.samples)>0 and entry not in args.samples:
             continue
-        sample.copy_files( os.path.join(os.path.expandvars(target), entry), selection=cutInterpreter.cutString(args.selection), overwrite=args.overwrite)
+        jobs.append( {'sample':sample, 'target':os.path.join(os.path.expandvars(target), entry), 'selection':cutInterpreter.cutString(args.selection), 'overwrite':args.overwrite} )
+
+#import time
+#def wrapper_function( job ):
+#    print (job)
+#    time.sleep(5)
+def wrapper_function( job ):
+    job['sample'].copy_files(target=job['target'], selection=job['selection'], overwrite=job['overwrite'])
+
+if args.cores>0:
+    from multiprocessing import Pool
+    pool = Pool(processes=args.cores)
+    results = pool.map(wrapper_function, jobs)
+    pool.close()
+else:
+    for job in jobs:
+        wrapper_function( job ) 
