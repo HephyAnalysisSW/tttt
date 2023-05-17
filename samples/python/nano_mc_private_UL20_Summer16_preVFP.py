@@ -52,8 +52,17 @@ TTZToQQ             = Sample.nanoAODfromDAS("TTZToQQ"           , "/TTZToQQ_Tune
 TTHnobb             = Sample.nanoAODfromDAS("TTHnobb"           , "/ttHToNonbb_M125_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v2_nano_mc_UL20_private_v2-d1ccc56c1acec6daa815d540cddfd4b1/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=0.5085*(1-0.577))
 TTHTobb             = Sample.nanoAODfromDAS("TTHTobb"           , "/ttHTobb_M125_TuneCP5_13TeV-powheg-pythia8/schoef-crab_RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v2_nano_mc_UL20_private_v2-d1ccc56c1acec6daa815d540cddfd4b1/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=0.5085*(0.577))
 TTbb                = Sample.nanoAODfromDAS("TTbb"              , "/TTbb_4f_TTTo2L2Nu_TuneCP5-Powheg-Openloops-Pythia8/schoef-crab_RunIISummer20UL16MiniAODAPVv2-106X_mcRun2_asymptotic_preVFP_v11-v1_nano_mc_UL20_private_v2-d1ccc56c1acec6daa815d540cddfd4b1/USER", dbFile=dbFile, redirector=redirector, instance="phys03", overwrite=ov, xSection=4.59)
+#TTbb_ToLep_pow_CP5_hDown                 = Sample.nanoAODfromDAS("TTbb_ToLep_pow_CP5_hDown","/TTbb_4f_TTTo2L2Nu_hdampDOWN_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODAPVv9-106X_mcRun2_asymptotic_preVFP_v11-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
+#TTbb_ToLep_pow_CP5_hUp                   = Sample.nanoAODfromDAS("TTbb_ToLep_pow_CP5_hUp",  "/TTbb_4f_TTTo2L2Nu_hdampUP_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODAPVv9-106X_mcRun2_asymptotic_preVFP_v11-v1/NANOAODSIM", dbFile=dbFIle, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
+#TTbb_ToHad_pow_CP5_hDown           = Sample.nanoAODfromDAS("TTbb_ToHad_pow_CP5_hDown", "/TTbb_4f_TTToHadronic_hdampDOWN_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODv9-106X_mcRun2_asymptotic_v17-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
+#TTbb_ToHad_pow_CP5_hUp             = Sample.nanoAODfromDAS("TTbb_ToHad_pow_CP5_hUp", "/TTbb_4f_TTToHadronic_hdampUP_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODAPVv9-106X_mcRun2_asymptotic_preVFP_v11-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
+#TTbb_SemiLeptonic_pow_CP5_hDown    = Sample.nanoAODfromDAS("TTbb_SemiLeptonic_pow_CP5_hDown", "/TTbb_4f_TTToSemiLeptonic_hdampDOWN_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODv9-106X_mcRun2_asymptotic_v17-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
+#TTbb_SemiLeptonic_pow_CP5_hUp      = Sample.nanoAODfromDAS("TTbb_SemiLeptonic_pow_CP5_hUp", "/TTbb_4f_TTToSemiLeptonic_hdampUP_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL16NanoAODv9-106X_mcRun2_asymptotic_v17-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
 
-allSamples = [ TTTT, TTLep_pow_CP5, T_tch_pow, Tbar_tch_pow, T_tWch, TBar_tWch, TTWToLNu, TTWToQQ, TTZToLLNuNu, TTZToLLNuNu_m1to10, TTZToQQ, TTHnobb, TTHTobb, TTbb]
+
+
+
+allSamples = [ TTTT, TTLep_pow_CP5, T_tch_pow, Tbar_tch_pow, T_tWch, TBar_tWch, TTWToLNu, TTWToQQ, TTZToLLNuNu, TTZToLLNuNu_m1to10, TTZToQQ, TTHnobb, TTHTobb, TTbb]#, TTbb_ToLep_pow_CP5_hDown, TTbb_ToLep_pow_CP5_hUp, TTbb_ToHad_pow_CP5_hDown, #TTbb_ToHad_pow_CP5_hUp, TTbb_SemiLeptonic_pow_CP5_hDown, TTbb_SemiLeptonic_pow_CP5_hUp]
 
 for s in allSamples:
     s.isData = False
