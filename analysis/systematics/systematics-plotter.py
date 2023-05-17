@@ -76,7 +76,11 @@ mc = [ {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}"},
        {"name": "TTW", "legendText" : "t#bar{t}W"},
        {"name": "TTH", "legendText" : "t#bar{t}H"},
        {"name": "TTZ", "legendText" : "t#bar{t}Z"},
-       {"name": "TTTT", "legendText" : "t#bar{t}t#bar{t}"} ]
+       {"name": "TTTT", "legendText" : "t#bar{t}t#bar{t}"}, 
+       {"name": "DY", "legendText" : "DY"},
+       {"name": "DiBoson", "legendText" : "DiBoson"},
+
+	]
 
 plots = [{"name" : "nJetGood" ,     "texX": "nJet", "texY" : 'Number of Events'},
          {"name" : "nBTag",         "texX": "nJet", "texY" : 'Number of Events'},
@@ -112,6 +116,11 @@ plots = [{"name" : "nJetGood" ,     "texX": "nJet", "texY" : 'Number of Events'}
 	 {"name" : "2l_ttbb",	    "texX" : "tttt_2l_TTLep_bb", "texY" : "Number of Events"},
 	 {"name" : "2l_ttcc",  	    "texX" : "tttt_2l_TTLep_cc", "texY" : "Number of Events"},
 	 {"name" : "2l_ttlight",    "texX" : "tttt_2l_TTLep_other", "texY" : "Number of Events"},
+	 {"name" : "2l_4t_course", 	    "texX" : "tttt_2l_TTTT", "texY" : "Number of Events"},
+	 {"name" : "2l_ttbb_course",	    "texX" : "tttt_2l_TTLep_bb", "texY" : "Number of Events"},
+	 {"name" : "2l_ttcc_course",  	    "texX" : "tttt_2l_TTLep_cc", "texY" : "Number of Events"},
+	 {"name" : "2l_ttlight_course",     "texX" : "tttt_2l_TTLep_other", "texY" : "Number of Events"},
+
 
         ]
 

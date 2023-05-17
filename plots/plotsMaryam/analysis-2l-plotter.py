@@ -19,52 +19,16 @@ logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 
-hist_dir = "/groups/hephy/cms/maryam.shooshtari/www/tttt/plots/analysisPlots/4t_syst/RunII/all/"+args.selection
+hist_dir = "/groups/hephy/cms/maryam.shooshtari/www/tttt/plots/analysisPlots/4t_syst"
 if args.small: 
   hist_dir += "_small"
   args.plot_directory += "_small"
 
-nominalSample = ROOT.TFile.Open(os.path.join(hist_dir, "tttt_central.root"))
+nominalSample = ROOT.TFile.Open(os.path.join(hist_dir, 'RunII', "all", args.selection, "Results.root"))
 
-systematics = [ {"name" : "LeptonSF",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_LeptonSFUp.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_LeptonSFDown.root"))},
-                {"name" : "PU",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_PUUp.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_PUDown.root"))},
-                {"name" : "L1Prefire",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_L1PrefireUp.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_L1PrefireDown.root"))},
-#                {"name" : "BTagSFJes",
-#                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesUp.root")),
-#                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesDown.root"))},
-                {"name" : "BTagSFHf",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfUp.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfDown.root"))},
-                {"name" : "BTagSFHfs1",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfs1Up.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfs1Down.root"))},
-                {"name" : "BTagSFHfs2",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfs2Up.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfs2Down.root"))},
-                {"name" : "BTagSFLf",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFLfUp.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFLfDown.root"))},
-                {"name" : "BTagSFLfs1",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFLfs1Up.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFLfs1Down.root"))},
-                {"name" : "BTagSFLfs2",
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFLfs2Up.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFLfs2Down.root"))},
-#                {"name" : "BTagSFCfe1",
-#                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe1Up.root")),
-#                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe1Down.root"))},
-#                {"name" : "BTagSFCfe2",
-#                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe2Up.root")),
-#                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe2Down.root"))}, 
-                 {"name" : "jesTotal",
-                 "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_jesTotalUp.root")),
-                 "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_jesTotalDown.root"))},
+systematics = [{"name" : "LeptonSF",
+                "up" :  ROOT.TFile.Open(os.path.join(hist_dir+"_LeptonSF"+"Up", 'RunII', "all", args.selection, "Results.root")),
+                "down": ROOT.TFile.Open(os.path.join(hist_dir+"_LeptonSF"+"Down", 'RunII', "all", args.selection, "Results.root"))}
               ]
 
 mc = [ {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}"},

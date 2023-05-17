@@ -81,7 +81,7 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 #Merge simulated background samples
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT]
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT, DY, DiBoson]
 #Add the data
 if not args.noData:
     from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
@@ -148,11 +148,11 @@ jetVars     =   ['pt/F',
                  'btagDeepFlavB/F',
                  'btagDeepFlavCvB/F',
                  'btagDeepFlavQG/F',
-                 'btagDeepFlavb/F',
-                 'btagDeepFlavbb/F',
-                 'btagDeepFlavlepb/F',
-                 'btagDeepb/F',
-                 'btagDeepbb/F',
+                 #'btagDeepFlavb/F',
+                 #'btagDeepFlavbb/F',
+                 #'btagDeepFlavlepb/F',
+                 #'btagDeepb/F',
+                 #'btagDeepbb/F',
                  'chEmEF/F',
                  'chHEF/F',
                  'neEmEF/F',
@@ -213,34 +213,14 @@ def keras_predict( event, sample ):
         else:
             prediction = model['model'].predict( [flat_variables] )
         for i_class_, class_ in enumerate(model['classes']):
-            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
+            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )	    
 sequence.append( keras_predict )
 
+def low_MVA(event,sample):
+	this = getattr(event, "tttt_2l_TTTT")
+	setattr(event,"low_tttt_MVA",1 if this<=0.2 else 0)
+sequence.append(low_MVA)
 
-
-#
-# config = configs.tttt_2l
-# read_variables += config.read_variables
-# # Add sequence that computes the MVA inputs
-# def make_mva_inputs( event, sample ):
-#     for mva_variable, func in config.mva_variables:
-#         setattr( event, mva_variable, func(event, sample) )
-# sequence.append( make_mva_inputs )
-#
-# classes = [ts.name for ts in config.training_samples]
-#
-# models  = []
-#
-# def keras_predict( event, sample ):
-#     flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
-#     for model in models:
-#         if model['has_lstm']:
-#             prediction = model['model'].predict( [flat_variables, lstm_jets] )
-#         else:
-#             prediction = model['model'].predict( flat_variables )
-#         for i_class_, class_ in enumerate(model['classes']):
-#             setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
-# sequence.append( keras_predict )
 
 #Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
@@ -278,7 +258,7 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
     return func_
 
 # TTreeFormulas are faster than if we compute things in the event loop.
-ttreeFormulas = { "bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))",
+ttreeFormulas = { #"bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))",
 		  "nJetGood_pt30" : "Sum$(JetGood_pt>30)",
                   "nJetGood_pt40" : "Sum$(JetGood_pt>40)",
                   "nJetGood_pt50" : "Sum$(JetGood_pt>50)",
@@ -293,7 +273,7 @@ ttreeFormulas = { "bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_btag
                   "nBTag_tight_pt40"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>40)"  ,
                   "nBTag_loose_pt50"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>50)",
                   "nBTag_medium_pt50"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>50)" ,
-                  "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)"
+                  "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)",
 		 }
 
 yields     = {}
@@ -306,6 +286,7 @@ for i_mode, mode in enumerate(allModes):
 
 # This weight goes to the plot. DO NOT apply it again to the samples
     weight_ = lambda event, sample: event.weight if sample.isData else event.weight
+    #weight_ = lambda event, sample: event.low_tttt_MVA*(event.weight if sample.isData else event.weight)
 
     #Plot styling
     for sample in mc: sample.style = styles.fillStyle(sample.color)
@@ -346,20 +327,35 @@ for i_mode, mode in enumerate(allModes):
                 addOverFlowBin='upper',
             ))
 
-    plots.append(Plot( name = 'bbtag_discriminator' , texX = 'max(bb_over_blepb)' , texY = 'Number of Events',
-        attribute = lambda event, sample: event.bbTag_max_value,
-        binning = [30,0,3],
-    ))
+    for model in models:
+        for class_ in model['classes']:
+	    if "TTTT" in class_ : plot_name = "2l_4t"
+	    if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
+	    if "TTLep_cc" in class_: plot_name = "2l_ttcc"
+	    if "TTLep_other" in class_: plot_name = "2l_ttlight"
+	    model_name = model['name']+'_'+class_
+            plots.append(Plot(
+                name = plot_name+"_course",
+                texX = model_name, texY = 'Number of Events',
+                attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
+                binning=Binning.fromThresholds([0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.82,0.84,0.86,0.88,0.90,0.92,0.94,0.96,0.98,1.0]),
+                addOverFlowBin='upper',
+            ))
 
-    plots.append(Plot( name = 'bbTag_value_leadingJet' , texX = 'DeepFlavbb-jet0' , texY = 'Number of Events',
-        attribute = lambda event, sample: event.JetGood_btagDeepFlavbb[0],
-        binning = [20,0,1],
-    ))
-
-    plots.append(Plot( name = 'bbTag_value_subleadingJet' , texX = 'DeepFlavbb-jet1' , texY = 'Number of Events',
-        attribute = lambda event, sample: event.JetGood_btagDeepFlavbb[1],
-        binning = [20,0,1],
-    ))
+#    plots.append(Plot( name = 'bbtag_discriminator' , texX = 'max(bb_over_blepb)' , texY = 'Number of Events',
+#        attribute = lambda event, sample: event.bbTag_max_value,
+#        binning = [30,0,3],
+#    ))
+#
+#    plots.append(Plot( name = 'bbTag_value_leadingJet' , texX = 'DeepFlavbb-jet0' , texY = 'Number of Events',
+#        attribute = lambda event, sample: event.JetGood_btagDeepFlavbb[0],
+#        binning = [20,0,1],
+#    ))
+#
+#    plots.append(Plot( name = 'bbTag_value_subleadingJet' , texX = 'DeepFlavbb-jet1' , texY = 'Number of Events',
+#        attribute = lambda event, sample: event.JetGood_btagDeepFlavbb[1],
+#        binning = [20,0,1],
+#    ))
 
     plots.append(Plot( name = 'Btagging_discriminator_value_Jet0' , texX = 'DeepB J0' , texY = 'Number of Events',
         attribute = lambda event, sample: event.JetGood_btagDeepFlavB[0],

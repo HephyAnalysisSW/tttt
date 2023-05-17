@@ -33,7 +33,7 @@ class Plotter:
         self.systNames = []
         self.data = {}
         self.totalHist = ROOT.TH1F()
-        self.totalError = ROOT.TGraphErrors()
+        self.totalError = ROOT.TGraphAsymmErrors()
         self.stack = ROOT.THStack()
 	self.postFitUnc = ROOT.TH1F()
         
@@ -82,20 +82,18 @@ class Plotter:
 
         for smp in self.samples:
             if smp["name"] == sampleName:
-                delta = upHist.Clone()
-                delta.Add(downHist, -1)
-		for i in range(delta.GetNbinsX()):
-		    delta.SetBinContent(i,abs(delta.GetBinContent(i)))
-		scaledHist = smp["hist"].Clone()
-		scaledHist.Add(delta, 0.5)
-		self.systDeltas.append((sampleName, sysName, delta, scaledHist))
+                deltaUp = upHist.Clone()
+                deltaUp.Add(smp["hist"], -1)
+                deltaDown = downHist.Clone()
+                deltaDown.Add(smp["hist"], -1)
+                self.systDeltas.append((sampleName, sysName, deltaUp, deltaDown))
                 syst= {}
 		syst["name"] = sysName
 		syst["color"] = color
 		if not syst in self.systNames:
 			self.systNames.append(syst)
 
-        self.noSyst = False
+	self.noSyst = False
 
     def addPostFitUnc(self,hist):
 	
@@ -144,16 +142,25 @@ class Plotter:
             binXLow = self.totalHist.GetXaxis().GetBinLowEdge(binNumber)
             binContent = self.totalHist.GetBinContent(binNumber)
             self.totalError.SetPoint(binNumber, binCenter, binContent)
-
-            Err2 = pow(10, -20)
+            upErr2 = pow(10, -20)
+            downErr2 = pow(10, -20)
             for sys in self.systNames:
-                shift = 0
-                for sampleName, sysName, delta, scaledHist in self.systDeltas:
+                shiftUp = 0
+                shiftDown = 0
+                for sampleName, sysName, deltaUp, deltaDown in self.systDeltas:
                     if sys["name"] == sysName:
-                        shift   += delta.GetBinContent(binNumber)
-                Err2   += pow(shift,2)
-            xE  = (binXUp - binXLow)/2
-            self.totalError.SetPointError(binNumber, xE, sqrt(Err2)/2)
+		    	if deltaUp.GetMaximum()>=0:
+                        	shiftUp   += deltaUp.GetBinContent(binNumber)
+                        	shiftDown += deltaDown.GetBinContent(binNumber)
+		    	else:
+				shiftUp   += deltaDown.GetBinContent(binNumber)
+				shiftDown += deltaUp.GetBinContent(binNumber)
+
+                upErr2   += pow(shiftUp,2)
+                downErr2 += pow(shiftDown,2)
+            xELow  = binCenter - binXLow
+            xEHigh = binXUp - binCenter
+            self.totalError.SetPointError(binNumber, xELow, xEHigh, sqrt(downErr2), sqrt(upErr2))
 
         self.totalError.SetFillStyle(3245)
         self.totalError.SetFillColor(13)
@@ -187,15 +194,17 @@ class Plotter:
             errorgraph.GetPoint(point, d1, d2)
             Xval = float(d1)
             Yval = float(d2)
-            eX = errorgraph.GetErrorXlow(point)
-
+            eX_hi = errorgraph.GetErrorXhigh(point)
+            eX_lo = errorgraph.GetErrorXlow(point)
             if Yval==0:
-                eY = 0
+                eY_hi = 0
+                eY_lo = 0
             else:
-                eY = errorgraph.GetErrorYlow(point)/Yval
+                eY_hi = errorgraph.GetErrorYhigh(point)/Yval
+                eY_lo = errorgraph.GetErrorYlow(point)/Yval
 
             ratio.SetPoint(point, Xval, 1.0)
-            ratio.SetPointError(point, eX, eY)
+            ratio.SetPointError(point, eX_lo, eX_hi, eY_lo, eY_hi)
 
         return ratio
 
@@ -216,8 +225,7 @@ class Plotter:
    
    		X = h2.GetBinCenter(bin)
                 r = h1.Eval(h2.GetBinCenter(bin))/h2.GetBinContent(bin)
-   	        #print h1.GetErrorYlow(bin), d2, Yval, h2.GetBinContent(bin), r
-                print Xval, X , h2.GetBinCenter(bin), h1.Eval(h2.GetBinCenter(bin)),h2.GetBinContent(bin), r
+   	        print Xval, X , h2.GetBinCenter(bin), h1.Eval(h2.GetBinCenter(bin)),h2.GetBinContent(bin), r
 		eY = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
             ratio.SetPoint(bin,X,r)
            
@@ -321,38 +329,61 @@ class Plotter:
 
 	for sys in self.systNames:
 	    firstHist = True
-            for sampleName, sysName, delta, scaledHist in self.systDeltas:
+            for sampleName, sysName, deltaUp, deltaDown in self.systDeltas:
                  if sys["name"] == sysName:
 			if firstHist:
-				sys["totalScaledHist"] = scaledHist.Clone()
+				sys["totalUpHist"] = deltaUp.Clone()
+				sys["totalDownHist"] = deltaDown.Clone()
 				firstHist = False
 			else:
-			 	sys["totalScaledHist"].Add(scaledHist)
+			 	sys["totalUpHist"].Add(deltaUp)
+				sys["totalDownHist"].Add(deltaDown)
 
-	    sys["totalScaledHist"].Divide(self.totalHist)
-	    self.otherLegend.AddEntry(sys["totalScaledHist"], sys["name"])
-	    if sys["totalScaledHist"].GetMaximum() > self.yC:
-            		self.yC = sys["totalScaledHist"].GetMaximum()
+	    sys["totalUpHist"].Add(self.totalHist)
+	    sys["totalUpHist"].Divide(self.totalHist)
+	    sys["totalDownHist"].Add(self.totalHist)
+	    sys["totalDownHist"].Divide(self.totalHist)
+	    self.otherLegend.AddEntry(sys["totalUpHist"], sys["name"])
+	    if sys["totalUpHist"].GetMaximum() > self.yC:
+            		self.yC = sys["totalUpHist"].GetMaximum()
 
     def setComparisonDrawOptions(self):
 
 	for sys in self.systNames:
-		sys["totalScaledHist"].SetFillColor(0)
-		sys["totalScaledHist"].SetLineColor(sys["color"])
-		sys["totalScaledHist"].GetXaxis().SetTitle(self.xTitle)
-        	sys["totalScaledHist"].GetYaxis().SetTitle("Events/0.01")
-        	sys["totalScaledHist"].SetStats(False)
-        	sys["totalScaledHist"].SetTitle(self.name+"_syst")
+		sys["totalUpHist"].SetFillColor(0)
+		sys["totalUpHist"].SetLineColor(sys["color"])
+		sys["totalUpHist"].GetXaxis().SetTitle(self.xTitle)
+        	sys["totalUpHist"].GetYaxis().SetTitle("Events/0.01")
+        	sys["totalUpHist"].SetStats(False)
+        	sys["totalUpHist"].SetTitle(self.name+"_syst")
         	# precision 3 fonts. see https://root.cern.ch/root/htmldoc//TAttText.html#T5
-        	sys["totalScaledHist"].GetXaxis().SetTitleFont(43)
-        	sys["totalScaledHist"].GetYaxis().SetTitleFont(43)
-        	sys["totalScaledHist"].GetXaxis().SetLabelFont(43)
-        	sys["totalScaledHist"].GetYaxis().SetLabelFont(43)
-        	sys["totalScaledHist"].GetXaxis().SetTitleSize(24)
-        	sys["totalScaledHist"].GetYaxis().SetTitleSize(24)
-        	sys["totalScaledHist"].GetXaxis().SetLabelSize(20)
-        	sys["totalScaledHist"].GetYaxis().SetLabelSize(20)
-            	sys["totalScaledHist"].GetYaxis().SetTitleOffset( 1.3 )
+        	sys["totalUpHist"].GetXaxis().SetTitleFont(43)
+        	sys["totalUpHist"].GetYaxis().SetTitleFont(43)
+        	sys["totalUpHist"].GetXaxis().SetLabelFont(43)
+        	sys["totalUpHist"].GetYaxis().SetLabelFont(43)
+        	sys["totalUpHist"].GetXaxis().SetTitleSize(24)
+        	sys["totalUpHist"].GetYaxis().SetTitleSize(24)
+        	sys["totalUpHist"].GetXaxis().SetLabelSize(20)
+        	sys["totalUpHist"].GetYaxis().SetLabelSize(20)
+            	sys["totalUpHist"].GetYaxis().SetTitleOffset( 1.3 )
+
+		sys["totalDownHist"].SetFillColor(0)
+		sys["totalDownHist"].SetLineColor(sys["color"])
+		sys["totalDownHist"].SetLineStyle(4)
+		sys["totalDownHist"].GetXaxis().SetTitle(self.xTitle)
+        	sys["totalDownHist"].GetYaxis().SetTitle("Events/0.01")
+        	sys["totalDownHist"].SetStats(False)
+        	sys["totalDownHist"].SetTitle(self.name+"_syst")
+        	# precision 3 fonts. see https://root.cern.ch/root/htmldoc//TAttText.html#T5
+        	sys["totalDownHist"].GetXaxis().SetTitleFont(43)
+        	sys["totalDownHist"].GetYaxis().SetTitleFont(43)
+        	sys["totalDownHist"].GetXaxis().SetLabelFont(43)
+        	sys["totalDownHist"].GetYaxis().SetLabelFont(43)
+        	sys["totalDownHist"].GetXaxis().SetTitleSize(24)
+        	sys["totalDownHist"].GetYaxis().SetTitleSize(24)
+        	sys["totalDownHist"].GetXaxis().SetLabelSize(20)
+        	sys["totalDownHist"].GetYaxis().SetLabelSize(20)
+            	sys["totalDownHist"].GetYaxis().SetTitleOffset( 1.3 )
 
 
 
@@ -449,7 +480,7 @@ class Plotter:
 		if not self.hasPostFitUnc :
 		    ratio_data = self.getRatio(self.data["hist"], self.totalHist)
                     self.setRatioDrawOptions(ratio_data)
-                    ratio_data.Draw("P SAME")
+                    ratio_data.Draw("X0 E0 P SAME")
 		else:
 		    ratio_data = self.getPostFitDataRatio(self.data["hist"], self.postFitUnc)
 		    self.setRatioDrawOptions(ratio_data)
@@ -466,17 +497,25 @@ class Plotter:
             pad.SetLeftMargin(0.15)
             pad.SetTopMargin(0.07)
             pad.SetRightMargin(0.05)
+            line = self.getRatioLine(self.totalHist)
+            self.setRatioDrawOptions(line)
+            line.SetFillColor(0)
+            line.SetLineColor(13)
+            line.SetLineWidth(2)
+            line.Draw("hist")
 	    pad.cd()
             pad.SetTitle(self.name+"_syst")
 
 	    isFirstHere = True
 	    for sys in self.systNames:
 		    if isFirstHere:
-			    sys["totalScaledHist"].GetYaxis().SetRangeUser(1, self.yC*1.3)
-			    sys["totalScaledHist"].Draw("hist")
+			    sys["totalUpHist"].GetYaxis().SetRangeUser(0.8, self.yC*1.3)
+			    sys["totalUpHist"].Draw("hist")
+			    sys["totalDownHist"].Draw("hist same")
 			    isFirstHere = False
 		    else:
-			    sys["totalScaledHist"].Draw("hist same")
+			    sys["totalUpHist"].Draw("hist same")
+			    sys["totalDownHist"].Draw("hist same")
 
 	    self.otherLegend.SetFillStyle(0)
             self.otherLegend.SetShadowColor(ROOT.kWhite)
