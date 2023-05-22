@@ -43,6 +43,7 @@ argParser.add_argument('--noData',         action='store_true', help='Do not plo
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?')
 argParser.add_argument('--plot_directory', action='store', default='4t')
 argParser.add_argument('--selection',      action='store', default='trg-dilepL-OS-minDLmass20-onZ1-njet4p-btag2p-ht500')
+argParser.add_argument('--era',           action='store', default='RunII', help= 'Plot year split or inclusively')
 args = argParser.parse_args()
 
 # DIrectory naming parser options
@@ -61,6 +62,21 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 #Simulated samples
 
 from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+
+
+if args.era not in ["Run2016_preVFP", "Run2016", "Run2017", "Run2018", "RunII"]:
+    raise Exception("Era %s not known"%args.era)
+if args.era == 'Run2016_preVFP':
+        from tttt.samples.nano_mc_private_UL20_Summer16_preVFP_postProcessed_dilep import *
+if args.era == 'Run2016':
+        from tttt.samples.nano_mc_private_UL20_Summer16_postProcessed_dilep import *
+if args.era == 'Run2017':
+        from tttt.samples.nano_mc_private_UL20_Fall17_postProcessed_dilep import *
+if args.era == 'Run2018':
+        from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import *
+if args.era == 'RunII':
+        from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+
 
 # Split dileptonic TTBar into three different contributions
 sample_TTLep = TTLep
@@ -84,15 +100,24 @@ TTLep_other.setSelectionString( "genTtbarId%100<40" )
 mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT, DY, DiBoson]
 #Add the data
 if not args.noData:
-    from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
-    data_sample = RunII
+    if args.era == 'Run2016_preVFP':
+        from tttt.samples.nano_data_private_UL20_Run2016_preVFP_postProcessed_dilep import Run2016_preVFP as data_sample
+    if args.era == 'Run2016':
+        from tttt.samples.nano_data_private_UL20_Run2016_postProcessed_dilep import Run2016 as data_sample
+    if args.era == 'Run2017':
+        from tttt.samples.nano_data_private_UL20_Run2017_postProcessed_dilep import Run2017 as data_sample
+    if args.era == 'Run2018':
+        from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
+    if args.era == 'RunII':
+        from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII as data_sample
+    #data_sample = RunII
     data_sample.name = "data"
     all_samples = mc +  [data_sample]
 else:
     all_samples = mc
 
 #Luminosity scaling. Here we compute the scaling of the simulation to the data luminosity (event.weight corresponds to 1/fb for simulation, hence we divide the data lumi in pb^-1 by 1000)
-
+#if args.era == 'Run2016_preVFP':
 lumi_scale = 137. if args.noData else data_sample.lumi/1000.
 
 for sample in mc:
@@ -122,7 +147,10 @@ def drawObjects( dataMCScale, lumi_scale ):
 
 def drawPlots(plots, mode, dataMCScale):
   for log in [False, True]:
-    plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), args.selection)
+    if args.era in ["Run2016_preVFP", "Run2016", "Run2017", "Run2018"]:
+        plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, args.era, mode + ("_log" if log else ""), args.selection)
+    elif args.era == "RunII":
+        plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', mode + ("_log" if log else ""), args.selection)
     for plot in plots:
       if not max(l.GetMaximum() for l in sum(plot.histos,[])): continue # Empty plot
 
@@ -213,7 +241,7 @@ def keras_predict( event, sample ):
         else:
             prediction = model['model'].predict( [flat_variables] )
         for i_class_, class_ in enumerate(model['classes']):
-            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )	    
+            setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
 sequence.append( keras_predict )
 
 def low_MVA(event,sample):
