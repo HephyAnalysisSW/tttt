@@ -27,20 +27,21 @@ args = get_parser().parse_args()
 from Analysis.Tools.DirDB import DirDB
 dirDB = DirDB(os.path.join( user.cache_dir, 'normalizationCache'))
 
-if args.sampleFile is not None:
+if args.DAS is None:
     exec( "from %s import allSamples as samples"%args.sampleFile )
     with open( "makeNormalizations.sh", 'w' if not os.path.exists("makeNormalizations.sh") else "a" ) as f:
         for sample in samples:
-            f.write("python makeNormalizations.py --DAS %s %s --vector LHEPdfWeight --len 101\n"%(sample.DAS, '--overwrite' if args.overwrite else ''))
-            f.write("python makeNormalizations.py --DAS %s %s --vector PSWeight --len 4\n"      %(sample.DAS, '--overwrite' if args.overwrite else ''))
-            f.write("python makeNormalizations.py --DAS %s %s --vector LHEScaleWeight --len 9\n"%(sample.DAS, '--overwrite' if args.overwrite else ''))
+            f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector LHEPdfWeight --len 101\n"%(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
+            f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector PSWeight --len 4\n"      %(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
+            f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector LHEScaleWeight --len 9\n"%(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
         f.write("\n")
 
     print ("Job commands added to makeNormalizations.sh")
+else:
+    # Logging
+    import tttt.Tools.logger as _logger
+    logger  = _logger.get_logger(args.logLevel)
+    import RootTools.core.logger as _logger_rt
+    logger_rt = _logger_rt.get_logger(args.logLevel)
 
-# Logging
-import tttt.Tools.logger as _logger
-logger  = _logger.get_logger(args.logLevel)
-import RootTools.core.logger as _logger_rt
-logger_rt = _logger_rt.get_logger(args.logLevel)
-
+    exec( "from %s import %s as sample"% (args.sampleFile, args.sample ) )
