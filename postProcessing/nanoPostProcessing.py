@@ -435,7 +435,7 @@ if options.era == "2017":
     branchKeepStrings_DATAMC += [ "METFixEE2017_*" ]
 
 #branches to be kept for MC samples only
-branchKeepStrings_MC = [ "Generator_*", "GenPart_*", "nGenPart", "genWeight", "Pileup_nTrueInt","GenMET_*", "nGenJet", "GenJet_*", "genTtbarId"]
+branchKeepStrings_MC = [ "Generator_*", "GenPart_*", "nGenPart", "genWeight", "Pileup_nTrueInt","GenMET_*", "nGenJet", "GenJet_*", "genTtbarId", "PSWeight"]
 branchKeepStrings_MC.extend(["LHEWeight_originalXWGTUP"])
 
 #branches to be kept for data only
@@ -849,7 +849,7 @@ def filler( event ):
         pdf_weights = [reader.sample.chain.GetLeaf("LHEPdfWeight").GetValue(i_weight) for i_weight in range(r.nLHEPdfWeight)]
         for i,w in enumerate(pdf_weights):
             event.PDF_Weight[i] = w
-        event.nPDF = r.nLHEPdfWeight
+        event.nPDF = r.LHEPdfWeight
 
     ################################################################################
     # reweights
