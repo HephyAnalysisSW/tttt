@@ -43,9 +43,8 @@ special_cuts = {
     #"OS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0)",
     #"SS":              "(Sum$(lep_isFO)==2&&Sum$(lep_isTight)==2&&(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0)",
 
-    "OS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0",
-    "SS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0",
-
+    "OS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)<0&&(abs(l2_pdgId)>=11)",
+    "SS":              "(l1_pdgId/abs(l1_pdgId))*(abs(l2_pdgId)/l2_pdgId)>0&&(abs(l2_pdgId)>=11)",
 
     "trg":             "triggerDecision",
 
