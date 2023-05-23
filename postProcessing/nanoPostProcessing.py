@@ -837,19 +837,19 @@ def filler( event ):
         for i,w in enumerate(scale_weights):
             event.scale_Weight[i] = w/scale_norm_histo.GetBinContent( i+1 )
             #print w, scale_norm_histo.GetBinContent( i+1 )
-        event.nscaleWeight = r.nLHEScaleWeight
+        event.nscale = r.nLHEScaleWeight
 
         pdf_weights = [reader.sample.chain.GetLeaf("LHEPdfWeight").GetValue(i_weight) for i_weight in range(r.nLHEPdfWeight)]
         for i,w in enumerate(pdf_weights):
             event.PDF_Weight[i] = w/pdf_norm_histo[i+1]
             #print w, pdf_norm_histo.GetBinContent( i+1 )
-        event.nPDFWeight = r.nLHEPdfWeight
+        event.nPDF = r.nLHEPdfWeight
 
         ps_weights = [reader.sample.chain.GetLeaf("PSWeight").GetValue(i_weight) for i_weight in range(r.nPSWeight)]
         for i,w in enumerate(ps_weights):
             event.PS_Weight[i] = w/ps_norm_histo[i+1]
             #print w, scale_norm_histo.GetBinContent( i+1 )
-        event.nPSWeight = r.nPSWeight
+        event.nPS = r.nPSWeight
 
     ################################################################################
     # reweights
