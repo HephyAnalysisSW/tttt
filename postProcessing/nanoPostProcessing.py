@@ -594,9 +594,9 @@ if addReweights:
     new_variables.append( "chi2_ndof/F" )
 
 if sample.isMC:
-    new_variables.append( TreeVariable.fromString("nscaleWeight/I") )
+    #new_variables.append( TreeVariable.fromString("nscaleWeight/I") )
     new_variables.append( TreeVariable.fromString("scale[Weight/F]") )
-    new_variables.append( TreeVariable.fromString("nPDFWeight/I") )
+    #new_variables.append( TreeVariable.fromString("nPDFWeight/I") )
     new_variables.append( VectorTreeVariable.fromString("PDF[Weight/F]", nMax=150) ) # There are more than 100 PDF weights
     new_variables.append( TreeVariable.fromString("nPSWeight/I") )
     new_variables.append( VectorTreeVariable.fromString("PS[Weight/F]") ) 
