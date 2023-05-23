@@ -39,7 +39,6 @@ python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose
 python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose --skim dilep --era UL2016 --processingEra tttt_v7 --sample WZTo1L1Nu2Q #SPLIT23
 python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose --skim dilep --era UL2016 --processingEra tttt_v7 --sample WZTo2L2Q #SPLIT39
 
-
 #trilep
 #python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep --era UL2016 --processingEra tttt_v7 --flagTT   --sample TTLep_pow_CP5  #SPLIT300
 #python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim trilep --era UL2016 --processingEra tttt_v7 --flagTTbb --sample TTbb  #SPLIT20
