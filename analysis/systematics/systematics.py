@@ -84,6 +84,7 @@ variations = ['LeptonSFDown',
               'BTagSFCfe1Up',
               'BTagSFCfe2Down',
               'BTagSFCfe2Up',
+	      'noTopPtReweight',
              ]
 
 jesUncertainties = [
@@ -223,7 +224,7 @@ read_variables += [
 
 #MC only
 read_variables_MC = [
-    'reweightBTagSF_central/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F',
+    'reweightBTagSF_central/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F', 'reweightTopPt/F',
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
 
@@ -333,6 +334,7 @@ else: ttreeFormulas = {}
 
 #list all the reweights
 weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
+if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
         'LeptonSFUp'    : ('reweightLeptonSF','reweightLeptonSFUp'),
