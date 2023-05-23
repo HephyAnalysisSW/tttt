@@ -34,8 +34,10 @@ from Analysis.Tools.helpers                  import checkRootFile, deepCheckRoot
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 from Analysis.Tools.BTagEfficiencyUL         import BTagEfficiency
 from Analysis.Tools.BTagReshapingUL          import BTagReshaping, flavourSys
-#from Analysis.Tools.mcTools                  import pdgToName, GenSearch, B_mesons, D_mesons, B_mesons_abs, D_mesons_abs
-#genSearch = GenSearch()
+
+# Load the data base with normalisations. For now, use Robert's hardcoded path so that you don't have to fill it; it is my user.cache_dir path.
+from Analysis.Tools.DirDB import DirDB
+normalizationDB = DirDB(os.path.join( "/groups/hephy/cms/robert.schoefbeck/tttt/caches", 'normalizationCache'))
 
 def get_parser():
     ''' Argument parser for post-processing module.
@@ -44,7 +46,7 @@ def get_parser():
     argParser = argparse.ArgumentParser(description = "Argument parser for cmgPostProcessing")
 
     argParser.add_argument('--logLevel',    action='store',         nargs='?',  choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'],   default='INFO', help="Log level for logging" )
-    argParser.add_argument('--samples',     action='store',         nargs='*',  type=str, default=['TTZToLLNuNu_ext'],                  help="List of samples to be post-processed, given as CMG component name" )
+    argParser.add_argument('--sample',      action='store',         nargs='?',  type=str, default='TTZToLLNuNu_ext',                    help="List of samples to be post-processed, given as CMG component name" )
     argParser.add_argument('--eventsPerJob',action='store',         nargs='?',  type=int, default=30000000,                             help="Maximum number of events per job (Approximate!)." )
     argParser.add_argument('--interpolationOrder',   action='store',nargs='?',  type=int, default=2,                                    help="Maximum number of simultaneous jobs." )
     argParser.add_argument('--nJobs',       action='store',         nargs='?',  type=int, default=2,                                    help="EFT interpolation order" )
@@ -71,7 +73,7 @@ def get_parser():
     argParser.add_argument('--forceProxy',                  action='store_true',                                                        help="Skip Nano tools?")
     argParser.add_argument('--skipNanoTools',               action='store_true',                                                        help="Skipt the nanoAOD tools step for computing JEC/JER/MET etc uncertainties")
     argParser.add_argument('--keepNanoAOD',                 action='store_true',                                                        help="Keep nanoAOD output?")
-    argParser.add_argument('--reuseNanoAOD',                action='store_true',                                                        help="Keep nanoAOD output?")
+    argParser.add_argument('--reuseNanoAOD',                action='store_true',                                                        help="Reuse nanoAOD output?")
     argParser.add_argument('--reapplyJECS',                 action='store_true',                                                        help="Reapply JECs to data?")
     argParser.add_argument('--reduceSizeBy',                action='store',     type=int,                                               help="Reduce the size of the sample by a factor of...")
     argParser.add_argument('--event',                       action='store',     type=int, default=-1,                                   help="Just process event no")
@@ -94,7 +96,7 @@ elif "UL2018" == options.era:
 
 # Logging
 import tttt.Tools.logger as _logger
-logFile = '/tmp/%s_%s_%s_njob%s.txt'%(options.skim, '_'.join(options.samples), os.environ['USER'], str(0 if options.nJobs==1 else options.job))
+logFile = '/tmp/%s_%s_%s_njob%s.txt'%(options.skim, options.sample, os.environ['USER'], str(0 if options.nJobs==1 else options.job))
 logger  = _logger.get_logger(options.logLevel, logFile = logFile)
 import RootTools.core.logger as _logger_rt
 logger_rt = _logger_rt.get_logger(options.logLevel, logFile = logFile )
@@ -184,52 +186,38 @@ else:
         from tttt.samples.nano_data_private_UL20_Run2018 import allSamples as dataSamples
         allSamples = mcSamples + dataSamples
 
-samples = []
-for selected in options.samples:
-    for sample in allSamples:
-        if selected == sample.name:
-            samples.append(sample)
+# retrieve the sample by name
+sample = None
+for _sample in allSamples:
+    if _sample.name == options.sample:
+        sample = _sample
+        sample.isMC = not sample.isData
+        break
 
-if len(samples)==0:
-    logger.info( "No samples found. Was looking for %s. Exiting" % options.samples )
+if sample is None:
+    logger.info( "No sample found. Was looking for %s. Exiting." % options.sample )
     sys.exit(-1)
 
-isData = False not in [s.isData for s in samples]
-isMC   =  True not in [s.isData for s in samples]
-
-# Check that all samples which are concatenated have the same x-section.
-assert isData or len(set([s.xSection for s in samples]))==1, "Not all samples have the same xSection: %s !"%(",".join([s.name for s in samples]))
-assert isMC or len(samples)==1, "Don't concatenate data samples"
-
-xSection = samples[0].xSection if isMC else None
+xSection = sample.xSection if sample.isMC else None
+if sample.isMC:
+    scale_norm_histo = normalizationDB.get( key=(sample.DAS, "LHEScaleWeight" ) )
+    pdf_norm_histo   = normalizationDB.get( key=(sample.DAS, "LHEPdfWeight" ) )
+    ps_norm_histo    = normalizationDB.get( key=(sample.DAS, "PSWeight" ) )
 
 # LeptonSF
 leptonSF = LeptonSF(options.era, muID='medium', elID='tight')
 
 # Apply MET filter
-skimConds.append( getFilterCut(options.era, isData=isData, ignoreJSON=True, skipWeight=True, skipECalFilter=True) )
+skimConds.append( getFilterCut(options.era, isData=sample.isData, ignoreJSON=True, skipWeight=True, skipECalFilter=True) )
 
 triggerEff          = triggerEfficiency(year)
 
 ################################################################################
-# Samples: combine if more than one
-if len(samples)>1:
-    sample_name =  samples[0].name+"_comb"
-    logger.info( "Combining samples %s to %s.", ",".join(s.name for s in samples), sample_name )
-    sample      = Sample.combine(sample_name, samples, maxN = maxN)
-    sampleForPU = Sample.combine(sample_name, samples, maxN = -1)
-elif len(samples)==1:
-    sample      = samples[0]
-    sampleForPU = samples[0]
-else:
-    raise ValueError( "Need at least one sample. Got %r",samples )
-
-################################################################################
-# Reduce samples?
+# Reduce sample?
 if options.reduceSizeBy > 1:
     logger.info("Sample size will be reduced by a factor of %s", options.reduceSizeBy)
     logger.info("Recalculating the normalization of the sample. Before: %s", sample.normalization)
-    if isData:
+    if sample.isData:
         NotImplementedError ( "Data samples shouldn't be reduced in size!!" )
     sample.reduceFiles( factor = options.reduceSizeBy )
     # recompute the normalization
@@ -298,12 +286,13 @@ if options.nJobs>len(sample.files):
     raise RuntimeError("NJobs incorrect! There are only %i files in sample %s in era %s. nJobs=%i"%(len(sample.files), sample.name, options.era, options.nJobs ) )
 
 sample = sample.split( n=options.nJobs, nSub=options.job)
+sample.isMC = not sample.isData
 logger.info( "fileBasedSplitting: Run over %i/%i files for job %i/%i."%(len(sample.files), len_orig, options.job, options.nJobs))
 logger.debug("fileBasedSplitting: Files to be run over:\n%s", "\n".join(sample.files) )
 
 ################################################################################
 # Systematic variations
-addSystematicVariations = (not isData) and (not options.skipSystematicVariations)
+addSystematicVariations = (not sample.isData) and (not options.skipSystematicVariations)
 
 ################################################################################
 # B tagging SF
@@ -354,7 +343,7 @@ treeFormulas = {}
 from tttt.Tools.triggerSelector import triggerSelector
 if (isTrilep or isDilep):
     ts           = triggerSelector(year, isTrilep=isTrilep)
-    triggerCond  = ts.getSelection(options.samples[0] if isData else "MC", triggerList = ts.getTriggerList(sample) )
+    triggerCond  = ts.getSelection(options.sample if sample.isData else "MC", triggerList = ts.getTriggerList(sample) )
 elif isSinglelep:
     electriggers = "HLT_Ele8_CaloIdM_TrackIdM_PFJet30||HLT_Ele17_CaloIdM_TrackIdM_PFJet30"
     muontriggers = "HLT_Mu3_PFJet40||HLT_Mu8||HLT_Mu17||HLT_Mu20||HLT_Mu27"
@@ -363,7 +352,7 @@ elif isSinglelep:
 # Add trigger decision to ntuple
 treeFormulas["triggerDecision"] =  {'string':triggerCond}
 logger.info("'triggerDecision' will correspond to: %s"%triggerCond)
-if not options.noTriggerSelection and isData:
+if not options.noTriggerSelection and sample.isData:
     logger.info("Sample will have the trigger skim applied!")
     skimConds.append( triggerCond )
 else:
@@ -445,7 +434,7 @@ branchKeepStrings_DATA = [ ]
 jetCorrInfo = []
 jetMCInfo   = ['genJetIdx/I','hadronFlavour/I', 'partonFlavour/I']
 
-if isData:
+if sample.isData:
     lumiScaleFactor=None
     branchKeepStrings = branchKeepStrings_DATAMC + branchKeepStrings_DATA
     from FWCore.PythonUtilities.LumiList import LumiList
@@ -502,7 +491,7 @@ jesUncertainties = [
     "SinglePionHCAL",
     "TimePtEta",
 ]
-if isMC:
+if sample.isMC:
     jetVars     += jetMCInfo
     jesVariations= ["pt_jes%s%s"%(var, upOrDown) for var in jesUncertainties for upOrDown in ["Up","Down"]]
     jetVars     += ["%s/F"%var for var in jesVariations]
@@ -522,25 +511,24 @@ lepVarNames     = [x.split('/')[0] for x in lepVars]
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
 if options.era == "2017":
     read_variables += map(TreeVariable.fromString, [ 'METFixEE2017_pt/F', 'METFixEE2017_phi/F', 'METFixEE2017_pt_nom/F', 'METFixEE2017_phi_nom/F'])
-    if isMC:
+    if sample.isMC:
         read_variables += map(TreeVariable.fromString, [ 'METFixEE2017_pt_jesTotalUp/F', 'METFixEE2017_pt_jesTotalDown/F', 'METFixEE2017_pt_jerUp/F', 'METFixEE2017_pt_jerDown/F', 'METFixEE2017_pt_unclustEnDown/F', 'METFixEE2017_pt_unclustEnUp/F', 'METFixEE2017_phi_jesTotalUp/F', 'METFixEE2017_phi_jesTotalDown/F', 'METFixEE2017_phi_jerUp/F', 'METFixEE2017_phi_jerDown/F', 'METFixEE2017_phi_unclustEnDown/F', 'METFixEE2017_phi_unclustEnUp/F', 'METFixEE2017_pt_jer/F', 'METFixEE2017_phi_jer/F'])
 # else:
     # These variables don't exist anymore in UL, MET variations are calculated with JMECorrector
     # read_variables += map(TreeVariable.fromString, [ 'MET_pt_nom/F', 'MET_phi_nom/F' ])
-    # if isMC:
+    # if sample.isMC:
     #     read_variables += map(TreeVariable.fromString, [ 'MET_pt_jesTotalUp/F', 'MET_pt_jesTotalDown/F', 'MET_pt_jerUp/F', 'MET_pt_jerDown/F', 'MET_pt_unclustEnDown/F', 'MET_pt_unclustEnUp/F', 'MET_phi_jesTotalUp/F', 'MET_phi_jesTotalDown/F', 'MET_phi_jerUp/F', 'MET_phi_jerDown/F', 'MET_phi_unclustEnDown/F', 'MET_phi_unclustEnUp/F', 'MET_pt_jer/F', 'MET_phi_jer/F'])
-if isMC:
+if sample.isMC:
     read_variables += map(TreeVariable.fromString, [ 'GenMET_pt/F', 'GenMET_phi/F' , 'genTtbarId/I'])
 
 new_variables = [ 'weight/F', 'year/I', 'preVFP/O']
-
-new_variables+= ['triggerDecision/I']
+new_variables+= [ 'triggerDecision/I' ]
 
 read_variables.append( TreeVariable.fromString('L1PreFiringWeight_Dn/F') )
 read_variables.append( TreeVariable.fromString('L1PreFiringWeight_Nom/F') )
 read_variables.append( TreeVariable.fromString('L1PreFiringWeight_Up/F') )
 
-if isMC:
+if sample.isMC:
     read_variables += [ TreeVariable.fromString('Pileup_nTrueInt/F') ]
     # reading gen particles for top pt reweighting
     read_variables.append( TreeVariable.fromString('nGenPart/I') )
@@ -558,21 +546,22 @@ read_variables += [\
     TreeVariable.fromString('nMuon/I'),
     VectorTreeVariable.fromString('Muon[pt/F,eta/F,phi/F,pdgId/I,mediumId/O,miniPFRelIso_all/F,miniPFRelIso_chg/F,pfRelIso03_all/F,sip3d/F,dxy/F,dz/F,charge/I,mvaTTH/F,jetNDauCharged/b,jetPtRelv2/F,jetRelIso/F,segmentComp/F,isGlobal/O,isTracker/O,jetIdx/I]'),
     TreeVariable.fromString('nJet/I'),
-    VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars + (['nBHadrons/b', 'nCHadrons/b'] if (isMC and not options.central) else []) )))]
+    VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars + (['nBHadrons/b', 'nCHadrons/b'] if (sample.isMC and not options.central) else []) )))]
 if addReweights:
     read_variables.extend( ["nLHEReweightingWeight/I" ] )#, "nLHEReweighting/I", "LHEReweighting[Weight/F]" ] ) # need to set alias later
-if isMC:
+if sample.isMC:
     read_variables.extend( ["nLHEScaleWeight/I" ] )
     read_variables.extend( ["nLHEPdfWeight/I" ] )
+    read_variables.extend( ["nPSWeight/I" ] )
 
 new_variables += [\
     'overlapRemoval/I','nlep/I',
     'met_pt/F', 'met_phi/F',
 ]
 if options.central:
-    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F' if isMC else '' )))
+    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F' if sample.isMC else '' )))
 else:
-    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if isMC else '' )))
+    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if sample.isMC else '' )))
 
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['ht/F', 'nBTag/I', 'm3/F', 'minDLmass/F'] )
@@ -583,11 +572,11 @@ if isTrilep or isDilep or isSinglelep:
     new_variables.extend( ['nGoodMuons/I', 'nGoodElectrons/I', 'nGoodLeptons/I' ] )
     new_variables.extend( ['l1_pt/F', 'l1_mvaTOP/F', 'l1_mvaTOPWP/I', 'l1_mvaTOPv2/F', 'l1_mvaTOPv2WP/I', 'l1_ptCone/F', 'l1_eta/F', 'l1_phi/F', 'l1_pdgId/I', 'l1_index/I', 'l1_jetPtRelv2/F', 'l1_jetPtRatio/F', 'l1_miniRelIso/F', 'l1_relIso03/F', 'l1_dxy/F', 'l1_dz/F', 'l1_mIsoWP/I', 'l1_eleIndex/I', 'l1_muIndex/I', 'l1_isFO/O', 'l1_isTight/O'] )
     new_variables.extend( ['mlmZ_mass/F'])
-    if isMC:
+    if sample.isMC:
         new_variables.extend(['reweightLeptonSF/F', 'reweightLeptonSFUp/F', 'reweightLeptonSFDown/F'])
 if isTrilep or isDilep:
     new_variables.extend( ['l2_pt/F', 'l2_mvaTOP/F', 'l2_mvaTOPWP/I', 'l2_mvaTOPv2/F', 'l2_mvaTOPv2WP/I', 'l2_ptCone/F', 'l2_eta/F', 'l2_phi/F', 'l2_pdgId/I', 'l2_index/I', 'l2_jetPtRelv2/F', 'l2_jetPtRatio/F', 'l2_miniRelIso/F', 'l2_relIso03/F', 'l2_dxy/F', 'l2_dz/F', 'l2_mIsoWP/I', 'l2_eleIndex/I', 'l2_muIndex/I', 'l2_isFO/O', 'l2_isTight/O'] )
-    if isMC: new_variables.extend( \
+    if sample.isMC: new_variables.extend( \
         [   'genZ1_pt/F', 'genZ1_eta/F', 'genZ1_phi/F',
             'genZ2_pt/F', 'genZ1_eta/F', 'genZ1_phi/F',
             'reweightTrigger/F', 'reweightTriggerUp/F', 'reweightTriggerDown/F',
@@ -604,11 +593,13 @@ if addReweights:
     new_variables[-1].nMax = HyperPoly.get_ndof(weightInfo.nvar, options.interpolationOrder)
     new_variables.append( "chi2_ndof/F" )
 
-if isMC:
-    new_variables.append( TreeVariable.fromString("nScale/I") )
-    new_variables.append( TreeVariable.fromString("Scale[Weight/F]") )
-    new_variables.append( TreeVariable.fromString("nPDF/I") )
+if sample.isMC:
+    new_variables.append( TreeVariable.fromString("nscaleWeight/I") )
+    new_variables.append( TreeVariable.fromString("scale[Weight/F]") )
+    new_variables.append( TreeVariable.fromString("nPDFWeight/I") )
     new_variables.append( VectorTreeVariable.fromString("PDF[Weight/F]", nMax=150) ) # There are more than 100 PDF weights
+    new_variables.append( TreeVariable.fromString("nPSWeight/I") )
+    new_variables.append( VectorTreeVariable.fromString("PS[Weight/F]") ) 
 ## ttZ related variables
 new_variables.extend( ['Z1_l1_index/I', 'Z1_l2_index/I', 'Z2_l1_index/I', 'Z2_l2_index/I', 'nonZ1_l1_index/I', 'nonZ1_l2_index/I'] )
 for i in [1,2]:
@@ -627,7 +618,7 @@ if addSystematicVariations:
                  'down_cferr2':1., 'up_hf':1., 'down_hf':1., 'up_lfstats1':1.,
                  'down_lfstats1':1., 'up_lfstats2':1., 'down_lfstats2':1.
                  }
-    if isMC:
+    if sample.isMC:
         for k in bTagVariations.keys():
             new_variables.append('reweightBTagSF_'+k+'/F')
 
@@ -776,7 +767,7 @@ def filler( event ):
     # shortcut
     r = reader.event
     #workaround  = (r.run, r.luminosityBlock, r.event) # some fastsim files seem to have issues, apparently solved by this.
-    event.isData = s.isData
+    event.isData = sample.isData
     event.year   = year
     event.preVFP = False
     if options.era == "UL2016_preVFP":
@@ -790,7 +781,7 @@ def filler( event ):
     else:
         event.overlapRemoval = 1
 
-    if isMC:
+    if sample.isMC:
 
         # GEN Particles
         gPart = getGenPartsAll(r)
@@ -802,7 +793,7 @@ def filler( event ):
         if len(genZs)>0:
             event.genZ_mass = genZs[0][0]
 
-    if isMC:
+    if sample.isMC:
         if hasattr(r, "genWeight"):
             event.weight = lumiScaleFactor*r.genWeight if lumiScaleFactor is not None else 1
         else:
@@ -810,7 +801,7 @@ def filler( event ):
     elif sample.isData:
         event.weight = 1
     else:
-        raise NotImplementedError( "isMC %r isData %r " % (isMC, isData) )
+        raise NotImplementedError( "isMC %r isData %r " % (sample.isMC, sample.isData) )
 
     # lumi lists and vetos
     if sample.isData:
@@ -823,7 +814,7 @@ def filler( event ):
 
     ################################################################################
     # PU reweighting
-    if isMC and hasattr(r, "Pileup_nTrueInt"):
+    if sample.isMC and hasattr(r, "Pileup_nTrueInt"):
         from Analysis.Tools.puWeightsUL			import getPUReweight
         event.reweightPU     = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="nominal")
         event.reweightPUDown = getPUReweight( r.Pileup_nTrueInt, year=options.era, weight="down" )
@@ -831,7 +822,7 @@ def filler( event ):
 
     ################################################################################
     # top pt reweighting
-    if isMC:
+    if sample.isMC:
         event.reweightTopPt     = topPtReweightingFunc(getTopPtsForReweighting(r)) * topScaleF if doTopPtReweighting else 1.
 
     ################################################################################
@@ -839,17 +830,26 @@ def filler( event ):
     event.triggerDecision = int(treeFormulas['triggerDecision']['TTreeFormula'].EvalInstance())
 
     ################################################################################
-    # Store Scale and PDF weights in a format that is readable with HEPHY framework
-    if isMC:
+    # Store Scale, PDF, and PS weights in a format that is readable with HEPHY framework
+    if sample.isMC:
+
         scale_weights = [reader.sample.chain.GetLeaf("LHEScaleWeight").GetValue(i_weight) for i_weight in range(r.nLHEScaleWeight)]
         for i,w in enumerate(scale_weights):
-            event.Scale_Weight[i] = w
-        event.nScale = r.nLHEScaleWeight
+            event.scale_Weight[i] = w/scale_norm_histo.GetBinContent( i+1 )
+            #print w, scale_norm_histo.GetBinContent( i+1 )
+        event.nscaleWeight = r.nLHEScaleWeight
 
         pdf_weights = [reader.sample.chain.GetLeaf("LHEPdfWeight").GetValue(i_weight) for i_weight in range(r.nLHEPdfWeight)]
         for i,w in enumerate(pdf_weights):
-            event.PDF_Weight[i] = w
-        event.nPDF = r.LHEPdfWeight
+            event.PDF_Weight[i] = w/pdf_norm_histo[i+1]
+            #print w, pdf_norm_histo.GetBinContent( i+1 )
+        event.nPDFWeight = r.nLHEPdfWeight
+
+        ps_weights = [reader.sample.chain.GetLeaf("PSWeight").GetValue(i_weight) for i_weight in range(r.nPSWeight)]
+        for i,w in enumerate(ps_weights):
+            event.PS_Weight[i] = w/ps_norm_histo[i+1]
+            #print w, scale_norm_histo.GetBinContent( i+1 )
+        event.nPSWeight = r.nPSWeight
 
     ################################################################################
     # reweights
@@ -904,7 +904,7 @@ def filler( event ):
     leptons.sort(key = lambda p:-p['pt'])
 
     # Get all jets because they are needed to calculate the lepton mvaTOP
-    all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if (isMC and not options.central) else []))
+    all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if (sample.isMC and not options.central) else []))
     analysis_jets= filter(lambda j: isAnalysisJet(j, ptCut=minJetPt, absEtaCut=maxJetAbsEta, ptVar = ['pt']+jesVariations), all_jets)
     for j in analysis_jets:
         j['isNominal'] = j['pt']>minJetPt
@@ -1004,7 +1004,7 @@ def filler( event ):
         event.JetGood_isBJet_loose[iJet]  = isBJet(jet, tagger=b_tagger, WP='loose',  year=options.era)
 
         #event.ht[iJet] = [sum(jet['pt'])]
-        if isMC:
+        if sample.isMC:
             if not options.central:
                 event.JetGood_nBHadrons[iJet] = ord(jet["nBHadrons"])
                 event.JetGood_nCHadrons[iJet] = ord(jet["nCHadrons"])
@@ -1019,7 +1019,7 @@ def filler( event ):
         getattr(event, "JetGood_pt")[iJet] = jet['pt']
 
     event.ht = sum([jet['pt'] for jet in store_jets])
-    if isMC and options.doCRReweighting:
+    if sample.isMC and options.doCRReweighting:
         event.reweightCR = getCRWeight(event.nJetGood)
 
     event.nBTag      = len(nominal_bJets)
@@ -1085,7 +1085,7 @@ def filler( event ):
         # For TTZ studies: find Z boson candidate, and use third lepton to calculate mt
         (event.mlmZ_mass, zl1, zl2) = closestOSDLMassToMZ(leptons)
 
-        if isMC:
+        if sample.isMC:
             trig_eff, trig_eff_err =  triggerEff.getSF(leptons)
             event.reweightTrigger       = trig_eff
             event.reweightTriggerUp     = trig_eff + trig_eff_err
@@ -1123,7 +1123,7 @@ def filler( event ):
             event.l2_isFO       = leptons[1]['isFO']
             event.l2_isTight    = leptons[1]['isTight']
 
-            if isMC:
+            if sample.isMC:
               genZs = getGenZs(gPart)
               if len(genZs)>0:
                   event.genZ1_pt  = genZs[0]['pt']
@@ -1224,7 +1224,7 @@ def filler( event ):
             event.l4_isFO       = leptons[3]['isFO']
             event.l4_isTight    = leptons[3]['isTight']
 
-    if isMC and addSystematicVariations:
+    if sample.isMC and addSystematicVariations:
             #Comment 1a method (tbc)
             #btagEff.addBTagEffToJet(j)
 

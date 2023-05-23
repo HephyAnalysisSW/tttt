@@ -25,8 +25,7 @@ else:
     logger = logging.getLogger(__name__)
     ov = False
 
-from Samples.Tools.config import  redirector_global
-redirector = redirector_global
+from Samples.Tools.config import  redirector_clip as redirector
 
 # DB
 from Samples.Tools.config import dbDir
