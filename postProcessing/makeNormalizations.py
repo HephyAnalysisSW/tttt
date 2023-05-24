@@ -33,17 +33,24 @@ jobFileName = "jobsNormalizations.sh"
 
 # If no sample argument, let us write all possible samples to the job file 
 if args.DAS is None:
+    counter = 0
     exec( "from %s import allSamples as samples"%args.sampleFile )
     with open( jobFileName, 'w' if not os.path.exists(jobFileName) else "a" ) as f:
         for sample in samples:
             if not hasattr(sample, "DAS") or (not sample.DAS):
                 continue
-            f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector LHEPdfWeight --len 103\n"%(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
-            f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector PSWeight --len 4\n"      %(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
-            f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector LHEScaleWeight --len 9\n"%(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
+            if args.overwrite or not dirDB.contains( (sample.DAS, 'LHEPdfWeight') ):
+                f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector LHEPdfWeight --len 103\n"%(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
+                counter += 1 
+            if args.overwrite or not dirDB.contains( (sample.DAS, 'PSWeight') ):
+                f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector PSWeight --len 4\n"      %(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
+                counter += 1 
+            if args.overwrite or not dirDB.contains( (sample.DAS, 'LHEScaleWeight') ):
+                f.write("python makeNormalizations.py --sampleFile %s --sample %s --DAS %s %s --vector LHEScaleWeight --len 9\n"%(args.sampleFile, sample.name, sample.DAS, '--overwrite' if args.overwrite else ''))
+                counter += 1 
         f.write("\n")
 
-    print ("%i job commands added to %s" % ( 3*len(samples), jobFileName)) 
+    print ("%i job commands added to %s" % ( counter, jobFileName)) 
     sys.exit(0)
 
 # Logging

@@ -36,6 +36,7 @@ argParser.add_argument('--noData',         action='store_true', help='Do not plo
 argParser.add_argument('--dataMCScaling',  action='store_true', help='Data MC scaling?')
 argParser.add_argument('--plot_directory', action='store', default='TMB_4t_v2')
 argParser.add_argument('--selection',      action='store', default='dilepL-offZ1-njet4p-btag2p-ht500')
+argParser.add_argument('--n_cores',        action='store', type=int, default=-1)
 args = argParser.parse_args()
 
 # Logger
@@ -95,7 +96,7 @@ if args.small:
         data_sample.reduceFiles( factor = 100 )
     for sample in mc :
         sample.normalization = 1.
-        sample.reduceFiles( to = 1 )
+        sample.reduceFiles( to = 5 )
         #sample.reduceFiles( to=1)
         sample.scale /= sample.normalization
 
@@ -607,7 +608,7 @@ for i_mode, mode in enumerate(allModes):
                       binning=[5,0,5],
                     ))
 
-    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas)
+    plotting.fill(plots, read_variables = read_variables, sequence = sequence, ttreeFormulas = ttreeFormulas, n_cores=args.n_cores)
 
     # Get normalization yields from yield histogram
     for plot in plots:

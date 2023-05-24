@@ -35,10 +35,6 @@ from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 from Analysis.Tools.BTagEfficiencyUL         import BTagEfficiency
 from Analysis.Tools.BTagReshapingUL          import BTagReshaping, flavourSys
 
-# Load the data base with normalisations. For now, use Robert's hardcoded path so that you don't have to fill it; it is my user.cache_dir path.
-from Analysis.Tools.DirDB import DirDB
-normalizationDB = DirDB(os.path.join( "/groups/hephy/cms/robert.schoefbeck/tttt/caches", 'normalizationCache'))
-
 def get_parser():
     ''' Argument parser for post-processing module.
     '''
@@ -75,6 +71,7 @@ def get_parser():
     argParser.add_argument('--keepNanoAOD',                 action='store_true',                                                        help="Keep nanoAOD output?")
     argParser.add_argument('--reuseNanoAOD',                action='store_true',                                                        help="Reuse nanoAOD output?")
     argParser.add_argument('--reapplyJECS',                 action='store_true',                                                        help="Reapply JECs to data?")
+    argParser.add_argument('--normalizeSys',                action='store_true',                                                        help="Write collections with normalised PS/Scale/PDF weights?")
     argParser.add_argument('--reduceSizeBy',                action='store',     type=int,                                               help="Reduce the size of the sample by a factor of...")
     argParser.add_argument('--event',                       action='store',     type=int, default=-1,                                   help="Just process event no")
     argParser.add_argument('--pogEleId',                    action='store',               default=None,                                 help="Change electron selection to POG lepton IDs")
@@ -101,6 +98,10 @@ logger  = _logger.get_logger(options.logLevel, logFile = logFile)
 import RootTools.core.logger as _logger_rt
 logger_rt = _logger_rt.get_logger(options.logLevel, logFile = logFile )
 
+if options.normalizeSys:
+    # Load the data base with normalisations. For now, use Robert's hardcoded path so that you don't have to fill it; it is my user.cache_dir path.
+    from Analysis.Tools.DirDB import DirDB
+    normalizationDB = DirDB(os.path.join( "/groups/hephy/cms/robert.schoefbeck/tttt/caches", 'normalizationCache'))
 
 def fill_vector_collection( event, collection_name, collection_varnames, objects, maxN = 100):
     setattr( event, "n"+collection_name, len(objects) )
@@ -199,7 +200,7 @@ if sample is None:
     sys.exit(-1)
 
 xSection = sample.xSection if sample.isMC else None
-if sample.isMC:
+if sample.isMC and options.normalizeSys:
     scale_norm_histo = normalizationDB.get( key=(sample.DAS, "LHEScaleWeight" ) )
     pdf_norm_histo   = normalizationDB.get( key=(sample.DAS, "LHEPdfWeight" ) )
     ps_norm_histo    = normalizationDB.get( key=(sample.DAS, "PSWeight" ) )
@@ -593,12 +594,9 @@ if addReweights:
     new_variables[-1].nMax = HyperPoly.get_ndof(weightInfo.nvar, options.interpolationOrder)
     new_variables.append( "chi2_ndof/F" )
 
-if sample.isMC:
-    #new_variables.append( TreeVariable.fromString("nscaleWeight/I") )
+if sample.isMC and options.normalizeSys:
     new_variables.append( TreeVariable.fromString("scale[Weight/F]") )
-    #new_variables.append( TreeVariable.fromString("nPDFWeight/I") )
     new_variables.append( VectorTreeVariable.fromString("PDF[Weight/F]", nMax=150) ) # There are more than 100 PDF weights
-    new_variables.append( TreeVariable.fromString("nPSWeight/I") )
     new_variables.append( VectorTreeVariable.fromString("PS[Weight/F]") ) 
 ## ttZ related variables
 new_variables.extend( ['Z1_l1_index/I', 'Z1_l2_index/I', 'Z2_l1_index/I', 'Z2_l2_index/I', 'nonZ1_l1_index/I', 'nonZ1_l2_index/I'] )
@@ -831,7 +829,7 @@ def filler( event ):
 
     ################################################################################
     # Store Scale, PDF, and PS weights in a format that is readable with HEPHY framework
-    if sample.isMC:
+    if sample.isMC and options.normalizeSys:
 
         scale_weights = [reader.sample.chain.GetLeaf("LHEScaleWeight").GetValue(i_weight) for i_weight in range(r.nLHEScaleWeight)]
         for i,w in enumerate(scale_weights):
