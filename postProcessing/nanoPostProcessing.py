@@ -1371,3 +1371,5 @@ if os.path.exists(tmp_output_directory) and not options.keepNanoAOD:
 # Thus the job is resubmitted on condor even if the output is ok
 # Current idea is that the problem is with xrootd having a non-closed root file
 sample.clear()
+
+
