@@ -4,9 +4,7 @@ lstm_jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F'
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
 # Training variables
-read_variables += [\
-                    "Jet[btagDeepFlavb/F,btagDeepFlavbb/F,btagDeepFlavlepb/F]",
-                    ]
+#read_variables += ["Jet[btagDeepFlavb/F,btagDeepFlavbb/F,btagDeepFlavlepb/F]"]
 
 def lstm_jets(event, sample):
     jets = [ getObjDict( event, 'Jet_', lstm_jetVarNames, event.JetGood_index[i] ) for i in range(int(event.nJetGood)) ]

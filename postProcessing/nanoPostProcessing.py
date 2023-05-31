@@ -71,7 +71,7 @@ def get_parser():
     argParser.add_argument('--keepNanoAOD',                 action='store_true',                                                        help="Keep nanoAOD output?")
     argParser.add_argument('--reuseNanoAOD',                action='store_true',                                                        help="Reuse nanoAOD output?")
     argParser.add_argument('--reapplyJECS',                 action='store_true',                                                        help="Reapply JECs to data?")
-    argParser.add_argument('--normalizeSys',                action='store_true',                                                        help="Write collections with normalised PS/Scale/PDF weights?")
+    argParser.add_argument('--normalizeSys',                action='store_true',          default=False,                                help="Write collections with normalised PS/Scale/PDF weights?")
     argParser.add_argument('--reduceSizeBy',                action='store',     type=int,                                               help="Reduce the size of the sample by a factor of...")
     argParser.add_argument('--event',                       action='store',     type=int, default=-1,                                   help="Just process event no")
     argParser.add_argument('--pogEleId',                    action='store',               default=None,                                 help="Change electron selection to POG lepton IDs")
@@ -499,8 +499,8 @@ if sample.isMC:
 else:
     jesVariations = []
 
-if not options.central:
-    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
+#if not options.central:
+#    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
 
 jetVarNames     = [x.split('/')[0] for x in jetVars]
 genLepVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'genPartIdxMother/I', 'status/I', 'statusFlags/I'] # some might have different types
@@ -547,7 +547,8 @@ read_variables += [\
     TreeVariable.fromString('nMuon/I'),
     VectorTreeVariable.fromString('Muon[pt/F,eta/F,phi/F,pdgId/I,mediumId/O,miniPFRelIso_all/F,miniPFRelIso_chg/F,pfRelIso03_all/F,sip3d/F,dxy/F,dz/F,charge/I,mvaTTH/F,jetNDauCharged/b,jetPtRelv2/F,jetRelIso/F,segmentComp/F,isGlobal/O,isTracker/O,jetIdx/I]'),
     TreeVariable.fromString('nJet/I'),
-    VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars + (['nBHadrons/b', 'nCHadrons/b'] if (sample.isMC and not options.central) else []) )))]
+    #VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars + (['nBHadrons/b', 'nCHadrons/b'] if (sample.isMC and not options.central) else []) ))),
+    ]
 if addReweights:
     read_variables.extend( ["nLHEReweightingWeight/I" ] )#, "nLHEReweighting/I", "LHEReweighting[Weight/F]" ] ) # need to set alias later
 if sample.isMC:
@@ -559,10 +560,10 @@ new_variables += [\
     'overlapRemoval/I','nlep/I',
     'met_pt/F', 'met_phi/F',
 ]
-if options.central:
-    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F' if sample.isMC else '' )))
-else:
-    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if sample.isMC else '' )))
+#if options.central:
+new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F' if sample.isMC else '' )))
+#else:
+#    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if sample.isMC else '' )))
 
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['ht/F', 'nBTag/I', 'm3/F', 'minDLmass/F'] )
@@ -594,7 +595,7 @@ if addReweights:
     new_variables[-1].nMax = HyperPoly.get_ndof(weightInfo.nvar, options.interpolationOrder)
     new_variables.append( "chi2_ndof/F" )
 
-if sample.isMC and options.normalizeSys:
+if sample.isMC:
     new_variables.append( TreeVariable.fromString("scale[Weight/F]") )
     new_variables.append( VectorTreeVariable.fromString("PDF[Weight/F]", nMax=150) ) # There are more than 100 PDF weights
     new_variables.append( VectorTreeVariable.fromString("PS[Weight/F]") ) 
@@ -829,26 +830,39 @@ def filler( event ):
 
     ################################################################################
     # Store Scale, PDF, and PS weights in a format that is readable with HEPHY framework
-    if sample.isMC and options.normalizeSys:
+    if sample.isMC:
 
-        scale_weights = [reader.sample.chain.GetLeaf("LHEScaleWeight").GetValue(i_weight) for i_weight in range(r.nLHEScaleWeight)]
-        for i,w in enumerate(scale_weights):
-            event.scale_Weight[i] = w/scale_norm_histo.GetBinContent( i+1 )
-            #print w, scale_norm_histo.GetBinContent( i+1 )
+    	scale_weights = [reader.sample.chain.GetLeaf("LHEScaleWeight").GetValue(i_weight) for i_weight in range(r.nLHEScaleWeight)]
+    	for i,w in enumerate(scale_weights): 
+	    if options.normalizeSys:
+	    	event.scale_Weight[i] = w/scale_norm_histo.GetBinContent( i+1 )
+		#print len(scale_norm_histo)
+	    else:
+	        event.scale_Weight[i] = 1.0
+	    #print "scale thing:",event.scale_Weight[i]
         event.nscale = r.nLHEScaleWeight
 
-        pdf_weights = [reader.sample.chain.GetLeaf("LHEPdfWeight").GetValue(i_weight) for i_weight in range(r.nLHEPdfWeight)]
+        pdf_weights = [reader.sample.chain.GetLeaf("LHEPdfWeight").GetValue(i_weight) for i_weight in range(r.nLHEPdfWeight-1)]
+	#print len(pdf_weights)
         for i,w in enumerate(pdf_weights):
-            event.PDF_Weight[i] = w/pdf_norm_histo[i+1]
-            #print w, pdf_norm_histo.GetBinContent( i+1 )
-        event.nPDF = r.nLHEPdfWeight
+	    if options.normalizeSys:
+		#print len(pdf_norm_histo)
+            	event.PDF_Weight[i] = w/pdf_norm_histo[i+1]
+            else:
+		event.PDF_Weight[i] = 1.0
+	    #print "PDF thing:",i,event.PDF_Weight[i]
+	    event.nPDF = r.nLHEPdfWeight
 
         ps_weights = [reader.sample.chain.GetLeaf("PSWeight").GetValue(i_weight) for i_weight in range(r.nPSWeight)]
         for i,w in enumerate(ps_weights):
-            event.PS_Weight[i] = w/ps_norm_histo[i+1]
-            #print w, scale_norm_histo.GetBinContent( i+1 )
+	    #print len(ps_norm_histo)
+	    if options.normalizeSys:
+            	event.PS_Weight[i] = w/ps_norm_histo[i+1]
+	    else:
+		event.PS_Weight[i] = 1.0
+	    #print "PS thing:",event.PS_Weight[i] 
         event.nPS = r.nPSWeight
-
+   
     ################################################################################
     # reweights
     if addReweights:
@@ -902,7 +916,7 @@ def filler( event ):
     leptons.sort(key = lambda p:-p['pt'])
 
     # Get all jets because they are needed to calculate the lepton mvaTOP
-    all_jets     = getJets(r, jetVars=jetVarNames+(['nBHadrons', 'nCHadrons'] if (sample.isMC and not options.central) else []))
+    all_jets     = getJets(r, jetVars=jetVarNames)#+(['nBHadrons', 'nCHadrons'] if (sample.isMC and not options.central) else []))
     analysis_jets= filter(lambda j: isAnalysisJet(j, ptCut=minJetPt, absEtaCut=maxJetAbsEta, ptVar = ['pt']+jesVariations), all_jets)
     for j in analysis_jets:
         j['isNominal'] = j['pt']>minJetPt
@@ -1003,9 +1017,9 @@ def filler( event ):
 
         #event.ht[iJet] = [sum(jet['pt'])]
         if sample.isMC:
-            if not options.central:
-                event.JetGood_nBHadrons[iJet] = ord(jet["nBHadrons"])
-                event.JetGood_nCHadrons[iJet] = ord(jet["nCHadrons"])
+            #if not options.central:
+            #    event.JetGood_nBHadrons[iJet] = ord(jet["nBHadrons"])
+            #    event.JetGood_nCHadrons[iJet] = ord(jet["nCHadrons"])
             if store_jets[iJet]['genJetIdx'] >= 0:
                 if r.nGenJet<maxNJet:
                     try:
