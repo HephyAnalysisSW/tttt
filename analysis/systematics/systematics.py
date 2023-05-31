@@ -85,6 +85,8 @@ variations = ['LeptonSFDown',
               'BTagSFCfe2Down',
               'BTagSFCfe2Up',
 	      'noTopPtReweight',
+	      'HDampUp',
+	      'HDampDown',
              ]
 
 jesUncertainties = [
@@ -117,8 +119,16 @@ jesUncertainties = [
     "TimePtEta",
 ]
     
+nPDFs = 101
+PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
+
+scaleWeights = ["ScaleDownDown", "ScaleDownNone", "ScaleNoneDown", "ScaleNoneUp", "ScaleUpNone", "ScaleUpUp"]
+
+PSWeights = ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]
+
 jetVariations= ["jes%s%s"%(var, upOrDown) for var in jesUncertainties for upOrDown in ["Up","Down"]]
-variations += jetVariations
+
+variations = variations + jetVariations + scaleWeights + PSWeights + PDFWeights
 
 # Check if we know the variation if not central don't use data!
 if args.sys not in variations:
@@ -139,11 +149,23 @@ else:
 
 #Simulated samples
 from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
-
 # Split dileptonic TTBar into three different contributions
-sample_TTLep = TTLep
+# Use the hdamp samples for this variation
+if not args.sys == "HDampUp" or args.sys == "HDampDown" :
+    sample_TTLep = TTLep
+elif args.sys == "HDampUp":
+    sample_TTLep = TTLepHUp
+elif args.sys == "HDampDown":
+    sample_TTLep = TTLepHDown
+
+if not args.sys == "HDampUp" or args.sys == "HDampDown" :
+    TTLep_bb    = copy.deepcopy( TTbb )
+elif args.sys == "HDampUp":
+    TTLep_bb    = copy.deepcopy( TTbbHUp )
+elif args.sys == "HDampDown":
+    TTLep_bb    = copy.deepcopy( TTbbHDown )
+
 # genTtbarId classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
-TTLep_bb    = copy.deepcopy( TTbb )
 TTLep_bb.name = "TTLep_bb"
 TTLep_bb.texName = "t#bar{t}b#bar{b}"
 TTLep_bb.color   = ROOT.kRed + 2
@@ -159,7 +181,7 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 #Merge simulated background samples
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DY, DiBoson]
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DY_inclusive, DiBoson]
 #Add the data
 if not args.noData:
     from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
@@ -196,8 +218,8 @@ jetVars     =   ['pt/F',
                  #'btagDeepFlavb/F',
                  #'btagDeepFlavbb/F',
                  #'btagDeepFlavlepb/F',
-                 'btagDeepb/F',
-                 'btagDeepbb/F',
+                 #'btagDeepb/F',
+                 #'btagDeepbb/F',
                  'chEmEF/F',
                  'chHEF/F',
                  'neEmEF/F',
@@ -225,9 +247,9 @@ read_variables += [
 #MC only
 read_variables_MC = [
     'reweightBTagSF_central/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F', 'reweightTopPt/F',
+    "PDF_Weight/F","nPDF/I","PS_Weight/F","nPS/I","scale_Weight/F","nscale/I",
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
-
 sequence = []
 
 # MVA configuration
@@ -326,6 +348,54 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
                 return getattr( event, "Electron_%s"%branch )[event.lep_eleIndex[index]] if abs(event.lep_pdgId[index])==abs_pdg else float('nan')
     return func_
 
+
+#get each theory uncertainty reweight
+
+def getTheorySystematics(event,sample):
+    if args.sys in scaleWeights and not event.nscale == 0:
+	 WhichWay9 = {"ScaleDownDown": 	0, 
+		      "ScaleDownNone": 	1, 
+		      "ScaleNoneDown": 	3, 
+		      "ScaleNoneUp":	5, 
+		      "ScaleUpNone":	7, 
+		      "ScaleUpUp":	8,
+			 }
+	 WhichWay8 = {"ScaleDownDown": 	0, 
+		      "ScaleDownNone": 	1, 
+		      "ScaleNoneDown": 	3, 
+		      "ScaleNoneUp":	4, 
+		      "ScaleUpNone":	6, 
+		      "ScaleUpUp":	7,
+			 }
+	 if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
+	 elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
+ 	 else: print "Unexpected number of Scale weights!" 
+	 print "We are at scale weight number:" , WhichWay9[args.sys]
+    else:event.reweightScale = 1.0
+
+    if args.sys in PDFWeights and not event.nPDF == 0:
+	 WhichOne = int(args.sys.split("_")[1])
+	 print WhichOne
+	 if WhichOne == -1 or WhichOne > event.nPDF-1:
+		         print "PDF index out of range!"
+	 event.reweightPDF = PDF_Weight[WhichOne]
+	 print "we are at PDF weight"
+    else:event.reweightPDF = 1.0
+
+    if args.sys in PSWeights and not event.nPS == 0:
+	 WhichSide = {	"ISRUp": 	0,
+			"FSRUp":	1,
+			"ISRDown": 	2,
+			"FSRDown": 	3,
+			}
+	 event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
+	 print WhichSide[args.sys]
+	 print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
+    else:event.reweightPS = 1.0 
+
+sequence.append( getTheorySystematics )
+
+
 #TTree formulas
 
 if args.sys in jetVariations:
@@ -335,6 +405,8 @@ else: ttreeFormulas = {}
 #list all the reweights
 weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
 if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
+weightnames += ['reweightScale','reweightPS','reweightPDF']
+
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
         'LeptonSFUp'    : ('reweightLeptonSF','reweightLeptonSFUp'),
@@ -433,11 +505,11 @@ for i_mode, mode in enumerate(allModes):
 
     for model in models:
         for class_ in model['classes']:
-	    if "TTTT" in class_ : plot_name = "2l_4t"
-	    if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
-	    if "TTLep_cc" in class_: plot_name = "2l_ttcc"
-	    if "TTLep_other" in class_: plot_name = "2l_ttlight"
-	    model_name = model['name']+'_'+class_
+            if "TTTT" in class_ : plot_name = "2l_4t"
+            if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
+            if "TTLep_cc" in class_: plot_name = "2l_ttcc"
+            if "TTLep_other" in class_: plot_name = "2l_ttlight"
+            model_name = model['name']+'_'+class_
             plots.append(Plot(
                 name = plot_name,
                 texX = model_name, texY = 'Number of Events',
@@ -448,11 +520,11 @@ for i_mode, mode in enumerate(allModes):
 
     for model in models:
         for class_ in model['classes']:
-	    if "TTTT" in class_ : plot_name = "2l_4t"
-	    if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
-	    if "TTLep_cc" in class_: plot_name = "2l_ttcc"
-	    if "TTLep_other" in class_: plot_name = "2l_ttlight"
-	    model_name = model['name']+'_'+class_
+            if "TTTT" in class_ : plot_name = "2l_4t"
+            if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
+            if "TTLep_cc" in class_: plot_name = "2l_ttcc"
+            if "TTLep_other" in class_: plot_name = "2l_ttlight"
+            model_name = model['name']+'_'+class_
             plots.append(Plot(
                 name = plot_name+"_course",
                 texX = model_name, texY = 'Number of Events',
