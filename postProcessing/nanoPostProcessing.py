@@ -547,7 +547,7 @@ read_variables += [\
     TreeVariable.fromString('nMuon/I'),
     VectorTreeVariable.fromString('Muon[pt/F,eta/F,phi/F,pdgId/I,mediumId/O,miniPFRelIso_all/F,miniPFRelIso_chg/F,pfRelIso03_all/F,sip3d/F,dxy/F,dz/F,charge/I,mvaTTH/F,jetNDauCharged/b,jetPtRelv2/F,jetRelIso/F,segmentComp/F,isGlobal/O,isTracker/O,jetIdx/I]'),
     TreeVariable.fromString('nJet/I'),
-    #VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars + (['nBHadrons/b', 'nCHadrons/b'] if (sample.isMC and not options.central) else []) ))),
+    VectorTreeVariable.fromString('Jet[%s]'% ( ','.join(jetVars ))),
     ]
 if addReweights:
     read_variables.extend( ["nLHEReweightingWeight/I" ] )#, "nLHEReweighting/I", "LHEReweighting[Weight/F]" ] ) # need to set alias later
@@ -917,6 +917,7 @@ def filler( event ):
 
     # Get all jets because they are needed to calculate the lepton mvaTOP
     all_jets     = getJets(r, jetVars=jetVarNames)#+(['nBHadrons', 'nCHadrons'] if (sample.isMC and not options.central) else []))
+
     analysis_jets= filter(lambda j: isAnalysisJet(j, ptCut=minJetPt, absEtaCut=maxJetAbsEta, ptVar = ['pt']+jesVariations), all_jets)
     for j in analysis_jets:
         j['isNominal'] = j['pt']>minJetPt
