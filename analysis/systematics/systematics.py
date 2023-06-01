@@ -233,7 +233,7 @@ jetVarNames     = [x.split('/')[0] for x in jetVars]
 #Read variables (data & MC)
 
 read_variables += [
-    "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I",
+    "weight/F", "year/I", "met_pt/F", "met_phi/F", "nBTag/I", "nJetGood/I", "PV_npvsGood/I", #"event/l", "run/I", "luminosityBlock/I",
     "l1_pt/F", "l1_eta/F" , "l1_phi/F", "l1_mvaTOP/F", "l1_mvaTOPWP/I", "l1_index/I",
     "l2_pt/F", "l2_eta/F" , "l2_phi/F", "l2_mvaTOP/F", "l2_mvaTOPWP/I", "l2_index/I",
     "JetGood[%s]"%(",".join(jetVars)),
@@ -247,7 +247,7 @@ read_variables += [
 #MC only
 read_variables_MC = [
     'reweightBTagSF_central/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F', 'reweightTopPt/F',
-    "PDF_Weight/F","nPDF/I","PS_Weight/F","nPS/I","scale_Weight/F","nscale/I",
+    "PDF[Weight/F]","nPDF/I","PS[Weight/F]","nPS/I","scale[Weight/F]","nscale/I",
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
 sequence = []
@@ -281,8 +281,6 @@ def keras_predict( event, sample ):
             setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
 sequence.append( keras_predict )
 
-
-
 #Jet Selection modifier
 def jetSelectionModifier( sys, returntype = "func"):
   variiedJetObservables = ['nJetGood', 'nBTag', 'ht']
@@ -309,7 +307,6 @@ else:
 def make_jets( event, sample ):
     event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
-
 
 sequence.append( make_jets )
 
@@ -395,17 +392,17 @@ def getTheorySystematics(event,sample):
 
 sequence.append( getTheorySystematics )
 
-
 #TTree formulas
 
 if args.sys in jetVariations:
   ttreeFormulas = {"ht_"+args.sys :"Sum$(JetGood_pt_"+args.sys+")"}
 else: ttreeFormulas = {} 
 
-#list all the reweights
+##list all the reweights FIXME
 weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
 if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
 weightnames += ['reweightScale','reweightPS','reweightPDF']
+
 
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
@@ -451,10 +448,6 @@ if args.sys in jetVariations:
         if weight == oldname:
           weightnames[i] = newname
           read_variables_MC += ['%s/F'%(newname)]
-
-
-
-
 
 
 yields     = {}
