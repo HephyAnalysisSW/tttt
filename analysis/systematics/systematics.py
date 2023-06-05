@@ -256,7 +256,6 @@ sequence = []
 import tttt.MVA.configs as configs
 config = configs.tttt_2l
 read_variables += config.read_variables
-
 sequence += config.sequence
 
 # Add sequence that computes the MVA inputs
@@ -349,7 +348,7 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 #get each theory uncertainty reweight
 
 def getTheorySystematics(event,sample):
-    if args.sys in scaleWeights and not event.nscale == 0:
+    if args.sys in scaleWeights:
 	 WhichWay9 = {"ScaleDownDown": 	0, 
 		      "ScaleDownNone": 	1, 
 		      "ScaleNoneDown": 	3, 
@@ -367,19 +366,19 @@ def getTheorySystematics(event,sample):
 	 if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
 	 elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
  	 else: print "Unexpected number of Scale weights!" 
-	 print "We are at scale weight number:" , WhichWay9[args.sys]
+	 #print "We are at scale weight number:" , WhichWay9[args.sys]
     else:event.reweightScale = 1.0
 
-    if args.sys in PDFWeights and not event.nPDF == 0:
+    if args.sys in PDFWeights:
 	 WhichOne = int(args.sys.split("_")[1])
-	 print WhichOne
+	 #print WhichOne
 	 if WhichOne == -1 or WhichOne > event.nPDF-1:
 		         print "PDF index out of range!"
-	 event.reweightPDF = PDF_Weight[WhichOne]
-	 print "we are at PDF weight"
+	 event.reweightPDF = event.PDF_Weight[WhichOne]
+	 #print "we are at PDF weight"
     else:event.reweightPDF = 1.0
 
-    if args.sys in PSWeights and not event.nPS == 0:
+    if args.sys in PSWeights:
 	 WhichSide = {	"ISRUp": 	0,
 			"FSRUp":	1,
 			"ISRDown": 	2,
@@ -387,7 +386,7 @@ def getTheorySystematics(event,sample):
 			}
 	 event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
 	 print WhichSide[args.sys]
-	 print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
+	 #print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
     else:event.reweightPS = 1.0 
 
 sequence.append( getTheorySystematics )
