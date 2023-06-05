@@ -330,11 +330,11 @@ else:
     selectionModifier = None
 
 
-def make_jets( event, sample ):
-    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
-    event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+# def make_jets( event, sample ):
+#     event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
+#     event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
 
-sequence.append( make_jets )
+#sequence.append( make_jets )
 
 #Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
