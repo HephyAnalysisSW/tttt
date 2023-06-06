@@ -283,7 +283,7 @@ def debug(event, sample):
     try:
         event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
         mass = sqrt(2*event.jets[0]['pt']*event.jets[1]['pt']*(cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))) if event.nJetGood >=2 else 0
-        print event.jets[0]['phi'], event.jets[0]['pt'], event.jets[1]['phi'], event.jets[1]['pt'], event.jets[0]['eta'], event.jets[1]['eta']
+        #print event.jets[0]['phi'], event.jets[0]['pt'], event.jets[1]['phi'], event.jets[1]['pt'], event.jets[0]['eta'], event.jets[1]['eta']
         if mass <0:
             raise RuntimeError
     except:
@@ -389,7 +389,7 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 #get each theory uncertainty reweight
 
 def getTheorySystematics(event,sample):
-    if args.sys in scaleWeights and not event.nscale == 0:
+    if args.sys in scaleWeights:
 	 WhichWay9 = {"ScaleDownDown": 	0,
 		      "ScaleDownNone": 	1,
 		      "ScaleNoneDown": 	3,
@@ -410,16 +410,16 @@ def getTheorySystematics(event,sample):
 	 #print "We are at scale weight number:" , WhichWay9[args.sys]
     else:event.reweightScale = 1.0
 
-    if args.sys in PDFWeights and not event.nPDF == 0:
+    if args.sys in PDFWeights:
 	 WhichOne = int(args.sys.split("_")[1])
 	 #print WhichOne
 	 if WhichOne == -1 or WhichOne > event.nPDF-1:
 		         print "PDF index out of range!"
-	 event.reweightPDF = PDF_Weight[WhichOne]
+	 event.reweightPDF = event.PDF_Weight[WhichOne]
 	 #print "we are at PDF weight"
     else:event.reweightPDF = 1.0
 
-    if args.sys in PSWeights and not event.nPS == 0:
+    if args.sys in PSWeights:
 	 WhichSide = {	"ISRUp": 	0,
 			"FSRUp":	1,
 			"ISRDown": 	2,
