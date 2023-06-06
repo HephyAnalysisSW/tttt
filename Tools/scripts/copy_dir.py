@@ -25,7 +25,7 @@ argParser.add_argument('--target',         action='store', default='/scratch-cbe
 #argParser.add_argument('--version',        action='store', default='tttt_v7', help='which version to copy to?')
 argParser.add_argument('--target_subdir',  action='store', default=None, help='If specified, will write to "target/target_subdir" instead if "target/source_subdir-selection".')
 argParser.add_argument('--selection',      action='store', default='SS')
-argParser.add_argument('--samples',        action='store',         nargs='*',  type=str, default=[],                  help="List of samples to be post-processed, given as CMG component name" )
+argParser.add_argument('--sampleSelection',        action='store',         nargs='*',  type=str, default=[],                  help="List of strings that must appear in samples to be processed (OR-ed)" )
 argParser.add_argument('--cores',          action='store',         type=int, default=-1,                  help="How many jobs to parallelize?" )
 args = argParser.parse_args()
 
@@ -47,9 +47,15 @@ for i_entry, entry in enumerate( os.listdir(args.source) ):
         sample = Sample.fromDirectory( "s%i"%i_entry, directory = sample_dir )
         #print(sample.name, len(sample.files))
         #if entry == args.sample:
-        if len(args.samples)>0 and entry not in args.samples:
-            continue
-        jobs.append( {'sample':sample, 'target':os.path.join(os.path.expandvars(target), entry), 'selection':cutInterpreter.cutString(args.selection), 'overwrite':args.overwrite} )
+        found=True
+        if len(args.sampleSelection)>0:
+            found = False
+            for selection in args.sampleSelection:
+                if selection in sample_dir:
+                    found = True
+                    break
+        if found:
+            jobs.append( {'sample':sample, 'target':os.path.join(os.path.expandvars(target), entry), 'selection':cutInterpreter.cutString(args.selection), 'overwrite':args.overwrite} )
 
 #import time
 #def wrapper_function( job ):

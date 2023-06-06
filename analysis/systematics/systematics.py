@@ -147,7 +147,6 @@ else:
     logger.info( "Data included in analysis cycle")
 
 
-
 #Simulated samples
 #from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 # Split dileptonic TTBar into three different contributions
@@ -274,7 +273,7 @@ read_variables += [
 #MC only
 read_variables_MC = [
     'reweightBTagSF_central/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F', 'reweightTopPt/F',
-    "PDF[Weight/F]","nPDF/I","PS[Weight/F]","nPS/I","scale[Weight/F]","nscale/I",
+    VectorTreeVariable.fromString( "PDF[Weight/F]", nMax=120) , "nPDF/I","PS[Weight/F]","nPS/I","scale[Weight/F]","nscale/I",
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
 sequence = []
@@ -283,7 +282,7 @@ def debug(event, sample):
     try:
         event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
         mass = sqrt(2*event.jets[0]['pt']*event.jets[1]['pt']*(cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))) if event.nJetGood >=2 else 0
-        print event.jets[0]['phi'], event.jets[0]['pt'], event.jets[1]['phi'], event.jets[1]['pt'], event.jets[0]['eta'], event.jets[1]['eta']
+        #print event.jets[0]['phi'], event.jets[0]['pt'], event.jets[1]['phi'], event.jets[1]['pt'], event.jets[0]['eta'], event.jets[1]['eta']
         if mass <0:
             raise RuntimeError
     except:
@@ -291,6 +290,7 @@ def debug(event, sample):
         raise RuntimeError
 
 sequence.append(debug)
+
 # MVA configuration
 import tttt.MVA.configs as configs
 config = configs.tttt_2l
@@ -343,7 +343,6 @@ if args.sys in jetVariations:
 else:
     selectionModifier = None
 
-
 # def make_jets( event, sample ):
 #     event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
 #     event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
@@ -389,7 +388,7 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 #get each theory uncertainty reweight
 
 def getTheorySystematics(event,sample):
-    if args.sys in scaleWeights and not event.nscale == 0:
+    if args.sys in scaleWeights:
 	 WhichWay9 = {"ScaleDownDown": 	0,
 		      "ScaleDownNone": 	1,
 		      "ScaleNoneDown": 	3,
@@ -410,24 +409,24 @@ def getTheorySystematics(event,sample):
 	 #print "We are at scale weight number:" , WhichWay9[args.sys]
     else:event.reweightScale = 1.0
 
-    if args.sys in PDFWeights and not event.nPDF == 0:
-	 WhichOne = int(args.sys.split("_")[1])
-	 #print WhichOne
-	 if WhichOne == -1 or WhichOne > event.nPDF-1:
-		         print "PDF index out of range!"
-	 event.reweightPDF = PDF_Weight[WhichOne]
-	 #print "we are at PDF weight"
+    if args.sys in PDFWeights:
+	    WhichOne = int(args.sys.split("_")[1])
+	    #print WhichOne
+	    if WhichOne == -1 or WhichOne > event.nPDF-1:
+	                print "PDF index out of range!"
+	    event.reweightPDF = event.PDF_Weight[WhichOne]
+	    #print "we are at PDF weight"
     else:event.reweightPDF = 1.0
 
-    if args.sys in PSWeights and not event.nPS == 0:
-	 WhichSide = {	"ISRUp": 	0,
+    if args.sys in PSWeights:
+	    WhichSide = {	"ISRUp": 	0,
 			"FSRUp":	1,
 			"ISRDown": 	2,
 			"FSRDown": 	3,
 			}
-	 event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
-	 #print WhichSide[args.sys]
-	 #print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
+	    event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
+	    #print WhichSide[args.sys]
+	    #print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
     else:event.reweightPS = 1.0
 
 sequence.append( getTheorySystematics )
