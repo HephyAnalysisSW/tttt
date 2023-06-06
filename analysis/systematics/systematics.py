@@ -249,7 +249,8 @@ jetVars     =   ['pt/F',
                  'chEmEF/F',
                  'chHEF/F',
                  'neEmEF/F',
-                 'neHEF/F' ]
+                 'neHEF/F',
+                 'index/I']
 
 if args.sys in jetVariations:
   jetVars += ["pt_"+args.sys+"/F"]
@@ -295,6 +296,7 @@ from keras.models import load_model
 classes = [ts.name for ts in config.training_samples]
 
 models  = [{'name':'tttt_2l', 'has_lstm':False, 'classes':classes, 'model':load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l/regression_model.h5")}]
+
 
 def keras_predict( event, sample ):
     flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
