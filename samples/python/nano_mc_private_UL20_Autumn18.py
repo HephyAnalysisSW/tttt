@@ -57,7 +57,7 @@ TTbb_pow_CP5_hUp     = Sample.nanoAODfromDAS("TTbb_pow_CP5_hUp",  "/TTbb_4f_TTTo
 TTLep_pow_CP5_hDown  = Sample.nanoAODfromDAS("TTLep_pow_CP5_hDown","/TTTo2L2Nu_hdampDOWN_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=88.4)
 TTLep_pow_CP5_hUp    = Sample.nanoAODfromDAS("TTLep_pow_CP5_hUp","/TTTo2L2Nu_hdampUP_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=88.4)
 
-TTSingleLep_pow_CP5 = Sample.nanoAODfromDAS("TTSingleLep_pow_CP5",      "/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM",      dbFile=dbFile, redirector=redirector_global, instance="global", overwrite=ov, xSection=365.34)
+TTSingleLep_pow_CP5 = Sample.nanoAODfromDAS("TTSingleLep_pow_CP5",      "/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM",      dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=365.34)
 
 #TTTT_sync miniAOD : https://cmsweb.cern.ch/das/request?instance=prod/global&input=dataset+file%3D%2Fstore%2Fmc%2FRunIISummer20UL18MiniAODv2%2FTTTT_TuneCP5_13TeV-amcatnlo-pythia8%2FMINIAODSIM%2F106X_upgrade2018_realistic_v16_L1v1-v2%2F2520000%2F01CC7B01-9F49-A44F-8B48-D8B913E73DB0.root
 TTTT_sync            = Sample.fromFiles("TTTT_sync", ["/groups/hephy/cms/robert.schoefbeck/tttt/sync/nanoAOD.root"], xSection=1, normalization = 1)
