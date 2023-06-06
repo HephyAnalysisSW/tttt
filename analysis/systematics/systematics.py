@@ -42,6 +42,7 @@ argParser.add_argument('--dataMCScaling',  action='store_true',                 
 argParser.add_argument('--plot_directory', action='store',      default='4t')
 argParser.add_argument('--selection',      action='store',      default='trg-dilepL-minDLmass20-offZ1-njet4p-btag2p-ht500')
 argParser.add_argument('--sys',            action='store',      default='central')
+argParser.add_argument('--era',            action='store',      default='RunII', type=str,                help="Which era?" )
 args = argParser.parse_args()
 
 #Directory naming parser options
@@ -58,7 +59,7 @@ logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 
 # Possible Syst variations
-variations = ['LeptonSFDown', 
+variations = ['LeptonSFDown',
               'LeptonSFUp',
               'PUDown',
               'PUUp',
@@ -66,7 +67,7 @@ variations = ['LeptonSFDown',
               'L1PrefireUp',
               #'TriggerDown',
               #'TriggerUp',
-              'BTagSFJesDown', 
+              'BTagSFJesDown',
               'BTagSFJesUp',
               'BTagSFHfDown',
               'BTagSFHfUp',
@@ -118,7 +119,7 @@ jesUncertainties = [
     "SinglePionHCAL",
     "TimePtEta",
 ]
-    
+
 nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
 
@@ -148,9 +149,24 @@ else:
 
 
 #Simulated samples
-from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+#from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 # Split dileptonic TTBar into three different contributions
 # Use the hdamp samples for this variation
+
+
+if args.era not in ["2016_preVFP", "2016", "2017", "2018", "RunII"]:
+    raise Exception("Era %s not known"%args.era)
+if args.era == '2016_preVFP':
+        from tttt.samples.nano_mc_private_UL20_Summer16_preVFP_postProcessed_dilep import *
+if args.era == '2016':
+        from tttt.samples.nano_mc_private_UL20_Summer16_postProcessed_dilep import *
+if args.era == '2017':
+        from tttt.samples.nano_mc_private_UL20_Fall17_postProcessed_dilep import *
+if args.era == '2018':
+        from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import *
+if args.era == 'RunII':
+        from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+
 if not args.sys == "HDampUp" or args.sys == "HDampDown" :
     sample_TTLep = TTLep
 elif args.sys == "HDampUp":
@@ -184,8 +200,18 @@ TTLep_other.setSelectionString( "genTtbarId%100<40" )
 mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DY_inclusive, DiBoson]
 #Add the data
 if not args.noData:
-    from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
-    data_sample = RunII
+    if args.era == '2016_preVFP':
+        from tttt.samples.nano_data_private_UL20_Run2016_preVFP_postProcessed_dilep import Run2016_preVFP as data_sample
+    if args.era == '2016':
+        from tttt.samples.nano_data_private_UL20_Run2016_postProcessed_dilep import Run2016 as data_sample
+    if args.era == '2017':
+        from tttt.samples.nano_data_private_UL20_Run2017_postProcessed_dilep import Run2017 as data_sample
+    if args.era == '2018':
+        from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
+    if args.era == 'RunII':
+        from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII as data_sample
+    #from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
+    #data_sample = RunII
     data_sample.name = "data"
     all_samples = mc +  [data_sample]
 else:
@@ -223,7 +249,8 @@ jetVars     =   ['pt/F',
                  'chEmEF/F',
                  'chHEF/F',
                  'neEmEF/F',
-                 'neHEF/F' ]
+                 'neHEF/F',
+                 'index/I']
 
 if args.sys in jetVariations:
   jetVars += ["pt_"+args.sys+"/F"]
@@ -252,6 +279,18 @@ read_variables_MC = [
     ]
 sequence = []
 
+def debug(event, sample):
+    try:
+        event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
+        mass = sqrt(2*event.jets[0]['pt']*event.jets[1]['pt']*(cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))) if event.nJetGood >=2 else 0
+        #print event.jets[0]['phi'], event.jets[0]['pt'], event.jets[1]['phi'], event.jets[1]['pt'], event.jets[0]['eta'], event.jets[1]['eta']
+        if mass <0:
+            raise RuntimeError
+    except:
+        print event.jets[0]['phi'], event.jets[0]['pt'], event.jets[1]['phi'], event.jets[1]['pt'], event.jets[0]['eta'], event.jets[1]['eta']
+        raise RuntimeError
+
+sequence.append(debug)
 # MVA configuration
 import tttt.MVA.configs as configs
 config = configs.tttt_2l
@@ -269,6 +308,7 @@ from keras.models import load_model
 classes = [ts.name for ts in config.training_samples]
 
 models  = [{'name':'tttt_2l', 'has_lstm':False, 'classes':classes, 'model':load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l/regression_model.h5")}]
+
 
 def keras_predict( event, sample ):
     flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
@@ -293,7 +333,7 @@ def jetSelectionModifier( sys, returntype = "func"):
     list = []
     for v in variiedJetObservables:
       string = v+'_'+sys
-      list.append(string)    
+      list.append(string)
     return list
 
 #Add a selection selection Modifier
@@ -304,11 +344,11 @@ else:
     selectionModifier = None
 
 
-def make_jets( event, sample ):
-    event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
-    event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+# def make_jets( event, sample ):
+#     event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
+#     event.bJets = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
 
-sequence.append( make_jets )
+#sequence.append( make_jets )
 
 #Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
@@ -349,46 +389,46 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 #get each theory uncertainty reweight
 
 def getTheorySystematics(event,sample):
-    if args.sys in scaleWeights and not event.nscale == 0:
-	 WhichWay9 = {"ScaleDownDown": 	0, 
-		      "ScaleDownNone": 	1, 
-		      "ScaleNoneDown": 	3, 
-		      "ScaleNoneUp":	5, 
-		      "ScaleUpNone":	7, 
+    if args.sys in scaleWeights:
+	 WhichWay9 = {"ScaleDownDown": 	0,
+		      "ScaleDownNone": 	1,
+		      "ScaleNoneDown": 	3,
+		      "ScaleNoneUp":	5,
+		      "ScaleUpNone":	7,
 		      "ScaleUpUp":	8,
 			 }
-	 WhichWay8 = {"ScaleDownDown": 	0, 
-		      "ScaleDownNone": 	1, 
-		      "ScaleNoneDown": 	3, 
-		      "ScaleNoneUp":	4, 
-		      "ScaleUpNone":	6, 
+	 WhichWay8 = {"ScaleDownDown": 	0,
+		      "ScaleDownNone": 	1,
+		      "ScaleNoneDown": 	3,
+		      "ScaleNoneUp":	4,
+		      "ScaleUpNone":	6,
 		      "ScaleUpUp":	7,
 			 }
 	 if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
 	 elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
- 	 else: print "Unexpected number of Scale weights!" 
-	 print "We are at scale weight number:" , WhichWay9[args.sys]
+ 	 else: print "Unexpected number of Scale weights!"
+	 #print "We are at scale weight number:" , WhichWay9[args.sys]
     else:event.reweightScale = 1.0
 
-    if args.sys in PDFWeights and not event.nPDF == 0:
+    if args.sys in PDFWeights:
 	 WhichOne = int(args.sys.split("_")[1])
-	 print WhichOne
+	 #print WhichOne
 	 if WhichOne == -1 or WhichOne > event.nPDF-1:
 		         print "PDF index out of range!"
-	 event.reweightPDF = PDF_Weight[WhichOne]
-	 print "we are at PDF weight"
+	 event.reweightPDF = event.PDF_Weight[WhichOne]
+	 #print "we are at PDF weight"
     else:event.reweightPDF = 1.0
 
-    if args.sys in PSWeights and not event.nPS == 0:
+    if args.sys in PSWeights:
 	 WhichSide = {	"ISRUp": 	0,
 			"FSRUp":	1,
 			"ISRDown": 	2,
 			"FSRDown": 	3,
 			}
 	 event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
-	 print WhichSide[args.sys]
-	 print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
-    else:event.reweightPS = 1.0 
+	 #print WhichSide[args.sys]
+	 #print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
+    else:event.reweightPS = 1.0
 
 sequence.append( getTheorySystematics )
 
@@ -396,7 +436,7 @@ sequence.append( getTheorySystematics )
 
 if args.sys in jetVariations:
   ttreeFormulas = {"ht_"+args.sys :"Sum$(JetGood_pt_"+args.sys+")"}
-else: ttreeFormulas = {} 
+else: ttreeFormulas = {}
 
 ##list all the reweights FIXME
 weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
@@ -484,7 +524,7 @@ for i_mode, mode in enumerate(allModes):
         stack = Stack(mc)
 
     # Define everything we want to have common to all plots
-    selection_string = selectionModifier(cutInterpreter.cutString(args.selection)) if selectionModifier is not None else cutInterpreter.cutString(args.selection) 
+    selection_string = selectionModifier(cutInterpreter.cutString(args.selection)) if selectionModifier is not None else cutInterpreter.cutString(args.selection)
     Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+selection_string+")")
 
     plots = []
@@ -824,9 +864,9 @@ for i_mode, mode in enumerate(allModes):
 
       plots.append(Plot(
         texX = 'N_{jets}_'+args.sys, texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "nJetGood_"+args.sys+"/I" ), #nJet varied 
+        attribute = TreeVariable.fromString( "nJetGood_"+args.sys+"/I" ), #nJet varied
         binning=[8,3.5,11.5],
-      )) 
+      ))
 
       plots.append(Plot(
         texX = 'N_{b-tag}_'+args.sys, texY = 'Number of Events',
@@ -889,7 +929,10 @@ for mode in ["SF","all"]:
 
 # Write Result Hist in root file
 logger.info( "Now writing results in root file")
-plot_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', 'all', args.selection)
+if args.era in ["2016_preVFP", "2016", "2017", "2018"]:
+    plot_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, args.era, 'all', args.selection)
+elif args.era == "RunII":
+    plot_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, "RunII", 'all', args.selection)
 if not os.path.exists(plot_dir):
     try:
         os.makedirs(plot_dir)
@@ -903,18 +946,18 @@ for plot in allPlots[allModes[0]]:
     for idx, histo_list in enumerate(plot.histos):
         for j, h in enumerate(histo_list):
             histname = h.GetName()
-            if "TTLep_bb" in histname: process = "TTLep_bb"
-            elif "TTLep_cc" in histname: process = "TTLep_cc"
-            elif "TTLep_other" in histname: process = "TTLep_other"
-            elif "ST_tch" in histname: process = "ST_tch"
-	    elif "ST_twch" in histname: process = "ST_twch"
-            elif "TTW" in histname: process = "TTW"
-            elif "TTZ" in histname: process = "TTZ"
-            elif "TTH" in histname: process = "TTH"
-   	    elif "DY" in histname: process = "DY"
-    	    elif "DiBoson" in histname: process = "DiBoson"
-            elif "data" in histname: process = "data"
-	    elif "TTTT" in histname: process = "TTTT"
+            if "TTLep_bb" in histname: process = "TTLep_bb_"+args.era if not args.era=='RunII' else "TTLep_bb"
+            elif "TTLep_cc" in histname: process = "TTLep_cc_"+args.era if not args.era=='RunII' else "TTLep_cc"
+            elif "TTLep_other" in histname: process = "TTLep_other_"+args.era if not args.era=='RunII' else "TTLep_other"
+            elif "ST_tch" in histname: process = "ST_tch_"+args.era if not args.era=='RunII' else "ST_tch"
+            elif "ST_twch" in histname: process = "ST_twch_"+args.era if not args.era=='RunII' else "ST_twch"
+            elif "TTW" in histname: process = "TTW_"+args.era if not args.era=='RunII' else "TTW"
+            elif "TTZ" in histname: process = "TTZ_"+args.era if not args.era=='RunII' else "TTZ"
+            elif "TTH" in histname: process = "TTH_"+args.era if not args.era=='RunII' else "TTH"
+            elif "DY" in histname: process = "DY_"+args.era if not args.era=='RunII' else "DY"
+            elif "DiBoson" in histname: process = "DiBoson_"+args.era if not args.era=='RunII' else "DiBoson"
+            elif "data" in histname: process = "data_"+args.era if not args.era=='RunII' else "data"
+            elif "TTTT" in histname: process = "TTTT_"+args.era if not args.era=='RunII' else "TTTT"
             h.Write(plot.name+"__"+process)
 outfile.Close()
 
