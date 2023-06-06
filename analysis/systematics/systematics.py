@@ -147,7 +147,6 @@ else:
     logger.info( "Data included in analysis cycle")
 
 
-
 #Simulated samples
 #from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
 # Split dileptonic TTBar into three different contributions
@@ -274,7 +273,7 @@ read_variables += [
 #MC only
 read_variables_MC = [
     'reweightBTagSF_central/F', 'reweightPU/F', 'reweightL1Prefire/F', 'reweightLeptonSF/F', 'reweightTrigger/F', 'reweightTopPt/F',
-    "PDF[Weight/F]","nPDF/I","PS[Weight/F]","nPS/I","scale[Weight/F]","nscale/I",
+    VectorTreeVariable.fromString( "PDF[Weight/F]", nMax=120) , "nPDF/I","PS[Weight/F]","nPS/I","scale[Weight/F]","nscale/I",
     "GenJet[pt/F,eta/F,phi/F,partonFlavour/I,hadronFlavour/i]"
     ]
 sequence = []
@@ -291,6 +290,7 @@ def debug(event, sample):
         raise RuntimeError
 
 sequence.append(debug)
+
 # MVA configuration
 import tttt.MVA.configs as configs
 config = configs.tttt_2l
@@ -342,7 +342,6 @@ if args.sys in jetVariations:
     read_variables_MC += ["nJetGood_"+args.sys+"/I","nBTag_"+args.sys+"/I","ht_"+args.sys+"/F"]
 else:
     selectionModifier = None
-
 
 # def make_jets( event, sample ):
 #     event.jets  = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
@@ -411,23 +410,23 @@ def getTheorySystematics(event,sample):
     else:event.reweightScale = 1.0
 
     if args.sys in PDFWeights:
-	 WhichOne = int(args.sys.split("_")[1])
-	 #print WhichOne
-	 if WhichOne == -1 or WhichOne > event.nPDF-1:
-		         print "PDF index out of range!"
-	 event.reweightPDF = event.PDF_Weight[WhichOne]
-	 #print "we are at PDF weight"
+	    WhichOne = int(args.sys.split("_")[1])
+	    #print WhichOne
+	    if WhichOne == -1 or WhichOne > event.nPDF-1:
+	                print "PDF index out of range!"
+	    event.reweightPDF = event.PDF_Weight[WhichOne]
+	    #print "we are at PDF weight"
     else:event.reweightPDF = 1.0
 
     if args.sys in PSWeights:
-	 WhichSide = {	"ISRUp": 	0,
+	    WhichSide = {	"ISRUp": 	0,
 			"FSRUp":	1,
 			"ISRDown": 	2,
 			"FSRDown": 	3,
 			}
-	 event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
-	 #print WhichSide[args.sys]
-	 #print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
+	    event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
+	    #print WhichSide[args.sys]
+	    #print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
     else:event.reweightPS = 1.0
 
 sequence.append( getTheorySystematics )
