@@ -35,9 +35,9 @@ systematics = [ {"name" : "LeptonSF", "color" : ROOT.kTeal-9,
 		{"name" : "L1Prefire", "color" : ROOT.kBlue+2,
                 "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_L1PrefireUp.root")),
                 "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_L1PrefireDown.root"))},
-#                {"name" : "BTagSFJes", "color" : ROOT.kBlue,
-#                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesUp.root")),
-#                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesDown.root"))},
+                {"name" : "BTagSFJes", "color" : ROOT.kBlue,
+                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesUp.root")),
+                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesDown.root"))},
 		{"name" : "BTagSFHf", "color" : ROOT.kPink+2,
                 "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfUp.root")),
                 "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfDown.root"))},
@@ -56,16 +56,43 @@ systematics = [ {"name" : "LeptonSF", "color" : ROOT.kTeal-9,
 		{"name" : "BTagSFLfs2", "color" : ROOT.kCyan+2,
                 "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFLfs2Up.root")),
                 "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFLfs2Down.root"))},
-#                {"name" : "BTagSFCfe1", "color" : ROOT.kBlue-4,
-#                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe1Up.root")),
-#                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe1Down.root"))},
-#                {"name" : "BTagSFCfe2", "color" : ROOT.kBlue+4,
-#                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe2Up.root")),
-#                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe2Down.root"))}, 
+                {"name" : "BTagSFCfe1", "color" : ROOT.kBlue-4,
+                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe1Up.root")),
+                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe1Down.root"))},
+                {"name" : "BTagSFCfe2", "color" : ROOT.kBlue+4,
+                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe2Up.root")),
+                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFCfe2Down.root"))}, 
 		{"name" : "jesTotal", "color" : ROOT.kCyan,
                 "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_jesTotalUp.root")),
                 "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_jesTotalDown.root"))},
+		{"name" : "HDamp", "color" : ROOT.kCyan+3,
+		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_HDampUp.root")),
+		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_HDampDown.root"))},
+		{"name" : "ISR", "color" : ROOT.kMagenta,
+		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ISRUp.root")),
+		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ISRDown.root"))},
+	 	{"name" : "FSR", "color" : ROOT.kMagenta+2,
+		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_FSRUp.root")),
+		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_FSRDown.root"))}, 
+		{"name" : "noTopPtReweight", "color" : ROOT.kBlue-9,
+		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_noTopPtReweight.root")),
+		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_central.root"))},
+		{"name" : "Renormalization", "color" : ROOT.kGreen+1,
+		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleUpNone.root")),
+		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleDownNone.root"))},
+		{"name" : "Factorization", "color" : ROOT.kGreen-7,
+		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleNoneUp.root")),
+		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleNoneDown.root"))},
+		{"name" : "scaleCorrelation", "color" : ROOT.kGreen-1,
+		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleUpUp.root")),
+		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleDownDown.root"))},
               ]
+
+PDFs = []
+for i in range(1,100):
+	PDFs += [{"name" : "PDF_%s"%i,
+	"up": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_PDF_%s.root"%i))}]
+
 
 mc = [ {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}"},
        {"name": "TTLep_cc", "legendText" : "t#bar{t}c#bar{c}"},
@@ -143,6 +170,11 @@ for j, plot in enumerate(plots):
             Uphist = syst["up"].Get(plot["name"]+"__"+sample["name"])
             Downhist = syst["down"].Get(plot["name"]+"__"+sample["name"])
             plotter.addSystematic(sample["name"] , syst["name"], Uphist, Downhist, syst["color"])
+	
+	for j,pdf in enumerate(PDFs):
+
+	    pdfHist = pdf["up"].Get(plot["name"]+"__"+sample["name"])
+	    plotter.addPDF(sample["name"] , pdf["name"] , pdfHist)
 
     if not args.noData:
         datahist = nominalSample.Get(plot["name"]+"__data")
