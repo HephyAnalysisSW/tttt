@@ -26,6 +26,7 @@ argParser.add_argument('--target',         action='store', default='/scratch-cbe
 argParser.add_argument('--target_subdir',  action='store', default=None, help='If specified, will write to "target/target_subdir" instead if "target/source_subdir-selection".')
 argParser.add_argument('--selection',      action='store', default='SS')
 argParser.add_argument('--sampleSelection',        action='store',         nargs='*',  type=str, default=[],                  help="List of strings that must appear in samples to be processed (OR-ed)" )
+argParser.add_argument('--skipSelection',        action='store',         nargs='*',  type=str, default=[],                  help="List of strings that must not appear in samples to be processed (OR-ed)" )
 argParser.add_argument('--cores',          action='store',         type=int, default=-1,                  help="How many jobs to parallelize?" )
 args = argParser.parse_args()
 
@@ -54,6 +55,10 @@ for i_entry, entry in enumerate( os.listdir(args.source) ):
                 if selection in sample_dir:
                     found = True
                     break
+        for selection in args.skipSelection:
+            if selection in sample_dir: 
+                found = False
+                break
         if found:
             jobs.append( {'sample':sample, 'target':os.path.join(os.path.expandvars(target), entry), 'selection':cutInterpreter.cutString(args.selection), 'overwrite':args.overwrite} )
 

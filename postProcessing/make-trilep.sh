@@ -1,0 +1,4 @@
+copy_dir.py --source /scratch-cbe/users/cristina.giordano/tttt/nanoTuples/tttt_v7/UL2016/trilep/           --selection trilep --target_subdir trilep --target /scratch-cbe/users/$USER/tttt/nanoTuples/tttt_v7-skimmed/UL2016 --cores 10
+copy_dir.py --source /scratch-cbe/users/cristina.giordano/tttt/nanoTuples/tttt_v7/UL2016_preVFP/trilep/   --selection trilep --target_subdir trilep --target /scratch-cbe/users/$USER/tttt/nanoTuples/tttt_v7-skimmed/UL2016_preVFP --cores 10
+copy_dir.py --source /scratch-cbe/users/cristina.giordano/tttt/nanoTuples/tttt_v7/UL2017/trilep/           --selection trilep --target_subdir trilep --target /scratch-cbe/users/$USER/tttt/nanoTuples/tttt_v7-skimmed/UL2017 --cores 10
+copy_dir.py --source /scratch-cbe/users/cristina.giordano/tttt/nanoTuples/tttt_v7/UL2018/trilep/           --selection trilep --target_subdir trilep --target /scratch-cbe/users/$USER/tttt/nanoTuples/tttt_v7-skimmed/UL2018 --cores 10
