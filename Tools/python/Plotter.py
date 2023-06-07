@@ -4,7 +4,7 @@ Plotting class including systematics
 
 import os
 import ROOT
-from math                                import sqrt
+from math                                import sqrt, isnan
 
 from tttt.Tools.user                     import plot_directory
 import RootTools.plot.helpers as plot_helpers
@@ -31,6 +31,7 @@ class Plotter:
         self.samples = []
         self.systDeltas = []
         self.systNames = []
+	self.PDFs = []
         self.data = {}
         self.totalHist = ROOT.TH1F()
         self.totalError = ROOT.TGraphAsymmErrors()
@@ -104,6 +105,14 @@ class Plotter:
 
 	self.hasPostFitUnc = True
 	
+    def addPDF(self, sampleName, sysName, hist):
+	for smp in self.samples:
+	    if smp["name"] == sampleName:
+		deltaSqr = hist.Clone()
+		deltaSqr.Add(smp["hist"], -1)
+		deltaSqr.Multiply(deltaSqr)
+		self.PDFs.append((sampleName, sysName, deltaSqr))
+
 
 #---Private functions-----------------------------------------------------------
 
@@ -132,7 +141,31 @@ class Plotter:
         if self.totalHist.GetMaximum() > self.yMax:
             self.yMax = self.totalHist.GetMaximum()
 
+
+    #build PDF RMS uncertainty first
+    def buildPDF(self):
+
+	for smp in self.samples:
+	    deltaUp = self.totalHist.Clone()
+	    deltaUp.Reset()
+	    deltaDown = self.totalHist.Clone()
+	    deltaDown.Reset()
+	    for sampleName, pdfName, deltaSqr in self.PDFs:
+		if smp["name"] == sampleName:
+		      deltaUp.Add(deltaSqr)
+	    for j in range(deltaUp.GetNbinsX()):
+		binContent = deltaUp.GetBinContent(j+1)
+		binContent = sqrt(binContent*0.01)
+		deltaUp.SetBinContent(j+1,binContent)
+	    self.systDeltas.append((sampleName, "PDF", deltaUp, deltaDown))
+	    syst= {}
+	    syst["name"] = "PDF"
+	    syst["color"] = ROOT.kBlue
+	    if not syst in self.systNames:
+	    	self.systNames.append(syst)
+	
     def buildUncertainty(self):
+    
 
         nBins = self.totalHist.GetNbinsX()
         for i in range(nBins):
@@ -144,22 +177,29 @@ class Plotter:
             self.totalError.SetPoint(binNumber, binCenter, binContent)
             upErr2 = pow(10, -20)
             downErr2 = pow(10, -20)
-            for sys in self.systNames:
-                shiftUp = 0
+	    for sys in self.systNames:
+		shiftUp = 0
                 shiftDown = 0
                 for sampleName, sysName, deltaUp, deltaDown in self.systDeltas:
                     if sys["name"] == sysName:
+			binFromUp = deltaUp.GetBinContent(binNumber)
+			binFromDown = deltaDown.GetBinContent(binNumber)
+			if isnan(binFromUp) : binFromUp = 0
+			if isnan(binFromDown) : binFromDown = 0
 		    	if deltaUp.GetMaximum()>=0:
-                        	shiftUp   += deltaUp.GetBinContent(binNumber)
-                        	shiftDown += deltaDown.GetBinContent(binNumber)
-		    	else:
-				shiftUp   += deltaDown.GetBinContent(binNumber)
-				shiftDown += deltaUp.GetBinContent(binNumber)
+		                shiftUp   += binFromUp
+                        	shiftDown += binFromDown
+			elif deltaDown.GetMaximum()>=0:
+				shiftUp   += binFromDown
+				shiftDown += binFromUp
+			#if sys["name"] == "scaleCorrelation": print deltaUp.GetBinContent(binNumber), deltaDown.GetBinContent(binNumber)
 
                 upErr2   += pow(shiftUp,2)
                 downErr2 += pow(shiftDown,2)
+		#print sys["name"], upErr2, downErr2
             xELow  = binCenter - binXLow
             xEHigh = binXUp - binCenter
+	    #print xELow, xEHigh
             self.totalError.SetPointError(binNumber, xELow, xEHigh, sqrt(downErr2), sqrt(upErr2))
 
         self.totalError.SetFillStyle(3245)
@@ -438,6 +478,7 @@ class Plotter:
             self.buildStack()
 	    if not self.noSyst:
                 self.legend.AddEntry(self.totalError, "Systematic Uncertainty")
+		self.buildPDF()
                 self.buildUncertainty()
 
         self.setDrawOptions(self.totalHist)
