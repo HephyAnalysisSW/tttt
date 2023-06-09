@@ -35,9 +35,9 @@ systematics = [ {"name" : "LeptonSF", "color" : ROOT.kTeal-9,
 		{"name" : "L1Prefire", "color" : ROOT.kBlue+2,
                 "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_L1PrefireUp.root")),
                 "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_L1PrefireDown.root"))},
-                {"name" : "BTagSFJes", "color" : ROOT.kBlue,
-                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesUp.root")),
-                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesDown.root"))},
+#                {"name" : "BTagSFJes", "color" : ROOT.kBlue,
+#                "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesUp.root")),
+#                "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFJesDown.root"))},
 		{"name" : "BTagSFHf", "color" : ROOT.kPink+2,
                 "up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfUp.root")),
                 "down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_BTagSFHfDown.root"))},
@@ -111,9 +111,9 @@ mc = [ {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}"},
 
 plots = [{"name" : "nJetGood" ,     "texX": "nJet", "texY" : 'Number of Events'},
          {"name" : "nBTag",         "texX": "nJet", "texY" : 'Number of Events'},
-         {"name" : "mu0_pt",        "texX" : "p_{t}", "texY" : 'Number of Events'},
+#         {"name" : "mu0_pt",        "texX" : "p_{t}", "texY" : 'Number of Events'},
          {"name" : 'yield',         "texX" : "", "texY" : 'Number of Events'},
-         {"name" : 'nVtxs',         "texX" : 'vertex multiplicity', "texY" : 'Number of Events'},
+#         {"name" : 'nVtxs',         "texX" : 'vertex multiplicity', "texY" : 'Number of Events'},
          {"name" : 'l1_pt',         "texX" : 'p_{T}(l_{1}) (GeV)', "texY" : 'Number of Events'},
          {"name" : 'l1_eta',        "texX" : '#eta(l_{1})', "texY" : 'Number of Events'},
          {"name" : 'l1_mvaTOP',     "texX" : 'MVA_{TOP}(l_{1})', "texY" : 'Number of Events'},
@@ -124,21 +124,27 @@ plots = [{"name" : "nJetGood" ,     "texX": "nJet", "texY" : 'Number of Events'}
          {"name" : 'l2_mvaTOPWP',   "texX" : 'MVA_{TOP}(l_{1}) WP', "texY" : 'Number of Events'},
          {"name" : "met_pt",        "texX" : 'E_{T}^{miss} (GeV)', "texY" : 'Number of Events / 20 GeV'},
          {"name" : "met_phi",       "texX" : '#phi(E_{T}^{miss})', "texY" :  'Number of Events / 20 GeV'},
-         {"name" : "Z1_pt",         "texX" : 'p_{T}(Z_{1}) (GeV)', "texY" : 'Number of Events / 20 GeV'},
-         {"name" : 'Z1_pt_coarse',  "texX" : 'p_{T}(Z_{1}) (GeV)', "texY" : 'Number of Events / 50 GeV'},
-         {"name" : 'Z1_pt_superCoarse', "texX" : 'p_{T}(Z_{1}) (GeV)', "texY" : 'Number of Events'},
-         {"name" : 'lep1_pt',       "texX" : 'p_{T}(leading l) (GeV)', "texY" : 'Number of Events / 20 GeV'},
-         {"name" : 'lep2_pt',       "texX" : 'p_{T}(subleading l) (GeV)', "texY" : 'Number of Events / 10 GeV'},
-         {"name" : 'lep3_pt',       "texX" : 'p_{T}(trailing l) (GeV)', "texY" : 'Number of Events / 10 GeV'},
-         {"name" : "Z1_mass",       "texX" : 'M(ll) (GeV)', "texY" : 'Number of Events / 20 GeV'},
-         {"name" : "Z1_mass_wide",  "texX" : 'M(ll) (GeV)', "texY" : 'Number of Events / 2 GeV'},
-         {"name" : "Z1_cosThetaStar", "texX" : 'cos#theta(l-)', "texY" : 'Number of Events / 0.2'},
-         {"name" : "Z2_mass_wide",  "texX" : 'M(ll) of 2nd OSDL pair', "texY" : 'Number of Events / 2 GeV'},
+#         {"name" : "Z1_pt",         "texX" : 'p_{T}(Z_{1}) (GeV)', "texY" : 'Number of Events / 20 GeV'},
+#         {"name" : 'Z1_pt_coarse',  "texX" : 'p_{T}(Z_{1}) (GeV)', "texY" : 'Number of Events / 50 GeV'},
+#         {"name" : 'Z1_pt_superCoarse', "texX" : 'p_{T}(Z_{1}) (GeV)', "texY" : 'Number of Events'},
+#         {"name" : 'lep1_pt',       "texX" : 'p_{T}(leading l) (GeV)', "texY" : 'Number of Events / 20 GeV'},
+#         {"name" : 'lep2_pt',       "texX" : 'p_{T}(subleading l) (GeV)', "texY" : 'Number of Events / 10 GeV'},
+#         {"name" : 'lep3_pt',       "texX" : 'p_{T}(trailing l) (GeV)', "texY" : 'Number of Events / 10 GeV'},
+#         {"name" : "Z1_mass",       "texX" : 'M(ll) (GeV)', "texY" : 'Number of Events / 20 GeV'},
+#         {"name" : "Z1_mass_wide",  "texX" : 'M(ll) (GeV)', "texY" : 'Number of Events / 2 GeV'},
+#         {"name" : "Z1_cosThetaStar", "texX" : 'cos#theta(l-)', "texY" : 'Number of Events / 0.2'},
+#         {"name" : "Z2_mass_wide",  "texX" : 'M(ll) of 2nd OSDL pair', "texY" : 'Number of Events / 2 GeV'},
          {"name" : "minDLmass",     "texX" : 'min mass of all DL pairs', "texY" : 'Number of Events / 2 GeV'},
-         {"name" : "Z1_lldPhi",     "texX" : '#Delta#phi(Z_{1}(ll))', "texY" : 'Number of Events'},
-         {"name" : "Z1_lldR",       "texX" : '#Delta R(Z_{1}(ll))', "texY" : 'Number of Events'},
+#         {"name" : "Z1_lldPhi",     "texX" : '#Delta#phi(Z_{1}(ll))', "texY" : 'Number of Events'},
+#         {"name" : "Z1_lldR",       "texX" : '#Delta R(Z_{1}(ll))', "texY" : 'Number of Events'},
          {"name" : "ht",            "texX" : 'H_{T} (GeV)', "texY" : 'Number of Events / 30 GeV'},
+#addLater	 {"name" : "htb",            "texX" : 'H_{T}b (GeV)', "texY" : 'Number of Events / 30 GeV'},
          {"name" : 'jet0_pt',       "texX" : 'p_{T}(leading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
+         {"name" : 'jet1_pt',       "texX" : 'p_{T}(subleading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
+#addLater         {"name" : 'jet0_eta',       "texX" : '#eta(leading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
+#addLater         {"name" : 'jet1_eta',       "texX" : '#eta(subleading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
+#addLater         {"name" : 'jet0_phi',       "texX" : '#phi(leading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
+#addLater         {"name" : 'jet1_phi',       "texX" : '#phi(subleading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
 	 {"name" : "2l_4t",	    "texX" : "tttt_2l_TTTT", "texY" : "Number of Events"},
 	 {"name" : "2l_ttbb",	    "texX" : "tttt_2l_TTLep_bb", "texY" : "Number of Events"},
 	 {"name" : "2l_ttcc",  	    "texX" : "tttt_2l_TTLep_cc", "texY" : "Number of Events"},
@@ -151,13 +157,13 @@ plots = [{"name" : "nJetGood" ,     "texX": "nJet", "texY" : 'Number of Events'}
 
         ]
 
-for index in range(2):
-    for i, lep_name in enumerate(["mu", "ele"]):
-        plots.append({"name" : lep_name+'%i_pt'%index,  "texX" : 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), "texY" : 'Number of Events' })
-        plots.append({"name" : lep_name+'%i_eta'%index, "texX" : '#eta(%s_{%i})'%(lep_name, index), "texY" : 'Number of Events' })
-        plots.append({"name" : lep_name+'%i_phi'%index, "texX" : '#phi(%s_{%i})'%(lep_name, index), "texY" : 'Number of Events' })
-        plots.append({"name" : lep_name+'%i_dxy'%index, "texX" : 'dxy(%s_{%i})'%(lep_name, index), "texY" : 'Number of Events' })
-        plots.append({"name" : lep_name+'%i_dz'%index,  "texX" : 'dz(%s_{%i})'%(lep_name, index), "texY" : 'Number of Events' })
+#for index in range(2):
+#    for i, lep_name in enumerate(["mu", "ele"]):
+#        plots.append({"name" : lep_name+'%i_pt'%index,  "texX" : 'p_{T}(%s_{%i}) (GeV)'%(lep_name, index), "texY" : 'Number of Events' })
+#        plots.append({"name" : lep_name+'%i_eta'%index, "texX" : '#eta(%s_{%i})'%(lep_name, index), "texY" : 'Number of Events' })
+#        plots.append({"name" : lep_name+'%i_phi'%index, "texX" : '#phi(%s_{%i})'%(lep_name, index), "texY" : 'Number of Events' })
+#        plots.append({"name" : lep_name+'%i_dxy'%index, "texX" : 'dxy(%s_{%i})'%(lep_name, index), "texY" : 'Number of Events' })
+#        plots.append({"name" : lep_name+'%i_dz'%index,  "texX" : 'dz(%s_{%i})'%(lep_name, index), "texY" : 'Number of Events' })
 
 for j, plot in enumerate(plots):
     plotter = Plotter(plot["name"])
