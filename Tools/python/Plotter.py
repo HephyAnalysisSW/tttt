@@ -17,7 +17,8 @@ class Plotter:
         self.name = name
         self.plot_dir = plot_directory
         self.legend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
-	self.otherLegend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
+	self.theoLegend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
+	self.expLegend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
         self.xTitle = "something"
         self.yTitle = "Number of Events"
         self.ratioTitle = "Data/MC"
@@ -27,7 +28,8 @@ class Plotter:
         self.yMax = 0
         self.yMin = 0.9
         self.yFactor = 1.7
-	self.yC = 1.05
+	self.yT = 1.05
+	self.yE = 1.05
         self.samples = []
         self.systDeltas = []
         self.systNames = []
@@ -79,7 +81,7 @@ class Plotter:
 
     #Add each systematic error for each sample
     #+Creat a list of systematics names
-    def addSystematic(self, sampleName, sysName, upHist, downHist, color):
+    def addSystematic(self, sampleName, sysName, upHist, downHist, color, sysType):
 
         for smp in self.samples:
             if smp["name"] == sampleName:
@@ -91,6 +93,7 @@ class Plotter:
                 syst= {}
 		syst["name"] = sysName
 		syst["color"] = color
+		syst["type"] = sysType
 		if not syst in self.systNames:
 			self.systNames.append(syst)
 
@@ -161,6 +164,7 @@ class Plotter:
 	    syst= {}
 	    syst["name"] = "PDF"
 	    syst["color"] = ROOT.kBlue
+	    syst["type"] = "theoretical"
 	    if not syst in self.systNames:
 	    	self.systNames.append(syst)
 	
@@ -192,7 +196,7 @@ class Plotter:
 			elif deltaDown.GetMaximum()>=0:
 				shiftUp   += binFromDown
 				shiftDown += binFromUp
-			#if sys["name"] == "scaleCorrelation": print deltaUp.GetBinContent(binNumber), deltaDown.GetBinContent(binNumber)
+			#if sys["name"] == "PDF": print binFromUp, binFromDown
 
                 upErr2   += pow(shiftUp,2)
                 downErr2 += pow(shiftDown,2)
@@ -265,7 +269,7 @@ class Plotter:
    
    		X = h2.GetBinCenter(bin)
                 r = h1.Eval(h2.GetBinCenter(bin))/h2.GetBinContent(bin)
-   	        print Xval, X , h2.GetBinCenter(bin), h1.Eval(h2.GetBinCenter(bin)),h2.GetBinContent(bin), r
+   	        #print Xval, X , h2.GetBinCenter(bin), h1.Eval(h2.GetBinCenter(bin)),h2.GetBinContent(bin), r
 		eY = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
             ratio.SetPoint(bin,X,r)
            
@@ -383,9 +387,14 @@ class Plotter:
 	    sys["totalUpHist"].Divide(self.totalHist)
 	    sys["totalDownHist"].Add(self.totalHist)
 	    sys["totalDownHist"].Divide(self.totalHist)
-	    self.otherLegend.AddEntry(sys["totalUpHist"], sys["name"])
-	    if sys["totalUpHist"].GetMaximum() > self.yC:
-            		self.yC = sys["totalUpHist"].GetMaximum()
+	    if sys["type"] == "theoretical":
+	    	self.theoLegend.AddEntry(sys["totalUpHist"], sys["name"])
+		if sys["totalUpHist"].GetMaximum() > self.yT:
+			self.yT = sys["totalUpHist"].GetMaximum()
+	    elif sys["type"] == "experimental":
+		self.expLegend.AddEntry(sys["totalUpHist"], sys["name"])
+	    	if sys["totalUpHist"].GetMaximum() > self.yE:
+            		self.yE = sys["totalUpHist"].GetMaximum()
 
     def setComparisonDrawOptions(self):
 
@@ -533,24 +542,34 @@ class Plotter:
 	    self.buildComparisonPlots()
 	    self.setComparisonDrawOptions()
 	    c2 = ROOT.TCanvas("c2","c2",200,10, 500, 500)
-            pad = c2
-            pad.SetBottomMargin(0.13)
-            pad.SetLeftMargin(0.15)
-            pad.SetTopMargin(0.07)
-            pad.SetRightMargin(0.05)
+            c3 = ROOT.TCanvas("c3","c3",200,10, 500, 500)
+	    pad1 = c2
+	    pad2 = c3
+            pad1.SetBottomMargin(0.13)
+            pad1.SetLeftMargin(0.15)
+            pad1.SetTopMargin(0.07)
+            pad1.SetRightMargin(0.05)
+            pad2.SetBottomMargin(0.13)
+            pad2.SetLeftMargin(0.15)
+            pad2.SetTopMargin(0.07)
+            pad2.SetRightMargin(0.05)
+
             line = self.getRatioLine(self.totalHist)
             self.setRatioDrawOptions(line)
             line.SetFillColor(0)
             line.SetLineColor(13)
             line.SetLineWidth(2)
-            line.Draw("hist")
-	    pad.cd()
-            pad.SetTitle(self.name+"_syst")
 
+	    pad1.cd()
+            pad1.SetTitle(self.name+"_syst_theoretical")
+
+	    line.Draw("hist")
+ 
 	    isFirstHere = True
 	    for sys in self.systNames:
+		if sys["type"] == "theoretical":
 		    if isFirstHere:
-			    sys["totalUpHist"].GetYaxis().SetRangeUser(0.8, self.yC*1.3)
+			    sys["totalUpHist"].GetYaxis().SetRangeUser(0.8, self.yT*1.3)
 			    sys["totalUpHist"].Draw("hist")
 			    sys["totalDownHist"].Draw("hist same")
 			    isFirstHere = False
@@ -558,13 +577,39 @@ class Plotter:
 			    sys["totalUpHist"].Draw("hist same")
 			    sys["totalDownHist"].Draw("hist same")
 
-	    self.otherLegend.SetFillStyle(0)
-            self.otherLegend.SetShadowColor(ROOT.kWhite)
-            self.otherLegend.SetBorderSize(0)
-            self.otherLegend.SetNColumns(2)
-	    self.otherLegend.Draw()
+	    self.theoLegend.SetFillStyle(0)
+            self.theoLegend.SetShadowColor(ROOT.kWhite)
+            self.theoLegend.SetBorderSize(0)
+            self.theoLegend.SetNColumns(2)
+	    self.theoLegend.Draw()
 	    cmsText, subLabel = self.setLabel()
-            pad.RedrawAxis()
+	    pad1.RedrawAxis()
+
+	    pad2.cd()
+            pad2.SetTitle(self.name+"_syst_experimental")
+
+	    line.Draw("hist")
+ 
+	    isFirstHere = True
+	    for sys in self.systNames:
+		if sys["type"] == "experimental":
+		    if isFirstHere:
+			    sys["totalUpHist"].GetYaxis().SetRangeUser(0.8, self.yE*1.3)
+			    sys["totalUpHist"].Draw("hist")
+			    sys["totalDownHist"].Draw("hist same")
+			    isFirstHere = False
+		    else:
+			    sys["totalUpHist"].Draw("hist same")
+			    sys["totalDownHist"].Draw("hist same")
+
+
+	    self.expLegend.SetFillStyle(0)
+            self.expLegend.SetShadowColor(ROOT.kWhite)
+            self.expLegend.SetBorderSize(0)
+            self.expLegend.SetNColumns(2)
+	    self.expLegend.Draw()
+	    cmsText, subLabel = self.setLabel()
+            pad2.RedrawAxis()
 
 
 
@@ -581,5 +626,7 @@ class Plotter:
             plotname = os.path.join(plot_directory, self.name+".%s"%extension)
             c1.Print(plotname)
 	    if self.comparisonPlots and not log:
-	    	compraisonPlotname = os.path.join(plot_directory, self.name+"_syst.%s"%extension)
-	    	c2.Print(compraisonPlotname)
+	    	compraisonPlotnameTheo= os.path.join(plot_directory, self.name+"_syst_theoretical.%s"%extension)
+		compraisonPlotnameExp = os.path.join(plot_directory, self.name+"_syst_experimental.%s"%extension)
+	    	c2.Print(compraisonPlotnameTheo)
+		c3.Print(compraisonPlotnameExp)
