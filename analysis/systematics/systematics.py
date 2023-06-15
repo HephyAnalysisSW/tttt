@@ -16,29 +16,22 @@ from math                                import sqrt, cos, sin, pi, atan2, cosh
 
 from RootTools.core.standard             import *
 
-#tttt tools import
+#tttt
 
 from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList, isBJet
 from tttt.Tools.helpers                  import getObjDict
 
-
-#Analysis Tools imports
-
+#Analysis Tools
 from Analysis.Tools.helpers              import deltaPhi, deltaR
-from Analysis.Tools.puProfileCache       import *
-from Analysis.Tools.puReweighting        import getReweightingFunction
 import Analysis.Tools.syncer
 
 #Argument Parser
-
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--small',          action='store_true', default=False,       help='Run only on a small subset of the data?')
-argParser.add_argument('--noData',         action='store_true', default=False,       help='Do not plot data.')
-argParser.add_argument('--dataMCScaling',  action='store_true',                      help='Data MC scaling?')
 argParser.add_argument('--plot_directory', action='store',      default='4t')
 argParser.add_argument('--selection',      action='store',      default='trg-dilepL-minDLmass20-offZ1-njet4p-btag2p-ht500')
 argParser.add_argument('--sys',            action='store',      default='central')
@@ -47,7 +40,6 @@ args = argParser.parse_args()
 
 #Directory naming parser options
 
-if args.noData: args.plot_directory += "_noData"
 if args.small: args.plot_directory += "_small"
 
 #Logger
@@ -129,56 +121,51 @@ PSWeights = ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]
 
 jetVariations= ["jes%s%s"%(var, upOrDown) for var in jesUncertainties for upOrDown in ["Up","Down"]]
 
-variations = variations + jetVariations + scaleWeights + PSWeights + PDFWeights
+variations += jetVariations + scaleWeights + PSWeights + PDFWeights
 
 # Check if we know the variation if not central don't use data!
 if args.sys not in variations:
     if args.sys == "central":
         logger.info( "Running central samples (no sys variation)")
+        noData = False
     else:
         raise RuntimeError( "Variation %s not among the known: %s", args.sys, ",".join( variations ) )
 else:
     logger.info( "Running sys variation %s, noData is set to 'True'", args.sys)
-    args.noData = True
+    noData = True
 
-if args.noData:
+if noData:
     logger.info( "Running without data")
 else:
     logger.info( "Data included in analysis cycle")
 
-
-#Simulated samples
-#from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
-# Split dileptonic TTBar into three different contributions
-# Use the hdamp samples for this variation
-
-
-if args.era not in ["2016_preVFP", "2016", "2017", "2018", "RunII"]:
-    raise Exception("Era %s not known"%args.era)
 if args.era == '2016_preVFP':
         from tttt.samples.nano_mc_private_UL20_Summer16_preVFP_postProcessed_dilep import *
-if args.era == '2016':
+        from tttt.samples.nano_data_private_UL20_Run2016_preVFP_postProcessed_dilep import Run2016_preVFP as data_sample
+elif args.era == '2016':
         from tttt.samples.nano_mc_private_UL20_Summer16_postProcessed_dilep import *
-if args.era == '2017':
+        from tttt.samples.nano_data_private_UL20_Run2016_postProcessed_dilep import Run2016 as data_sample
+elif args.era == '2017':
         from tttt.samples.nano_mc_private_UL20_Fall17_postProcessed_dilep import *
-if args.era == '2018':
+        from tttt.samples.nano_data_private_UL20_Run2017_postProcessed_dilep import Run2017 as data_sample
+elif args.era == '2018':
         from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import *
-if args.era == 'RunII':
+        from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
+elif args.era == 'RunII':
         from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+        data_sample = RunII
+else:
+    raise Exception("Era %s not known"%args.era)
 
 if not args.sys == "HDampUp" or args.sys == "HDampDown" :
-    sample_TTLep = TTLep
+    sample_TTLep = copy.deepcopy(TTLep)
+    TTLep_bb     = copy.deepcopy(TTbb)
 elif args.sys == "HDampUp":
     sample_TTLep = TTLepHUp
+    TTLep_bb     = TTbbHUp 
 elif args.sys == "HDampDown":
     sample_TTLep = TTLepHDown
-
-if not args.sys == "HDampUp" or args.sys == "HDampDown" :
-    TTLep_bb    = copy.deepcopy( TTbb )
-elif args.sys == "HDampUp":
-    TTLep_bb    = copy.deepcopy( TTbbHUp )
-elif args.sys == "HDampDown":
-    TTLep_bb    = copy.deepcopy( TTbbHDown )
+    TTLep_bb     = TTbbHDown 
 
 # genTtbarId classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
 TTLep_bb.name = "TTLep_bb"
@@ -198,19 +185,7 @@ TTLep_other.setSelectionString( "genTtbarId%100<40" )
 #Merge simulated background samples
 mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DY_inclusive, DiBoson]
 #Add the data
-if not args.noData:
-    if args.era == '2016_preVFP':
-        from tttt.samples.nano_data_private_UL20_Run2016_preVFP_postProcessed_dilep import Run2016_preVFP as data_sample
-    if args.era == '2016':
-        from tttt.samples.nano_data_private_UL20_Run2016_postProcessed_dilep import Run2016 as data_sample
-    if args.era == '2017':
-        from tttt.samples.nano_data_private_UL20_Run2017_postProcessed_dilep import Run2017 as data_sample
-    if args.era == '2018':
-        from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
-    if args.era == 'RunII':
-        from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII as data_sample
-    #from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import RunII
-    #data_sample = RunII
+if not noData:
     data_sample.name = "data"
     all_samples = mc +  [data_sample]
 else:
@@ -218,19 +193,13 @@ else:
 
 #Luminosity scaling. Here we compute the scaling of the simulation to the data luminosity (event.weight corresponds to 1/fb for simulation, hence we divide the data lumi in pb^-1 by 1000)
 
-lumi_scale = 137. if args.noData else data_sample.lumi/1000.
-
-for sample in mc:
-    sample.scale  = 1
-
 if args.small:
-    if not args.noData:
+    if not noData:
         data_sample.reduceFiles( factor = 100 )
     for sample in mc :
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
         sample.scale /= sample.normalization
-
 
 read_variables = []
 
@@ -289,7 +258,7 @@ def debug(event, sample):
         print event.jets[0]['phi'], event.jets[0]['pt'], event.jets[1]['phi'], event.jets[1]['pt'], event.jets[0]['eta'], event.jets[1]['eta']
         raise RuntimeError
 
-sequence.append(debug)
+#sequence.append(debug)
 
 # MVA configuration
 import tttt.MVA.configs as configs
@@ -305,7 +274,8 @@ def make_mva_inputs( event, sample ):
 sequence.append( make_mva_inputs )
 
 from keras.models import load_model
-classes = [ts.name for ts in config.training_samples]
+
+classes = [ts.name for ts in config.training_samples] if not hasattr( config, "classes") else config.classes
 
 models  = [{'name':'tttt_2l', 'has_lstm':False, 'classes':classes, 'model':load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l/regression_model.h5")}]
 
@@ -386,28 +356,46 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 
 
 #get each theory uncertainty reweight
+#WhichWay9 = {
+#    "ScaleDownDown": 0,
+#    "ScaleDownNone": 1,
+#    "ScaleNoneDown": 3,
+#    "ScaleNoneUp":	 5,
+#    "ScaleUpNone":	 7,
+#    "ScaleUpUp":	 8,}
+#WhichWay8 = {
+#    "ScaleDownDown": 0,
+#    "ScaleDownNone": 1,
+#    "ScaleNoneDown": 3,
+#    "ScaleNoneUp":	 4,
+#    "ScaleUpNone":	 6,
+#    "ScaleUpUp":	 7,}
+scaleMap = {
+    9: {
+    "ScaleDownDown": 0,
+    "ScaleDownNone": 1,
+    "ScaleNoneDown": 3,
+    "ScaleNoneUp":   5,
+    "ScaleUpNone":   7,
+    "ScaleUpUp":     8,},
+    8: {
+    "ScaleDownDown": 0,
+    "ScaleDownNone": 1,
+    "ScaleNoneDown": 3,
+    "ScaleNoneUp":   4,
+    "ScaleUpNone":   6,
+    "ScaleUpUp":     7,}
+}
 
 def getTheorySystematics(event,sample):
     if args.sys in scaleWeights:
-	 WhichWay9 = {"ScaleDownDown": 	0,
-		      "ScaleDownNone": 	1,
-		      "ScaleNoneDown": 	3,
-		      "ScaleNoneUp":	5,
-		      "ScaleUpNone":	7,
-		      "ScaleUpUp":	8,
-			 }
-	 WhichWay8 = {"ScaleDownDown": 	0,
-		      "ScaleDownNone": 	1,
-		      "ScaleNoneDown": 	3,
-		      "ScaleNoneUp":	4,
-		      "ScaleUpNone":	6,
-		      "ScaleUpUp":	7,
-			 }
-	 if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
-	 elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
- 	 else: print "Unexpected number of Scale weights!"
-	 #print "We are at scale weight number:" , WhichWay9[args.sys]
-    else:event.reweightScale = 1.0
+	    #if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
+	    #elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
+ 	    #else: print "Unexpected number of Scale weights!"
+	    #print "We are at scale weight number:" , WhichWay9[args.sys
+        event.reweightScale = event.scale_Weight[scaleMap[event.nscale][args.sys]]
+    else:
+        event.reweightScale = 1.0
 
     if args.sys in PDFWeights:
 	    WhichOne = int(args.sys.split("_")[1])
@@ -441,7 +429,6 @@ else: ttreeFormulas = {}
 weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
 if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
 weightnames += ['reweightScale','reweightPS','reweightPDF']
-
 
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
@@ -488,7 +475,6 @@ if args.sys in jetVariations:
           weightnames[i] = newname
           read_variables_MC += ['%s/F'%(newname)]
 
-
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
@@ -507,7 +493,7 @@ for i_mode, mode in enumerate(allModes):
 
     #Plot styling
     for sample in mc: sample.style = styles.fillStyle(sample.color)
-    if not args.noData:
+    if not noData:
         data_sample.style = styles.errorStyle( ROOT.kBlack )
 
     #Apply reweighting to MC for specific detector effects
@@ -517,7 +503,7 @@ for i_mode, mode in enumerate(allModes):
 
 
     #Stack : Define what we want to see.
-    if not args.noData:
+    if not noData:
         stack = Stack(mc, [data_sample])
     else:
         stack = Stack(mc)
@@ -537,13 +523,9 @@ for i_mode, mode in enumerate(allModes):
 
     for model in models:
         for class_ in model['classes']:
-            if "TTTT" in class_ : plot_name = "2l_4t"
-            if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
-            if "TTLep_cc" in class_: plot_name = "2l_ttcc"
-            if "TTLep_other" in class_: plot_name = "2l_ttlight"
             model_name = model['name']+'_'+class_
             plots.append(Plot(
-                name = plot_name,
+                name = class_,
                 texX = model_name, texY = 'Number of Events',
                 attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
                 binning=[10,0,1],
@@ -552,13 +534,9 @@ for i_mode, mode in enumerate(allModes):
 
     for model in models:
         for class_ in model['classes']:
-            if "TTTT" in class_ : plot_name = "2l_4t"
-            if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
-            if "TTLep_cc" in class_: plot_name = "2l_ttcc"
-            if "TTLep_other" in class_: plot_name = "2l_ttlight"
             model_name = model['name']+'_'+class_
             plots.append(Plot(
-                name = plot_name+"_course",
+                name = class_+"_coarse",
                 texX = model_name, texY = 'Number of Events',
                 attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
                 binning=Binning.fromThresholds([0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.82,0.84,0.86,0.88,0.90,0.92,0.94,0.96,0.98,1.0]),
@@ -937,10 +915,6 @@ for i_mode, mode in enumerate(allModes):
 
     #yields[mode]["data"] = 0
     yields[mode]["MC"] = sum(yields[mode][s.name] for s in mc)
-    if args.noData:
-        dataMCScale = 1.
-    else:
-        dataMCScale        = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
 
     allPlots[mode] = plots
 
@@ -950,10 +924,6 @@ for mode in ["SF","all"]:
     for y in yields[allModes[0]]:
         try:    yields[mode][y] = sum(yields[c][y] for c in (['ee','mumu'] if mode=="SF" else ['ee','mumu','mue']))
         except: yields[mode][y] = 0
-    if args.noData:
-        dataMCScale = 1.
-    else:
-        dataMCScale = yields[mode]["data"]/yields[mode]["MC"] if yields[mode]["MC"] != 0 else float('nan')
 
     for plot in allPlots['mumu']:
         for plot2 in (p for p in (allPlots['ee'] if mode=="SF" else allPlots["mue"]) if p.name == plot.name):  #For SF add EE, second round add EMu for all
@@ -961,18 +931,16 @@ for mode in ["SF","all"]:
                 for k, l in enumerate(list(itertools.chain.from_iterable(plot2.histos))):
                     if i==k: j.Add(l)
 
-
 # Write Result Hist in root file
 logger.info( "Now writing results in root file")
-if args.era in ["2016_preVFP", "2016", "2017", "2018"]:
-    plot_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, args.era, 'all', args.selection)
-elif args.era == "RunII":
-    plot_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, "RunII", 'all', args.selection)
+plot_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, args.era, 'all', args.selection)
 if not os.path.exists(plot_dir):
     try:
         os.makedirs(plot_dir)
     except:
-        print 'Could not create', plot_dir
+        # different jobs may start at the same time creating race conditions.
+        pass 
+
 outfilename = plot_dir+'/tttt_'+args.sys+'.root'
 logger.info( "Saving in %s", outfilename )
 outfile = ROOT.TFile(outfilename, 'recreate')
@@ -980,21 +948,20 @@ outfile.cd()
 for plot in allPlots[allModes[0]]:
     for idx, histo_list in enumerate(plot.histos):
         for j, h in enumerate(histo_list):
-            histname = h.GetName()
-            if "TTLep_bb" in histname: process = "TTLep_bb_"+args.era if not args.era=='RunII' else "TTLep_bb"
-            elif "TTLep_cc" in histname: process = "TTLep_cc_"+args.era if not args.era=='RunII' else "TTLep_cc"
-            elif "TTLep_other" in histname: process = "TTLep_other_"+args.era if not args.era=='RunII' else "TTLep_other"
-            elif "ST_tch" in histname: process = "ST_tch_"+args.era if not args.era=='RunII' else "ST_tch"
-            elif "ST_twch" in histname: process = "ST_twch_"+args.era if not args.era=='RunII' else "ST_twch"
-            elif "TTW" in histname: process = "TTW_"+args.era if not args.era=='RunII' else "TTW"
-            elif "TTZ" in histname: process = "TTZ_"+args.era if not args.era=='RunII' else "TTZ"
-            elif "TTH" in histname: process = "TTH_"+args.era if not args.era=='RunII' else "TTH"
-            elif "DY" in histname: process = "DY_"+args.era if not args.era=='RunII' else "DY"
-            elif "DiBoson" in histname: process = "DiBoson_"+args.era if not args.era=='RunII' else "DiBoson"
-            elif "data" in histname: process = "data_"+args.era if not args.era=='RunII' else "data"
-            elif "TTTT" in histname: process = "TTTT_"+args.era if not args.era=='RunII' else "TTTT"
-            h.Write(plot.name+"__"+process)
+            #histname = h.GetName()
+            #if "TTLep_bb" in histname: process = "TTLep_bb_"+args.era if not args.era=='RunII' else "TTLep_bb"
+            #elif "TTLep_cc" in histname: process = "TTLep_cc_"+args.era if not args.era=='RunII' else "TTLep_cc"
+            #elif "TTLep_other" in histname: process = "TTLep_other_"+args.era if not args.era=='RunII' else "TTLep_other"
+            #elif "ST_tch" in histname: process = "ST_tch_"+args.era if not args.era=='RunII' else "ST_tch"
+            #elif "ST_twch" in histname: process = "ST_twch_"+args.era if not args.era=='RunII' else "ST_twch"
+            #elif "TTW" in histname: process = "TTW_"+args.era if not args.era=='RunII' else "TTW"
+            #elif "TTZ" in histname: process = "TTZ_"+args.era if not args.era=='RunII' else "TTZ"
+            #elif "TTH" in histname: process = "TTH_"+args.era if not args.era=='RunII' else "TTH"
+            #elif "DY" in histname: process = "DY_"+args.era if not args.era=='RunII' else "DY"
+            #elif "DiBoson" in histname: process = "DiBoson_"+args.era if not args.era=='RunII' else "DiBoson"
+            #elif "data" in histname: process = "data_"+args.era if not args.era=='RunII' else "data"
+            #elif "TTTT" in histname: process = "TTTT_"+args.era if not args.era=='RunII' else "TTTT"
+            h.Write( plot.name + "__" + stack[idx][j].name + ('_'+args.era if args.era != 'RunII' else '') )
 outfile.Close()
-
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
