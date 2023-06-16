@@ -388,7 +388,8 @@ scaleMap = {
 }
 
 def getTheorySystematics(event,sample):
-    if args.sys in scaleWeights:
+    #if event.nscale<8 : print event.nscale
+    if args.sys in scaleWeights and event.nscale>=8 :
 	    #if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
 	    #elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
  	    #else: print "Unexpected number of Scale weights!"
@@ -397,7 +398,7 @@ def getTheorySystematics(event,sample):
     else:
         event.reweightScale = 1.0
 
-    if args.sys in PDFWeights:
+    if args.sys in PDFWeights and event.nPDF > 0:
 	    WhichOne = int(args.sys.split("_")[1])
 	    #print WhichOne
 	    if WhichOne == -1 or WhichOne > event.nPDF-1:
