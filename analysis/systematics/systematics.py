@@ -199,7 +199,7 @@ if args.small:
     for sample in mc :
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
-        sample.scale /= sample.normalization
+        #sample.scale /= sample.normalization
 
 read_variables = []
 
@@ -425,10 +425,9 @@ if args.sys in jetVariations:
   ttreeFormulas = {"ht_"+args.sys :"Sum$(JetGood_pt_"+args.sys+")"}
 else: ttreeFormulas = {}
 
-##list all the reweights FIXME
-weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
+##list all the reweights
+weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger','reweightScale','reweightPS','reweightPDF']
 if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
-weightnames += ['reweightScale','reweightPS','reweightPDF']
 
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
@@ -465,7 +464,7 @@ if args.sys in sys_weights:
           read_variables_MC += ['%s/F'%(newname)]
 
 
-if args.sys in jetVariations:
+if "jesTotal" in args.sys:
     if "Up" in args.sys:
       oldname, newname = sys_weights['BTagSFJesUp']
     elif "Down" in args.sys:
