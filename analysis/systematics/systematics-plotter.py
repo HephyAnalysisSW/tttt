@@ -104,7 +104,7 @@ mc = [ {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}"},
        {"name": "TTH", "legendText" : "t#bar{t}H"},
        {"name": "TTZ", "legendText" : "t#bar{t}Z"},
        {"name": "TTTT", "legendText" : "t#bar{t}t#bar{t}"}, 
-       {"name": "DY", "legendText" : "DY"},
+       {"name": "DY_inclusive", "legendText" : "DY"},
        {"name": "DiBoson", "legendText" : "DiBoson"},
 
 	]

@@ -199,7 +199,7 @@ if args.small:
     for sample in mc :
         sample.normalization = 1.
         sample.reduceFiles( to = 1 )
-        sample.scale /= sample.normalization
+        #sample.scale /= sample.normalization
 
 read_variables = []
 
@@ -388,7 +388,8 @@ scaleMap = {
 }
 
 def getTheorySystematics(event,sample):
-    if args.sys in scaleWeights:
+    #if event.nscale<8 : print event.nscale
+    if args.sys in scaleWeights and event.nscale>=8 :
 	    #if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
 	    #elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
  	    #else: print "Unexpected number of Scale weights!"
@@ -397,7 +398,7 @@ def getTheorySystematics(event,sample):
     else:
         event.reweightScale = 1.0
 
-    if args.sys in PDFWeights:
+    if args.sys in PDFWeights and event.nPDF > 0:
 	    WhichOne = int(args.sys.split("_")[1])
 	    #print WhichOne
 	    if WhichOne == -1 or WhichOne > event.nPDF-1:
@@ -425,10 +426,9 @@ if args.sys in jetVariations:
   ttreeFormulas = {"ht_"+args.sys :"Sum$(JetGood_pt_"+args.sys+")"}
 else: ttreeFormulas = {}
 
-##list all the reweights FIXME
-weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger']
+##list all the reweights
+weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger','reweightScale','reweightPS','reweightPDF']
 if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
-weightnames += ['reweightScale','reweightPS','reweightPDF']
 
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
@@ -465,7 +465,7 @@ if args.sys in sys_weights:
           read_variables_MC += ['%s/F'%(newname)]
 
 
-if args.sys in jetVariations:
+if "jesTotal" in args.sys:
     if "Up" in args.sys:
       oldname, newname = sys_weights['BTagSFJesUp']
     elif "Down" in args.sys:
