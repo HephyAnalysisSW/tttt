@@ -48,7 +48,7 @@ args = argParser.parse_args()
 
 # DIrectory naming parser options
 
-if args.noData: args.plot_directory += "_noData"
+#if args.noData: args.plot_directory += "_noData"
 if args.small: args.plot_directory += "_small"
 
 #Logger
@@ -97,7 +97,7 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 #Merge simulated background samples
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT, DY, DiBoson]
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST, TTW, TTH, TTZ, TTTT, DY_inclusive, DiBoson]
 #Add the data
 if not args.noData:
     if args.era == 'Run2016_preVFP':
@@ -229,7 +229,7 @@ def make_mva_inputs( event, sample ):
 sequence.append( make_mva_inputs )
 
 from keras.models import load_model
-classes = [ts.name for ts in config.training_samples]
+classes = [ts.name for ts in config.training_samples] if not hasattr( config, "classes") else config.classes
 
 models  = [{'name':'tttt_2l', 'has_lstm':False, 'classes':classes, 'model':load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l/regression_model.h5")}]
 
@@ -242,12 +242,13 @@ def keras_predict( event, sample ):
             prediction = model['model'].predict( [flat_variables] )
         for i_class_, class_ in enumerate(model['classes']):
             setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
+	    #print model['name']+'_'+class_
 sequence.append( keras_predict )
 
-def low_MVA(event,sample):
-	this = getattr(event, "tttt_2l_TTTT")
-	setattr(event,"low_tttt_MVA",1 if this<=0.2 else 0)
-sequence.append(low_MVA)
+def cut_MVA(event,sample):
+	this = getattr(event, "tttt_2l_2l_4t")
+	setattr(event,"cut_tttt_MVA",1 if this>=0.9 else 0)
+sequence.append(cut_MVA)
 
 
 #Let's make a function that provides string-based lepton selection
@@ -313,8 +314,8 @@ for i_mode, mode in enumerate(allModes):
     # "event.weight" is 0/1 for data, depending on whether it is from a certified lumi section. For MC, it corresponds to the 1/fb*cross-section/Nsimulated. So we multiply with the lumi in /fb.
 
 # This weight goes to the plot. DO NOT apply it again to the samples
-    weight_ = lambda event, sample: event.weight if sample.isData else event.weight
-    #weight_ = lambda event, sample: event.low_tttt_MVA*(event.weight if sample.isData else event.weight)
+    #weight_ = lambda event, sample: event.weight if sample.isData else event.weight
+    weight_ = lambda event, sample: event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
 
     #Plot styling
     for sample in mc: sample.style = styles.fillStyle(sample.color)
@@ -348,7 +349,7 @@ for i_mode, mode in enumerate(allModes):
         for class_ in model['classes']:
             model_name = model['name']+'_'+class_
             plots.append(Plot(
-                name = model_name,
+                name = class_,
                 texX = model_name, texY = 'Number of Events',
                 attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
                 binning=[10,0,1],
@@ -357,13 +358,13 @@ for i_mode, mode in enumerate(allModes):
 
     for model in models:
         for class_ in model['classes']:
-	    if "TTTT" in class_ : plot_name = "2l_4t"
-	    if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
-	    if "TTLep_cc" in class_: plot_name = "2l_ttcc"
-	    if "TTLep_other" in class_: plot_name = "2l_ttlight"
+#	    if "TTTT" in class_ : plot_name = "2l_4t"
+#	    if "TTLep_bb" in class_ : plot_name = "2l_ttbb"
+#	    if "TTLep_cc" in class_: plot_name = "2l_ttcc"
+#	    if "TTLep_other" in class_: plot_name = "2l_ttlight"
 	    model_name = model['name']+'_'+class_
             plots.append(Plot(
-                name = plot_name+"_course",
+                name = class_+"_course",
                 texX = model_name, texY = 'Number of Events',
                 attribute = lambda event, sample, model_name=model_name: getattr(event, model_name),#if event.nJetGood> 5 and event.nJetGood < 7 else float('nan') ,
                 binning=Binning.fromThresholds([0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.82,0.84,0.86,0.88,0.90,0.92,0.94,0.96,0.98,1.0]),
@@ -692,6 +693,38 @@ for i_mode, mode in enumerate(allModes):
       name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
       binning=[1500/50,0,1500],
     ))
+
+    plots.append(Plot(
+      texX = 'H_{T}b (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'htb', attribute = lambda event, sample: sum( j['pt'] for j in event.bJets ),
+      binning=[1500/50,0,1500],
+    ))
+
+    plots.append(Plot(
+      texX = '#eta(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet0_eta', attribute = lambda event, sample: event.JetGood_eta[0],
+      binning=[20,-3,3],
+    ))
+
+    plots.append(Plot(
+      texX = '#eta(subleading jet) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet1_eta', attribute = lambda event, sample: event.JetGood_eta[1],
+      binning=[20,-3,3],
+    ))
+
+    plots.append(Plot(
+      texX = '#phi(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet0_phi', attribute = lambda event, sample: event.JetGood_phi[0],
+      binning=[10,-pi,pi],
+    ))
+
+    plots.append(Plot(
+      texX = '#phi(subleading jet) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet1_phi', attribute = lambda event, sample: event.JetGood_phi[1],
+      binning=[10,-pi,pi],
+    ))
+
+
 
     plots.append(Plot(
       texX = 'p_{T}(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',

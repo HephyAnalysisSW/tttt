@@ -27,10 +27,12 @@ def getData(path,region,fit):
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
-argParser.add_argument('--noData',         action='store_true', default=True,  help='Do not plot data.')
-argParser.add_argument('--plot_directory', action='store', default='4t_postfit')
+argParser.add_argument('--noData',         action='store_true', default=False,  help='Do not plot data.')
+argParser.add_argument('--plot_directory', action='store', default='4t-postfit-v2')
+argParser.add_argument('--selection',      action='store', default='combined')
 argParser.add_argument('--backgroundOnly', action='store_true', default=False)
 argParser.add_argument('--inputFile',	   action='store', default="dataCards/fitDiagnostics.postFit_combined.root")
+#argParser.add_argument('--selections',	   action='store', default="njet4to5-btag2")
 args = argParser.parse_args()
 
 import tttt.Tools.logger as logger
@@ -53,19 +55,14 @@ mc = [ 	{"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}", "color" : ROOT.k
 	{"name": "TTW", "legendText" : "t#bar{t}W", "color" : color.TTW},
 	{"name": "TTH", "legendText" : "t#bar{t}H", "color" : color.TTH},
 	{"name": "TTZ", "legendText" : "t#bar{t}Z", "color" : color.TTZ},
+	{"name": "DY", "legendText" : "DY", "color" : color.DY},
+	{"name": "DiBoson", "legendText" : "DiBoson", "color" : color.W},
 	{"name": "TTTT", "legendText" : "t#bar{t}t#bar{t}", "color" : color.TTTT} ]
 
-selections =["SR","CR1","CR2","CR3","CR4","CR5"]
-
+selections =["njet4to5_btag2","njet4to5_btag3p","njet6to7_btag2","njet6to7_btag3p","njet8p_btag2","njet8p_btag3p"]
 for region in selections:
 
    plotName = region
-   if region=="SR": plotName="nJet6to7_bTag3"
-   elif region=="CR1": plotName="nJet4to5_bTag3"
-   elif region=="CR2": plotName="nJet8p_bTag3"
-   elif region=="CR3": plotName="nJet4to5_bTag2"
-   elif region=="CR4": plotName="nJet6to7_bTag2"
-   elif region=="CR5": plotName="nJet8p_bTag2"
    if args.backgroundOnly: plotName += '_bOnly'
 
    plotter = Plotter(plotName)
@@ -87,6 +84,6 @@ for region in selections:
    
    #draw the plot
    for log in [False,True]:
-      plot_directory_ = os.path.join(plot_directory, 'analysisPlots', '4t_postFit', 'RunII', "all" + ("_log" if log else "") )
+      plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', "all" + ("_log" if log else ""), args.selection )
       plotter.draw(plot_directory_, log, texX = "2l_4t" , ratio = True )
 

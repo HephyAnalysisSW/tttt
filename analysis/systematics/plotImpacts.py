@@ -58,10 +58,11 @@ parser.add_argument("--sort", "-s", choices=["impact", "constraint", "pull"], de
 parser.add_argument("--relative", "-r", action="store_true", help="Show impacts relative to the uncertainty on the POI")
 parser.add_argument("--summary", action="store_true", help="Produce additional summary page, named [output]_summary.pdf")
 parser.add_argument("--selection", action="store", default='combined')
+parser.add_argument('--plot_directory', action='store', default='4t-limits-v2')
 args = parser.parse_args()
 
 #plot_directory_ = os.path.join(plot_directory, 'test/limit-plots/')
-plot_directory_ = os.path.join(plot_directory, 'analysisPlots', '4t-limits', 'RunII', args.selection)
+plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory , 'RunII', args.selection)
 plot_helpers.copyIndexPHP(plot_directory_)
 plotName = plot_directory_ +"/"+ args.output
 
@@ -608,5 +609,5 @@ for page in range(n):
         extra = '('
     if page == n - 1:
         extra = ')'
-    canv.Print(plotName+'.pdf%s' % extra)
-    canv.Print(plotName+'.png')
+    canv.Print(plotName+'%i.pdf'%page)
+    canv.Print(plotName+'%i.png'%page)

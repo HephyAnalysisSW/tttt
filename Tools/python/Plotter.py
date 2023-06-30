@@ -89,6 +89,7 @@ class Plotter:
                 deltaUp.Add(smp["hist"], -1)
                 deltaDown = downHist.Clone()
                 deltaDown.Add(smp["hist"], -1)
+
                 self.systDeltas.append((sampleName, sysName, deltaUp, deltaDown))
                 syst= {}
 		syst["name"] = sysName
@@ -188,22 +189,22 @@ class Plotter:
                     if sys["name"] == sysName:
 			binFromUp = deltaUp.GetBinContent(binNumber)
 			binFromDown = deltaDown.GetBinContent(binNumber)
-			if isnan(binFromUp) : binFromUp = 0
-			if isnan(binFromDown) : binFromDown = 0
-		    	if deltaUp.GetMaximum()>=0:
+			if isnan(binFromUp) : 
+				binFromUp = 0
+			if isnan(binFromDown) : 
+				binFromDown = 0
+		    	if binFromUp>=0:
 		                shiftUp   += binFromUp
                         	shiftDown += binFromDown
-			elif deltaDown.GetMaximum()>=0:
+			elif binFromDown>=0:
 				shiftUp   += binFromDown
 				shiftDown += binFromUp
 			#if sys["name"] == "PDF": print binFromUp, binFromDown
 
                 upErr2   += pow(shiftUp,2)
                 downErr2 += pow(shiftDown,2)
-		#print sys["name"], upErr2, downErr2
             xELow  = binCenter - binXLow
             xEHigh = binXUp - binCenter
-	    #print xELow, xEHigh
             self.totalError.SetPointError(binNumber, xELow, xEHigh, sqrt(downErr2), sqrt(upErr2))
 
         self.totalError.SetFillStyle(3245)
@@ -269,7 +270,6 @@ class Plotter:
    
    		X = h2.GetBinCenter(bin)
                 r = h1.Eval(h2.GetBinCenter(bin))/h2.GetBinContent(bin)
-   	        #print Xval, X , h2.GetBinCenter(bin), h1.Eval(h2.GetBinCenter(bin)),h2.GetBinContent(bin), r
 		eY = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
             ratio.SetPoint(bin,X,r)
            
@@ -326,7 +326,7 @@ class Plotter:
         ratio.SetTitle('')
         ratio.GetYaxis().SetTitle(self.ratioTitle)
 	if self.hasPostFitUnc:
-        	ratio.GetYaxis().SetRangeUser(0,2)
+        	ratio.GetYaxis().SetRangeUser(0.5,1.5)
 	else:   ratio.GetYaxis().SetRangeUser(0,2)
         ratio.GetYaxis().SetNdivisions(505)
         ratio.GetYaxis().CenterTitle()

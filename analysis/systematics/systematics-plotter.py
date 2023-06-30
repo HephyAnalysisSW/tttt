@@ -19,7 +19,7 @@ logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 
-hist_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', "all", args.selection)
+hist_dir = os.path.join(plot_directory, 'analysisPlots', "4t-v10-syst", 'RunII', "all", args.selection)#args.plot_directory, 'RunII', "all", args.selection)
 if args.small: 
   #hist_dir += "_small"
   args.plot_directory += "_small"
@@ -77,13 +77,13 @@ systematics = [ {"name" : "LeptonSF", "color" : ROOT.kTeal-9, "type":"experiment
 		{"name" : "noTopPtReweight", "color" : ROOT.kBlue-9,  "type":"experimental",
 		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_noTopPtReweight.root")),
 		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_central.root"))},
-		{"name" : "Renormalization", "color" : ROOT.kGreen+1,  "type":"theoretical",
-		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleUpNone.root")),
-		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleDownNone.root"))},
-		{"name" : "Factorization", "color" : ROOT.kGreen-7,  "type":"theoretical",
-		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleNoneUp.root")),
-		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleNoneDown.root"))},
-		{"name" : "scaleCorrelation", "color" : ROOT.kGreen-1,  "type":"theoretical",
+#		{"name" : "Renormalization", "color" : ROOT.kGreen+1,  "type":"theoretical",
+#		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleUpNone.root")),
+#		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleDownNone.root"))},
+#		{"name" : "Factorization", "color" : ROOT.kGreen-7,  "type":"theoretical",
+#		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleNoneUp.root")),
+#		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleNoneDown.root"))},
+		{"name" : "scale", "color" : ROOT.kGreen-1,  "type":"theoretical",
 		"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleUpUp.root")),
 		"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleDownDown.root"))},
               ]
@@ -109,8 +109,8 @@ mc = [ {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}"},
 
 	]
 
-plots = [{"name" : "nJetGood" ,     "texX": "nJet", "texY" : 'Number of Events'},
-         {"name" : "nBTag",         "texX": "nJet", "texY" : 'Number of Events'},
+plots = [{"name" : "nJetGood" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
+         {"name" : "nBTag",         "texX": "N_{BJet}", "texY" : 'Number of Events'},
 #         {"name" : "mu0_pt",        "texX" : "p_{t}", "texY" : 'Number of Events'},
          {"name" : 'yield',         "texX" : "", "texY" : 'Number of Events'},
 #         {"name" : 'nVtxs',         "texX" : 'vertex multiplicity', "texY" : 'Number of Events'},

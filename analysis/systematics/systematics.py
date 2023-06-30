@@ -10,7 +10,7 @@ import copy
 import array
 import operator
 import numpy as np
-from math                                import sqrt, cos, sin, pi, atan2, cosh
+from math                                import sqrt, cos, sin, pi, atan2, cosh, isnan
 
 #Standard imports and batch mode
 
@@ -157,15 +157,17 @@ elif args.era == 'RunII':
 else:
     raise Exception("Era %s not known"%args.era)
 
-if not args.sys == "HDampUp" or args.sys == "HDampDown" :
+if not (args.sys == "HDampUp" or args.sys == "HDampDown") :
     sample_TTLep = copy.deepcopy(TTLep)
     TTLep_bb     = copy.deepcopy(TTbb)
 elif args.sys == "HDampUp":
     sample_TTLep = TTLepHUp
     TTLep_bb     = TTbbHUp 
+    print "switching to HDampUp samples" 
 elif args.sys == "HDampDown":
     sample_TTLep = TTLepHDown
     TTLep_bb     = TTbbHDown 
+    print "switching to HDampDown samples"
 
 # genTtbarId classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
 TTLep_bb.name = "TTLep_bb"
@@ -198,7 +200,7 @@ if args.small:
         data_sample.reduceFiles( factor = 100 )
     for sample in mc :
         sample.normalization = 1.
-        sample.reduceFiles( to = 1 )
+	sample.reduceFiles( to = 1 )
         #sample.scale /= sample.normalization
 
 read_variables = []
@@ -398,12 +400,15 @@ def getTheorySystematics(event,sample):
     else:
         event.reweightScale = 1.0
 
-    if args.sys in PDFWeights and event.nPDF > 0:
+    if args.sys in PDFWeights:# and event.nPDF > 0:
 	    WhichOne = int(args.sys.split("_")[1])
 	    #print WhichOne
 	    if WhichOne == -1 or WhichOne > event.nPDF-1:
 	                print "PDF index out of range!"
-	    event.reweightPDF = event.PDF_Weight[WhichOne]
+	    if not isnan(event.PDF_Weight[WhichOne]): 
+		    event.reweightPDF = event.PDF_Weight[WhichOne]
+	    else :
+		    event.reweightPDF = 1.0
 	    #print "we are at PDF weight"
     else:event.reweightPDF = 1.0
 
@@ -433,11 +438,13 @@ if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
         'LeptonSFUp'    : ('reweightLeptonSF','reweightLeptonSFUp'),
+	'PUUp'		: ('reweightPU','reweightPUUp'),
+	'PUDown'        : ('reweightPU','reweightPUDown'),
         'BTagSFJesUp'   : ('reweightBTagSF_central','reweightBTagSF_up_jes'),
         'BTagSFJesDown' : ('reweightBTagSF_central','reweightBTagSF_down_jes'),
         'BTagSFHfDown'  : ('reweightBTagSF_central','reweightBTagSF_down_hf'),
         'BTagSFHfUp'    : ('reweightBTagSF_central','reweightBTagSF_up_hf'),
-        'BTagSFLfdown'  : ('reweightBTagSF_central','reweightBTagSF_down_lf'),
+        'BTagSFLfDown'  : ('reweightBTagSF_central','reweightBTagSF_down_lf'),
         'BTagSFLfUp'    : ('reweightBTagSF_central','reweightBTagSF_up_lf'),
         'BTagSFHfs1Down': ('reweightBTagSF_central','reweightBTagSF_down_hfstats1'),
         'BTagSFHfs1Up'  : ('reweightBTagSF_central','reweightBTagSF_up_hfstats1'),
@@ -447,9 +454,9 @@ sys_weights = {
         'BTagSFHfs2Up'  : ('reweightBTagSF_central','reweightBTagSF_up_hfstats2'),
         'BTagSFLfs2Down': ('reweightBTagSF_central','reweightBTagSF_down_lfstats2'),
         'BTagSFLfs2Up'  : ('reweightBTagSF_central','reweightBTagSF_up_lfstats2'),
-        'BTagSFCfe1Down': ('reweightBTagSF_central','reweightBTagSF_Down_cferr1'),
+        'BTagSFCfe1Down': ('reweightBTagSF_central','reweightBTagSF_down_cferr1'),
         'BTagSFCfe1Up'  : ('reweightBTagSF_central','reweightBTagSF_up_cferr1'),
-        'BTagSFCfe2Down': ('reweightBTagSF_central','reweightBTagSF_Down_cferr2'),
+        'BTagSFCfe2Down': ('reweightBTagSF_central','reweightBTagSF_down_cferr2'),
         'BTagSFCfe2Up'  : ('reweightBTagSF_central','reweightBTagSF_up_cferr2'),
         'L1PrefireUp'   : ('reweightL1Prefire','reweightL1PrefireUp'),
         'L1PrefireDown' : ('reweightL1Prefire','reweightL1PrefireDown'),
@@ -485,7 +492,12 @@ for i_mode, mode in enumerate(allModes):
     getters = map( operator.attrgetter, weightnames)
     def weight_function( event, sample):
         # Calculate weight, this becomes: w = event.weightnames[0]*event.weightnames[1]*...
-        w = reduce(operator.mul, [g(event) for g in getters], 1)
+	weights = [g(event) for g in getters]
+	# Check if any weight is nan
+	if any(not isinstance(w, (int, float)) or isnan(w) for w in weights):
+		weights = [1 if (not isinstance(w, (int, float)) or isnan(w) )else w for w in weights]
+		for w in weights : print w
+        w = reduce(operator.mul, weights, 1)
         return w
 
     # This weight goes to the plot - do not reweight the sample with it
