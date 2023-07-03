@@ -102,20 +102,33 @@ ZZZ.xSection = 0.01476
 # TTTT_sync            = Sample.fromFiles("TTTT_sync", ["/groups/hephy/cms/robert.schoefbeck/tttt/sync/nanoAOD.root"], xSection=1, normalization = 1)
 ################################################################################
 
-allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
-              TTLep_pow_CP5, TTLep_pow_CP5_hDown, TTLep_pow_CP5_hUp,
-              TTSingleLep_pow_CP5, TTHad_pow_CP5, TTbb,
-              TTbb_pow_CP5_hDown, TTbb_pow_CP5_hUp,
-              TTHTobb, TTHnobb, TTWToLNu, TTWToQQ, TTZToQQ, TTZToLLNuNu,
-              T_tch_pow, TBar_tch_pow, T_tWch, TBar_tWch,
-              DYJetsToLL_M50_HT100to200, DYJetsToLL_M50_HT200to400,
-              DYJetsToLL_M50_HT400to600, DYJetsToLL_M50_HT600to800,
-              DYJetsToLL_M50_HT800to1200, DYJetsToLL_M50_HT1200to2500,
-              DYJetsToLL_M50_HT2500toInf, DYJetsToLL_M4to50_HT100to200,
-              DYJetsToLL_M4to50_HT200to400, DYJetsToLL_M4to50_HT400to600,
-              DYJetsToLL_M4to50_HT600toInf, DYJetsToLL_M10to50, DYJetsToLL_M50,
-              WZTo3LNu, ZZTo4L, WWW_4F, WWZ_4F, WZZ, ZZZ, SSWW
-    ]
+
+TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTTT_MS_EFT-22-05-12/", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/") 
+TTTT_MS_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
+TTTT_MS_EFT.normalization = 4080634.0
+
+TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTbb_MS_EFT-22-05-12/", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/") 
+TTbb_MS_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
+TTbb_MS_EFT.normalization = 4657390.0
+
+EFT_samples = [TTTT_MS_EFT, TTbb_MS_EFT]
+
+allSamples += EFT_samples
+
+#allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
+#              TTLep_pow_CP5, TTLep_pow_CP5_hDown, TTLep_pow_CP5_hUp,
+#              TTSingleLep_pow_CP5, TTHad_pow_CP5, TTbb,
+#              TTbb_pow_CP5_hDown, TTbb_pow_CP5_hUp,
+#              TTHTobb, TTHnobb, TTWToLNu, TTWToQQ, TTZToQQ, TTZToLLNuNu,
+#              T_tch_pow, TBar_tch_pow, T_tWch, TBar_tWch,
+#              DYJetsToLL_M50_HT100to200, DYJetsToLL_M50_HT200to400,
+#              DYJetsToLL_M50_HT400to600, DYJetsToLL_M50_HT600to800,
+#              DYJetsToLL_M50_HT800to1200, DYJetsToLL_M50_HT1200to2500,
+#              DYJetsToLL_M50_HT2500toInf, DYJetsToLL_M4to50_HT100to200,
+#              DYJetsToLL_M4to50_HT200to400, DYJetsToLL_M4to50_HT400to600,
+#              DYJetsToLL_M4to50_HT600toInf, DYJetsToLL_M10to50, DYJetsToLL_M50,
+#              WZTo3LNu, ZZTo4L, WWW_4F, WWZ_4F, WZZ, ZZZ, SSWW
+#    ]
 
 for s in allSamples:
     s.isData = False
