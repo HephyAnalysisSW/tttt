@@ -33,5 +33,7 @@ TTbbHUp		= Sample.fromDirectory(name="TTbbHUp",  treeName="Events", isData=False
 TTbbHDown	= Sample.fromDirectory(name="TTbbHDown",  treeName="Events", isData=False, color=color.TTbb, texName="t#bar{t}b#bar{b}", directory=make_dirs( ['TTbb_pow_CP5_hDown'] ))
 TTLepHUp	= Sample.fromDirectory(name="TTLepHUp", treeName="Events", isData=False, color=color.TT, texName="t#bar{t}", directory=make_dirs( ['TTLep_pow_CP5_hUp'] ))
 TTLepHDown      = Sample.fromDirectory(name="TTLepHDown", treeName="Events", isData=False, color=color.TT, texName="t#bar{t}", directory=make_dirs( ['TTLep_pow_CP5_hDown'] ))
+TTbb_EFT	= Sample.fromDirectory(name="TTbb_EFT", treeName="Events", isData=False, color=color.TTbb, texName="t#bar{t}b#bar{b}", directory=make_dirs( ['TTbb_MS_EFT']))
+TTTT_EFT        = Sample.fromDirectory(name="TTTT_EFT", treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}", directory=make_dirs( ['TTTT_MS_EFT']))
 
 #TTTT_sync = Sample.fromDirectory(name="TTTT_sync",  treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}_sync", directory=["/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v5/UL2018/dilep/TTTT_sync"] )
