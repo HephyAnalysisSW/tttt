@@ -24,8 +24,22 @@
 using namespace std;
 
 int main() {
-vector<string> regions = {"njet4to5-btag3","njet6to7-btag3","njet8p-btag3"};
-vector<string> theYounglings = {"nJetGood","2l_4t"};
+vector<string> regions = {"njet4to5-btag3p","njet6to7-btag3p","njet8p-btag3p","njet4to5-btag2","njet6to7-btag2","njet8p-btag2"};
+vector<string> theYounglings = {"nJetGood","2l_4t","2l_4t_coarse"};
+vector<string> EXPgroup = {	"LeptonSF","PU","L1Prefire","jesTotal","BTagSFHf","BTagSFLf","BTagSFHfs1","BTagSFLfs1","BTagSFHfs2","BTagSFLfs2","BTagSFCfe1","BTagSFCfe2",
+				//"Trigger",
+				"noTopPtReweight",
+				};
+
+vector<string>  THgroup = {"HDamp","ISR", "FSR","scale"}; 
+int nPDFs = 100;
+std::vector<std::string> PDFWeights;
+for (int i = 1; i <= nPDFs; ++i) { PDFWeights.push_back("PDF_" + std::to_string(i));}
+THgroup.insert(THgroup.end(), PDFWeights.begin(), PDFWeights.end());
+
+std::vector<const std::string*> variations;
+for (const std::string& THvariation : THgroup) { variations.push_back(&THvariation);}
+for (const std::string& EXPvariation : EXPgroup) { variations.push_back(&EXPvariation);}
 
 for (auto selection:regions){
    for (auto theChosenOne:theYounglings){
@@ -43,7 +57,7 @@ for (auto selection:regions){
    	// ch::Categories is just a typedef of vector<pair<int, string>>
    	
    	//bkg_procs
-   	vector<string> bkg_procs = {"TTLep_bb","TTLep_cc","TTLep_other","ST_tch","ST_twch","TTW","TTZ","TTH"};
+   	vector<string> bkg_procs = {"TTLep_bb","TTLep_cc","TTLep_other","ST_tch","ST_twch","TTW","TTZ","TTH","DY","DiBoson"};
    	//signal
    	vector<string>  sig_procs = {"TTTT"}; 
    	
@@ -61,45 +75,11 @@ for (auto selection:regions){
    	//({"lumi_13TeV"}, 1.018));
    	
    	// Shape uncertainties
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "jesTotal", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "LeptonSF", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "PU", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "L1Prefire", "shape", SystMap<>::init(1.00));
-   	
-   	//cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	//.AddSyst(cb, "Trigger", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "BTagSFHf", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "BTagSFLf", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "BTagSFHfs1", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "BTagSFHfs2", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "BTagSFLfs1", "shape", SystMap<>::init(1.00));
-   	
-   	cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	.AddSyst(cb, "BTagSFHfs2", "shape", SystMap<>::init(1.00));
-   	
-   	//cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	//.AddSyst(cb, "BTagSFCfe1", "shape", SystMap<>::init(1.00));
-   	
-   	//cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
-   	//.AddSyst(cb, "BTagSFCfe2", "shape", SystMap<>::init(1.00));
-   	
+	for (auto syst:variations){
+		cb.cp().process( ch::JoinStr({sig_procs, bkg_procs}) )
+		.AddSyst(cb, *syst, "shape", SystMap<>::init(1.00));
+	}
+
      	
    	 //Rate uncertainties
    	cb.cp().process({"TTLep_bb","TTLep_cc","TTLep_other"})
@@ -117,11 +97,14 @@ for (auto selection:regions){
     	cb.cp().process({"TTZ"})
    	.AddSyst(cb, "ttZ_rate", "lnN", SystMap<>::init(1.09));
    
-    	//cb.cp().process({"TTH"})
-   	//.AddSyst(cb, "ttH_rate", "lnN", SystMap<>::init(1.08));
+    	cb.cp().process({"TTH"})
+   	.AddSyst(cb, "ttH_rate", "lnN", SystMap<>::init(1.08));
     	
-//   	string selection = "njet4to6-btag3";
-   	string dir = "../../../../../../../../groups/hephy/cms/maryam.shooshtari/www/tttt/plots/analysisPlots/4t-v8.1-syst/RunII/all/trg-dilepL-minDLmass20-offZ1-"+selection+"-ht500"; // relative link from this dir
+	cb.cp().SetGroup("theory", THgroup);
+	cb.cp().SetGroup("experimental", EXPgroup);
+
+
+   	string dir = "../../../../../../../../groups/hephy/cms/maryam.shooshtari/www/tttt/plots/analysisPlots/4t-v10-syst/RunII/all/trg-dilep-OS-minDLmass20-offZ1-lepVeto2-"+selection+"-ht500"; // relative link from this dir
    	string input_filename = dir+"/tttt__systematics.root";
    	
    	cb.cp().backgrounds().ExtractShapes(
