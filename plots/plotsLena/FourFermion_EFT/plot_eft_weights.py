@@ -24,7 +24,7 @@ ROOT.setTDRStyle()
 argParser = argparse.ArgumentParser(description = "Argument parser")
 argParser.add_argument('--logLevel',           action='store',                   default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 argParser.add_argument('--sample',             action='store',      type=str      )
-argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/eft-weights_v2/')
+argParser.add_argument('--output_directory',   action='store',      type=str,    default='/groups/hephy/cms/lena.wild/www/tttt/plots/eft-weights_v3/')
 argParser.add_argument('--input_directory',    action='store',      type=str,    default='/eos/vbc/group/cms/lena.wild/tttt/training-ntuples-tttt_v6_1/MVA-training/ttbb_2l_dilep2-bjet_delphes-met30-njet4p-btag2p/')
 
 args = argParser.parse_args()
@@ -39,7 +39,7 @@ if not (args.sample):
     if (str(args.models).find('TTbb')!=-1): 
         sample = 'TTbb_MS'
 if sample == 'TTTT_MS':  EFTCoefficients = ['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm']
-if sample == 'TTbb_MS':  EFTCoefficients = ['ctt', 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm','ctb1', 'ctb8', 'cQb1', 'cQb8', 'cQtQb1Re', 'cQtQb8Re', 'cQtQb1Im', 'cQtQb8Im']
+if sample == 'TTbb_MS':  EFTCoefficients = [ 'cQQ1', 'cQQ8', 'cQt1', 'cQt8', 'ctHRe', 'ctHIm', 'ctb1', 'ctb8', 'cQb1', 'cQb8', 'cQtQb1Re', 'cQtQb8Re', 'cQtQb1Im', 'cQtQb8Im']
 assert sample != None, "Sample not found"
 assert EFTCoefficients != None, "EFT Coefficient not found"
 
@@ -107,7 +107,7 @@ for coeff1 in EFTCoefficients:
         
         histo    = make_TH1F(np_histo)
         
-        histo.legendText = coeff1+", "+coeff2
+        histo.legendText = coeff1+","+coeff2
         if (coeff1==coeff2):
             histo.style       = styles.lineStyle( ROOT.kBlack, dashed = True)
         else:
@@ -124,10 +124,10 @@ for coeff1 in EFTCoefficients:
             #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
             logX = False, logY = True, sorting = False,
             yRange = ('auto', 'auto'),
-            legend         = ( (0.15,0.7,0.9,0.92),3),
+            legend         = ( (0.17,0.9-0.05*len(EFTCoefficients)/2,1.,0.9), 2), 
             drawObjects    = drawObjects,
             copyIndexPHP   = True,
-            extensions     = ["png"],
+            extensions     = ["png", "pdf"],
           )
 copyIndexPHP(os.path.join(args.output_directory, subdir, subdir_))          
 k = 0
@@ -146,7 +146,7 @@ for coeff1 in EFTCoefficients:
     
     histo    = make_TH1F(np_histo)
     
-    histo.legendText = coeff1+", "+coeff2
+    histo.legendText = coeff1+"       "
     histo.style       = styles.lineStyle( color[k%len(color)])
     k = k+1
     histos.append( histo )
@@ -154,16 +154,17 @@ for coeff1 in EFTCoefficients:
 drawObjects = [ ]
 subdir = sample
 subdir_ = "lin_quad_eft_weights"
-plot = Plot.fromHisto( os.path.join(subdir, subdir_, "quad"), [[h] for h in histos], texX = "w_2", texY = "Entries" )
+print(sum(map(len, histos)))
+plot = Plot.fromHisto( os.path.join(subdir, subdir_, "quad"), [[h] for h in histos], texX = "w_{i,2}", texY = "Entries" )
 plotting.draw( plot,
         plot_directory = args.output_directory,
         #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
         logX = False, logY = True, sorting = False,
         yRange = ('auto', 'auto'),
-        legend         = ( (0.15,0.7,0.9,0.92),3),
+        legend         = ( (0.17,0.9-0.05*len(EFTCoefficients)/2,1.,0.9), 2), 
         drawObjects    = drawObjects,
         copyIndexPHP   = True,
-        extensions     = ["png"],
+        extensions     = ["png", "pdf"],
       )  
 
 k = 0
@@ -178,7 +179,7 @@ for coeff1 in EFTCoefficients:
     
     histo    = make_TH1F(np_histo)
     
-    histo.legendText = coeff1
+    histo.legendText = coeff1+"       "
     histo.style       = styles.lineStyle( color[k%len(color)])
     k = k+1
     histos.append( histo )
@@ -186,16 +187,16 @@ for coeff1 in EFTCoefficients:
 drawObjects = [ ]
 subdir = sample
 subdir_ = "lin_quad_eft_weights"
-plot = Plot.fromHisto( os.path.join(subdir, subdir_, "lin"), [[h] for h in histos], texX = "w_1", texY = "Entries" )
+plot = Plot.fromHisto( os.path.join(subdir, subdir_, "lin"), [[h] for h in histos], texX = "w_{i,1}", texY = "Entries" )
 plotting.draw( plot,
         plot_directory = args.output_directory,
         #ratio          = {'yRange':(0.6,1.4)} if len(plot.stack)>=2 else None,
         logX = False, logY = True, sorting = False,
         yRange = ('auto', 'auto'),
-        legend         = ( (0.15,0.7,0.9,0.92),3),
+        legend         = ( (0.17,0.9-0.05*len(EFTCoefficients)/2,1.,0.9), 2), 
         drawObjects    = drawObjects,
         copyIndexPHP   = True,
-        extensions     = ["png"],
+        extensions     = ["png", "pdf"],
       )        
  
 copyIndexPHP(os.path.join(args.output_directory, subdir, subdir_))     
