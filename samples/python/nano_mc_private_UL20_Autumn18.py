@@ -34,12 +34,10 @@ dbFile = dbDir+'/nano_mc_private_UL20_Run2018.sql'
 
 logger.info("Using db file: %s", dbFile)
 
-from Samples.nanoAOD.UL18_nanoAODv9 import * #rareTop, TTbar, TTX, SingleTop, DY, multiboson#, DYJetsM50HT, DYJetsM4to50HT, DY, TTV, boson
-
+from Samples.nanoAOD.UL18_nanoAODv9 import *
 ################################################################################
 # Rare processes
-## ->  Where do these numbers come from?
-    
+
 TTTT.xSection = 0.01197
 TTWW.xSection = 0.007003
 TTWZ.xSection = 0.002453
@@ -52,18 +50,20 @@ TTTW.xSection = 0.0007314
 
 ################################################################################
 # TTbar
+
 TTLep_pow_CP5.xSection = 88.4
 TTLep_pow_CP5.topScaleF =  1.03957041204
-#TTLep_pow_CP5_hDown  = Sample.nanoAODfromDAS("TTLep_pow_CP5_hDown","/TTTo2L2Nu_hdampDOWN_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=88.4)
-#TTLep_pow_CP5_hUp    = Sample.nanoAODfromDAS("TTLep_pow_CP5_hUp","/TTTo2L2Nu_hdampUP_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=88.4)
+# TTLep_pow_CP5_hDown  = Sample.nanoAODfromDAS("TTLep_pow_CP5_hDown","/TTTo2L2Nu_hdampDOWN_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=88.4)
+# TTLep_pow_CP5_hUp    = Sample.nanoAODfromDAS("TTLep_pow_CP5_hUp","/TTTo2L2Nu_hdampUP_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=88.4)
 TTSingleLep_pow_CP5.xSection = 365.34
 TTHad_pow_CP5.xSection = 377.96
 TTbb.xSection = 4.59
-#TTbb_pow_CP5_hDown   = Sample.nanoAODfromDAS("TTbb_pow_CP5_hDown","/TTbb_4f_TTTo2L2Nu_hdampDOWN_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
-#TTbb_pow_CP5_hUp     = Sample.nanoAODfromDAS("TTbb_pow_CP5_hUp",  "/TTbb_4f_TTTo2L2Nu_hdampUP_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
+# TTbb_pow_CP5_hDown   = Sample.nanoAODfromDAS("TTbb_pow_CP5_hDown","/TTbb_4f_TTTo2L2Nu_hdampDOWN_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
+# TTbb_pow_CP5_hUp     = Sample.nanoAODfromDAS("TTbb_pow_CP5_hUp",  "/TTbb_4f_TTTo2L2Nu_hdampUP_TuneCP5-Powheg-Openloops-Pythia8/RunIISummer20UL18NanoAODv9-106X_upgrade2018_realistic_v16_L1v1-v1/NANOAODSIM", dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=4.59)
 
 ################################################################################
 # TTX
+
 TTWToLNu.xSection = 0.235
 TTWToQQ.xSection = 0.486
 TTZToQQ.xSection = 0.5297
@@ -71,6 +71,7 @@ TTZToLLNuNu.xSection = 0.258
 
 ################################################################################
 # Single top
+
 T_tch_pow.xSection = 136.02
 TBar_tch_pow.xSection = 35.85*(1.-(1.-0.108*3)*(1.-0.108*3))
 T_tWch.xSection = 35.85*(1.-(1.-0.108*3)*(1.-0.108*3))
@@ -103,11 +104,11 @@ ZZZ.xSection = 0.01476
 ################################################################################
 
 
-TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTTT_MS_EFT-22-05-12/", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/") 
+TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTTT_MS_EFT-22-05-12/", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/")
 TTTT_MS_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
 TTTT_MS_EFT.normalization = 4080634.0
 
-TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTbb_MS_EFT-22-05-12/", xSection=4.59, redirector = "root://eos.grid.vbc.ac.at/") 
+TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTbb_MS_EFT-22-05-12/", xSection=4.59, redirector = "root://eos.grid.vbc.ac.at/")
 TTbb_MS_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
 TTbb_MS_EFT.normalization = 4657390.0
 
