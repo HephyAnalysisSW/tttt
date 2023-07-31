@@ -71,8 +71,10 @@ def make_jets( event, sample ):
     # store all btag flavors in a list
     event.btagDeepFlavB_scores = sorted([jet['btagDeepFlavB'] for jet in event.jets], reverse=True)
     event.sortedBJets = sorted(event.bJets, key=lambda x: x['btagDeepFlavB'], reverse=True)
-    event.dR_bb = deltaR(event.sortedBJets[0], event.sortedBJets[1])
-
+    if len(event.sortedBJets)>=2:
+        event.dR_bb = deltaR(event.sortedBJets[0], event.sortedBJets[1])
+    else:
+        event.dR_bb = -1
     if len(event.bJets)>=2:
         event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.bJets, 2)] )
     else:
