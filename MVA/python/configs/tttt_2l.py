@@ -70,8 +70,9 @@ def make_jets( event, sample ):
 
     # store all btag flavors in a list
     event.btagDeepFlavB_scores = sorted([jet['btagDeepFlavB'] for jet in event.jets], reverse=True)
+    event.sortedBJets = sorted(event.bJets, key=lambda x: x['btagDeepFlavB'], reverse=True)
+    event.dR_bb = deltaR(event.sortedBJets[0], event.sortedBJets[1])
 
-    # minDR of all btag combinations
     if len(event.bJets)>=2:
         event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.bJets, 2)] )
     else:
@@ -124,7 +125,7 @@ sequence.append( jet_energy )
 def make_leptons(event, sample):
     event.leptons   = [getObjDict(event, 'lep_', lepVarNames, i) for i in range(int(event.nlep))]
 
-     #(Second) smallest dR between any lepton and medium b-tagged jet
+    #(Second) smallest dR between any lepton and medium b-tagged jet
     dR_vals = sorted([deltaR(event.bJets[i], event.leptons[j]) for i in range(len(event.bJets)) for j in range(len(event.leptons))])
     if len(dR_vals)>=2:
         event.dR_min0 = dR_vals[0]
@@ -214,6 +215,7 @@ all_mva_variables = {
      "mva_dR_min1"               :(lambda event, sample: event.dR_min1),
      #Smallest dR between two b-tagged jets
      "mva_min_dR_bb"             :(lambda event, sample: event.min_dR_bb),
+     "mva_dR_best_bb"            :(lambda event, sample: event.dR_bb),
      #dR between leading/subleading lepton
      "mva_dR_2l"                 :(lambda event, sample: sqrt(deltaPhi(event.l1_phi, event.l2_phi)**2 + (event.l1_eta - event.l2_eta)**2)),
      #Highest mass to pT ratio of any selected jet
