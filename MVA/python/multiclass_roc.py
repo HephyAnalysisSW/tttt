@@ -13,7 +13,7 @@ argParser.add_argument('--config',             action='store', type=str,   defau
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
 argParser.add_argument('--variable_set',       action='store', type=str,   default='mva_variables', help="List of variables for training")
 argParser.add_argument('--output_directory',   action='store', type=str,   default='/groups/hephy/cms/$USER/www/tttt/plots')
-argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/user/cms/$USER/tttt/training-ntuples-tttt/MVA-training") )
+argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/user/cms/$USER/tttt_2l/training-ntuples-tttt/MVA-training") )
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--add_LSTM',           action='store_true', help="add LSTM?")
 argParser.add_argument('--selectionString',    action='store', type=str,   default='dilepVL-offZ1-njet4p-btag3p')
@@ -160,8 +160,7 @@ if args.add_LSTM:
 outputs = Dense(len(config.training_samples), kernel_initializer='normal', activation='sigmoid')(x)
 model = Model( inputs, outputs )
 
-#model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_percentage_error'])
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 model.summary()
 
 # define callback for early stopping
@@ -181,25 +180,65 @@ history = model.fit(training_data,
                     #validation_split=0.1
                     validation_data = validation_data,
                    )
+
+loss_values = history.history['loss']
 print('training finished')
 
 # saving
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 
-output_file = os.path.join(output_directory, 'regression_model.h5')
+# output_file = os.path.join(output_directory, 'regression_model.h5')
+output_file = os.path.join(output_directory, args.selectionString,'.h5')
 model.save(output_file)
 logger.info("Written model to: %s", output_file)
+
+
+
 
 #plot roc curves
 import matplotlib.pyplot as plt
 from sklearn.metrics import roc_curve, auc
 
+
+# loss function plot
+plt.plot(range(1,  101), loss_values, label='Training Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.title('Training Loss over Epochs')
+plt.legend()
+plt.savefig(plot_directory+'training_loss.png')
 #Y_predict = model.predict(X_test)
 if args.add_LSTM:
    Y_predict = model.predict( [X_test,  V_test] )
 else:
     Y_predict = model.predict(X_test)
+
+#importance plot
+
+inputs = tf.constant(X_test, dtype=tf.float32)
+import tf.GradientTape as tape
+tape.watch(inputs)
+predictions = mdel(inputs)
+
+grads = tape.gradient(predictions, inputs)
+
+feature_importance = np.abs(gradients.numpy()).mean(axis=0)
+feature_names = X_test.feature_names
+feature_importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': feature_importance})
+
+feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
+
+print(feature_importance_df)
+
+plt.figure(figsize=(10, 6))
+plt.bar(feature_importance_df['Feature'], feature_importance_df['Importance'])
+plt.xticks(rotation=45, ha='right')
+plt.xlabel('Feature')
+plt.ylabel('Importance')
+plt.title('Feature Importance')
+plt.tight_layout()
+plt.savefig(plot_directory+"feature_importance.png")
 
 fpr = dict()
 tpr = dict()
