@@ -55,6 +55,8 @@ np.random.seed(1)
 mva_variables = [ mva_variable[0] for mva_variable in getattr(config, args.variable_set) ]
 
 n_var_flat   = len(mva_variables)
+n_var_flat_1 = n_var_flat*2
+n_var_flat_2 = n_var_flat+5
 
 df_file = {}
 for i_training_sample, training_sample in enumerate(config.training_samples):
@@ -87,6 +89,7 @@ Y = dataset[:, n_var_flat]
 from sklearn.preprocessing import label_binarize
 classes = range(len(config.training_samples))
 Y = label_binarize(Y, classes=classes)
+print(Y)
 
 # loading vector branches for LSTM
 if args.add_LSTM:
@@ -123,6 +126,7 @@ if args.add_LSTM:
 else:
     X_train, X_test, Y_train, Y_test                  = train_test_split(X, Y, **options)
     validation_data = ( X_test,  Y_test)
+    print(Y_test)
     training_data   =   X_train
 
 #########################################################################################
@@ -182,14 +186,15 @@ history = model.fit(training_data,
                    )
 
 loss_values = history.history['loss']
+other_loss_values = history.history['val_loss']
 print('training finished')
 
 # saving
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 
-# output_file = os.path.join(output_directory, 'regression_model.h5')
-output_file = os.path.join(output_directory, args.selectionString,'.h5')
+output_file = os.path.join(output_directory, 'regression_model_96_53.h5')
+#output_file = os.path.join(output_directory, 'model_.h5')
 model.save(output_file)
 logger.info("Written model to: %s", output_file)
 
@@ -198,11 +203,12 @@ logger.info("Written model to: %s", output_file)
 
 #plot roc curves
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 
 
 # loss function plot
 plt.plot(range(1,  101), loss_values, label='Training Loss')
+plt.plot(range(1,  101), other_loss_values, label='Test Loss')
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
 plt.title('Training Loss over Epochs')
@@ -213,32 +219,38 @@ if args.add_LSTM:
    Y_predict = model.predict( [X_test,  V_test] )
 else:
     Y_predict = model.predict(X_test)
+    print("HELOOOOOOOOO")
+    print(Y_predict)
+
+auc_scores = []
+feature_auc_scores = {}
+
 
 #importance plot
+X_test_original = X_test.copy()
+for i_feature in range(X_test.shape[1]):
+    feature_vals = X_test[:, i_feature].copy()
+    np.random.shuffle(feature_vals)
+    X_test[:, i_feature] = feature_vals
+    Y_predict = model.predict(X_test)
+    auc_score = roc_auc_score(Y_test, Y_predict)
+    auc_scores.append(auc_score)
+    feature_names = mva_variables[i_feature]
+    feature_auc_scores[feature_names] = auc_score
+    print("Feature {}".format(i_feature) + " shuffled, AUC score {}".format(auc_score))
+    # reset to origin
+    X_test[:, i_feature] = X_test_original[:, i_feature]
 
-inputs = tf.constant(X_test, dtype=tf.float32)
-import tf.GradientTape as tape
-tape.watch(inputs)
-predictions = mdel(inputs)
-
-grads = tape.gradient(predictions, inputs)
-
-feature_importance = np.abs(gradients.numpy()).mean(axis=0)
-feature_names = X_test.feature_names
-feature_importance_df = pd.DataFrame({'Feature': feature_names, 'Importance': feature_importance})
-
-feature_importance_df = feature_importance_df.sort_values(by='Importance', ascending=False)
-
-print(feature_importance_df)
 
 plt.figure(figsize=(10, 6))
-plt.bar(feature_importance_df['Feature'], feature_importance_df['Importance'])
+plt.bar(range(len(feature_auc_scores)), list(feature_auc_scores.values()), tick_label=list(feature_auc_scores.keys()))
 plt.xticks(rotation=45, ha='right')
-plt.xlabel('Feature')
-plt.ylabel('Importance')
+plt.xlabel('Features')
+plt.ylabel('AUC score')
 plt.title('Feature Importance')
 plt.tight_layout()
 plt.savefig(plot_directory+"feature_importance.png")
+plt.savefig(plot_directory+"feature_importance.pdf")
 
 fpr = dict()
 tpr = dict()
