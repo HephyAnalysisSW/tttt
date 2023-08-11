@@ -63,6 +63,7 @@ from tttt.Tools.objectSelection import isBJet
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+    event.bJets_medium = filter(lambda j:isBJet(j, WP="medium",year=event.year) and abs(j['eta'])<=2.4    , event.jets)
     event.nonbJets = []
     for b in event.jets:
         if b not in event.bJets:
@@ -120,7 +121,7 @@ sequence.append(sphericity)
 def jet_energy( event, sample):
     #to be redone with the correct energy --> see cal activity?
     event.tmpJets = [getObjDict(event, 'Jet_', lstm_jetVarNames, i) for i in range(int(event.nJetGood))]
-    event.jetEnergy = [ROOT.TMath.Sqrt(jet['pt']**2 + jet['mass']**2) for jet in event.tmpJets]
+    event.jetEnergy = [(jet['pt']* cosh(jet['eta'])) for jet in event.tmpJets]
 
 sequence.append( jet_energy )
 
@@ -190,9 +191,10 @@ all_mva_variables = {
 
      "mva_ht"                    :(lambda event, sample: sum( [j['pt'] for j in event.jets] ) ),
      "mva_htb"                   :(lambda event, sample: sum( [j['pt'] for j in event.bJets] ) ),
+     # "mva_htb_medium"            :(lambda event, sample: sum([j['pt'] for j in event.bJets_medium ]) ),
      "mva_ht_ratio"              :(lambda event, sample: sum( [j['pt'] for j in event.jets[:4]])/ sum( [j['pt'] for j in event.jets ]) if event.nJetGood>=4 else 1 ),
-     "mva_ht2m"                  :(lambda event, sample: sum( [j['pt'] for j in event.jets[2:]])),
-     "mva_centrality"            :(lambda event, sample: sum( [j['pt'] for j in event.jets] )/ sum(event.jetEnergy) if event.nJetGood>=1 else 1),
+     # "mva_ht2m"                  :(lambda event, sample: sum( [j['pt'] for j in event.jets[2:]])),
+     # "mva_centrality"            :(lambda event, sample: sum( [j['pt'] for j in event.jets] )/ sum(event.jetEnergy) if event.nJetGood>=1 else 1),
 
      "mva_jet0_pt"               :(lambda event, sample: event.JetGood_pt[0]          if event.nJetGood >=1 else 0),
      "mva_jet0_eta"              :(lambda event, sample: event.JetGood_eta[0]         if event.nJetGood >=1 else -10),
@@ -217,7 +219,7 @@ all_mva_variables = {
      "mva_dR_min1"               :(lambda event, sample: event.dR_min1),
      #Smallest dR between two b-tagged jets
      "mva_min_dR_bb"             :(lambda event, sample: event.min_dR_bb),
-     "mva_dR_best_bb"            :(lambda event, sample: event.dR_bb),
+     # "mva_dR_best_bb"            :(lambda event, sample: event.dR_bb),
      #dR between leading/subleading lepton
      "mva_dR_2l"                 :(lambda event, sample: sqrt(deltaPhi(event.l1_phi, event.l2_phi)**2 + (event.l1_eta - event.l2_eta)**2)),
      #Highest mass to pT ratio of any selected jet
@@ -231,8 +233,8 @@ all_mva_variables = {
      "mva_bTagScore_max2"        :(lambda event, sample: event.btagDeepFlavB_scores[2] if len(event.btagDeepFlavB_scores)>2 else -1),
      "mva_bTagScore_max3"        :(lambda event, sample: event.btagDeepFlavB_scores[3] if len(event.btagDeepFlavB_scores)>3 else -1),
 
-     "mva_sphericity"            :(lambda event, sample: event.s if event.nJetGood>=2 and [i>0 for i in event.ev] else 141),
-     "mva_sphericity_lin"        :(lambda event, sample: event.s_lin if event.nJetGood>=2 and [i>0 for i in event.ev] else 141 )
+     # "mva_sphericity"            :(lambda event, sample: event.s if event.nJetGood>=2 and [i>0 for i in event.ev] else 141),
+     # "mva_sphericity_lin"        :(lambda event, sample: event.s_lin if event.nJetGood>=2 and [i>0 for i in event.ev] else 141 )
 
 }
 

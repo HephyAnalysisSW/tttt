@@ -166,7 +166,8 @@ def nn_model(parameters):
 def objective(parameters):
     model = nn_model(parameters)
     callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3)
-    history = model.fit(training_data, Y_train, sample_weight=None, verbose=0, callbacks=[callback], validation_data=validation_data)
+    history = model.fit(training_data, Y_train, sample_weight=None, verbose=0,
+                    callbacks=[callback], validation_data=validation_data)
     val_loss = history.history['val_loss'][-1]
     return val_loss
 
@@ -177,11 +178,11 @@ space = {
     'activation':   hp.choice('activation', ['relu', 'tanh', 'sigmoid', 'softmax']),
     'optimizer':    hp.choice('optimizer', ['adam', 'adadelta', 'adagrad']),
     'kernel':       hp.choice('kernel', ['normal', 'glorot_uniform']),
-    'loss':         hp.choice('loss', ['categorical_crossentropy'])#??????????????????????????????????????????????????????????????
+    'loss':         hp.choice('loss', ['categorical_crossentropy', 'binary_crossentropy'])
     }
 
 # hyperparameter search
 best = fmin(fn=objective, space=space, algo=tpe.suggest, max_evals=10)
-hyperparameters = open(output_directory+"/hyperparameters.txt", "w+")
+hyperparameters = open(args.output_directory+"/hyperparameters.txt", "w+")
 print("Best set:", best)
 hyperparameters.write(best)
