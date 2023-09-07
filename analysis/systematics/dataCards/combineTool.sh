@@ -8,15 +8,15 @@ declare -A regions=(['njet4to5_btag3p']='njet4to5-btag3p' ['njet4to5_btag2']='nj
 declare -A variables=(['mva']='2l_4t' ['nJetGood']='nJetGood' ['nBTag']='nBTag' ['ht']='ht')
 declare -A masking=(['nJetGood']='nJetGood' ['nBTag']='nBTag' ['ht']='ht')
 
-merge=false
+unite=false
 asimov=false
 postfit=false
-impact=false
+multi=false
 
-while getopts "mapi" opt; do
+while getopts "uapm" opt; do
   case $opt in
-    m)
-      merge=true
+    u)
+      unite=true
       ;;
     a)
       asimov=true
@@ -24,8 +24,8 @@ while getopts "mapi" opt; do
     p)
       postfit=true
       ;;
-    i)
-      impact=true
+    m)
+      multi=true
       ;;
     \?)
       echo "Invalid option: -$OPTARG" >&2
@@ -34,8 +34,8 @@ while getopts "mapi" opt; do
   esac
 done
 
-if $merge;then
-  echo "Executing Merging."
+if $unite;then
+  echo "Executing Unite."
   theEndlessScroll="combineCards.py "
   for variable in "${!variables[@]}";do
     for region in "${!regions[@]}";do
@@ -48,7 +48,7 @@ if $merge;then
   echo "text2workspace.py CRs_combined.txt --channel-masks"
   wait
 elif $asimov; then
-  echo "Executing Asimov."
+  echo "Executing Asimov. Second Impact"
   echo "python combineTool.py -M Impacts -d CRs_combined.root -m 125 -t -1 --doInitialFit --robustFit 1 --expectSignal=1  --freezeNuisanceGroups=theory"
   wait
   echo "python combineTool.py -M Impacts -d CRs_combined.root -m 125 -t -1 --doFits --robustFit 1 --expectSignal=1   --freezeNuisanceGroups=theory --parallel 10"
@@ -72,7 +72,7 @@ elif $postfit; then
   echo "python postFitPlotter.py --inputFile dataCards/fitDiagnostics.postFit_combined.root --backgroundOnly"
 
 elif $impact; then
-  echo "Executing (Second) Impact."
+  echo "Executing Multi."
   neverendingStory="combine CRs_combined.root -M MultiDimFit --saveWorkspace  -t -1 --algo grid --points 100 --setParameterRange r=-19,20 -n .combinedFit --expectSignal=1 --freezeNuisanceGroups=theory"
   for mask in "${!masking[@]}";do
     for region in "${!regions[@]}";do
