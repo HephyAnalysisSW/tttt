@@ -127,7 +127,8 @@ variations += jetVariations + scaleWeights + PSWeights + PDFWeights
 if args.sys not in variations:
     if args.sys == "central":
         logger.info( "Running central samples (no sys variation)")
-        noData = False
+        #noData = False
+	noData = True
     else:
         raise RuntimeError( "Variation %s not among the known: %s", args.sys, ",".join( variations ) )
 else:
@@ -220,7 +221,13 @@ jetVars     =   ['pt/F',
                  'chHEF/F',
                  'neEmEF/F',
                  'neHEF/F',
-                 'index/I']
+                 'index/I',
+		 'isBJet/O',
+		 'isBJet_loose/O',
+		 'isBJet_medium/O',
+		 'isBJet_tight/O'
+
+		 ]
 
 if args.sys in jetVariations:
   jetVars += ["pt_"+args.sys+"/F"]
@@ -427,9 +434,30 @@ sequence.append( getTheorySystematics )
 
 #TTree formulas
 
+ttreeFormulas = { "nJetGood_pt30" : "Sum$(JetGood_pt>30)",
+                  "nJetGood_pt40" : "Sum$(JetGood_pt>40)",
+                  "nJetGood_pt50" : "Sum$(JetGood_pt>50)",
+                  "nJetGood_pt80" : "Sum$(JetGood_pt>80)",
+                  "nJetGood_pt100" : "Sum$(JetGood_pt>100)",
+                  "nJetGood_pt150" : "Sum$(JetGood_pt>150)",
+                  "nJetGood_pt200" : "Sum$(JetGood_pt>200)",
+                  "nBTag_loose"   : "Sum$(JetGood_isBJet_loose)",
+                  "nBTag_medium"  : "Sum$(JetGood_isBJet_medium)" ,
+                  "nBTag_tight"   : "Sum$(JetGood_isBJet_tight)" ,
+                  "nBTag_loose_pt30"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>30)",
+                  "nBTag_medium_pt30"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>30)" ,
+                  "nBTag_tight_pt30"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>30)"  ,
+                  "nBTag_loose_pt40"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>40)",
+                  "nBTag_medium_pt40"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>40)" ,
+                  "nBTag_tight_pt40"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>40)"  ,
+                  "nBTag_loose_pt50"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>50)",
+                  "nBTag_medium_pt50"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>50)" ,
+                  "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)",
+		}
+
 if args.sys in jetVariations:
-  ttreeFormulas = {"ht_"+args.sys :"Sum$(JetGood_pt_"+args.sys+")"}
-else: ttreeFormulas = {}
+  ttreeFormulas.update({"ht_"+args.sys :"Sum$(JetGood_pt_"+args.sys+")"})
+
 
 ##list all the reweights
 weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger','reweightScale','reweightPS','reweightPDF']
@@ -738,9 +766,128 @@ for i_mode, mode in enumerate(allModes):
     ))
 
     plots.append(Plot(
+      name = "nJetGood_pt30",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nJetGood_pt30, #nJetSelected_pt>30
+      binning=[8,3.5,11.5],
+    ))
+
+    plots.append(Plot(
+      name = "nJetGood_pt40",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nJetGood_pt40, #nJetSelected_pt>40
+      binning=[8,3.5,11.5],
+    ))
+
+    plots.append(Plot(
+      name = "nJetGood_pt50",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nJetGood_pt50, #nJetSelected_pt>50
+      binning=[8,3.5,11.5],
+    ))
+
+    plots.append(Plot(
+      name = "nJetGood_pt80",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nJetGood_pt80, #nJetSelected_pt>80
+      binning=[8,3.5,11.5],
+    ))
+
+    plots.append(Plot(
+      name = "nJetGood_pt100",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nJetGood_pt100, #nJetSelected_pt>100
+      binning=[8,3.5,11.5],
+    ))
+
+    plots.append(Plot(
+      name = "nJetGood_pt150",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nJetGood_pt150, #nJetSelected_pt>150
+      binning=[8,3.5,11.5],
+    ))
+
+    plots.append(Plot(
+      name = "nJetGood_pt200",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nJetGood_pt200, #nJetSelected_pt>200
+      binning=[8,3.5,11.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_loose_pt30",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_loose_pt30, #nJetSelected_pt>30
+      binning=[7,-0.5,6.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_loose_pt40",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_loose_pt40, #nJetSelected_pt>40
+      binning=[7,-0.5,6.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_loose_pt50",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_loose_pt50, #nJetSelected_pt>50
+      binning=[7,-0.5,6.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_medium_pt30",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_medium_pt30, #nJetSelected_pt>30
+      binning=[7,-0.5,6.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_medium_pt40",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_medium_pt40, #nJetSelected_pt>40
+      binning=[7,-0.5,6.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_medium_pt50",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_medium_pt50, #nJetSelected_pt>50
+      binning=[7,-0.5,6.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_tight_pt30",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_tight_pt30, #nJetSelected_pt>30
+      binning=[7,-0.5,6.5],
+    ))
+    
+    plots.append(Plot(
+      name = "nBTag_tight",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_tight, #nBJetTight
+      binning=[7, -0.5,6.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_medium",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_medium, #nBJetMedium
+      binning=[7, -0.5,6.5],
+    ))
+
+    plots.append(Plot(
+      name = "nBTag_loose",
+      texX = 'N_{jets}', texY = 'Number of Events',
+      attribute = lambda event, sample:event.nBTag_loose, #nBJetLoose
+      binning=[7, -0.5,6.5],
+    ))
+
+    plots.append(Plot(
       texX = 'N_{b-tag}', texY = 'Number of Events',
       attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
-      binning=[5, 1.5,6.5],
+      binning=[7, -0.5,6.5],
     ))
 
     plots.append(Plot(
@@ -766,6 +913,49 @@ for i_mode, mode in enumerate(allModes):
       name = 'jet1_pt', attribute = lambda event, sample: event.JetGood_pt[1],
       binning=[600/30,0,600],
     ))
+
+    plots.append(Plot(
+      texX = 'p_{T}(jet2) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet2_pt', attribute = lambda event, sample: event.JetGood_pt[2] if event.nJetGood >= 3 else float('nan'),
+      binning=[600/30,0,600],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      texX = 'p_{T}(jet3) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet3_pt', attribute = lambda event, sample: event.JetGood_pt[3] if event.nJetGood >= 4 else float('nan'),
+      binning=[600/30,0,600],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      texX = 'p_{T}(jet4) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet4_pt', attribute = lambda event, sample: event.JetGood_pt[4] if event.nJetGood >= 5 else float('nan'),
+      binning=[600/30,0,600],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      texX = 'p_{T}(jet5) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet5_pt', attribute = lambda event, sample: event.JetGood_pt[5] if event.nJetGood >= 6 else float('nan'),
+      binning=[600/30,0,600],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      texX = 'p_{T}(jet6) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet6_pt', attribute = lambda event, sample: event.JetGood_pt[6] if event.nJetGood >= 7 else float('nan'),
+      binning=[600/30,0,600],
+      addOverFlowBin='upper',
+    ))
+
+    plots.append(Plot(
+      texX = 'p_{T}(jet7) (GeV)', texY = 'Number of Events / 30 GeV',
+      name = 'jet7_pt', attribute = lambda event, sample: event.JetGood_pt[7] if event.nJetGood >= 8 else float('nan'),
+      binning=[600/30,0,600],
+      addOverFlowBin='upper',
+    ))
+
     
     plots.append(Plot(
       texX = '#eta(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',
@@ -892,11 +1082,11 @@ for i_mode, mode in enumerate(allModes):
         attribute = TreeVariable.fromString( "nJetGood_"+args.sys+"/I" ), #nJet varied
         binning=[8,3.5,11.5],
       ))
-
+      
       plots.append(Plot(
         texX = 'N_{b-tag}_'+args.sys, texY = 'Number of Events',
         attribute = TreeVariable.fromString( "nBTag_"+args.sys+"/I" ), #nJetSelected
-        binning=[5, 1.5,6.5],
+        binning=[7, -0.5,6.5],
       ))
 
       plots.append(Plot(

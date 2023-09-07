@@ -55,35 +55,42 @@ mc = [ 	{"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}", "color" : ROOT.k
 	{"name": "TTW", "legendText" : "t#bar{t}W", "color" : color.TTW},
 	{"name": "TTH", "legendText" : "t#bar{t}H", "color" : color.TTH},
 	{"name": "TTZ", "legendText" : "t#bar{t}Z", "color" : color.TTZ},
-	{"name": "DY", "legendText" : "DY", "color" : color.DY},
+	{"name": "DY_inclusive", "legendText" : "DY", "color" : color.DY},
 	{"name": "DiBoson", "legendText" : "DiBoson", "color" : color.W},
 	{"name": "TTTT", "legendText" : "t#bar{t}t#bar{t}", "color" : color.TTTT} ]
 
-selections =["njet4to5_btag2","njet4to5_btag3p","njet6to7_btag2","njet6to7_btag3p","njet8p_btag2","njet8p_btag3p"]
-for region in selections:
-
-   plotName = region
-   if args.backgroundOnly: plotName += '_bOnly'
-
-   plotter = Plotter(plotName)
-
-   #get the histos
-   for process in mc:
-   	process["hist"] = getPostFit(process["name"],args.inputFile,region,fit)
-	plotter.addSample(process["name"], process["hist"], process["legendText"], process["color"])
-	  
-   #get uncertainty
+selections =["njet4to5_btag2","njet4to5_btag3p","njet6to7_btag2","njet8p_btag2","njet4to5_btag1","njet6to7_btag1","njet8p_btag1"]#,"njet6to7_btag3p","njet8p_btag3p"]
+plots =[	
+		{"name":"mva",		"texX":"2l_4t",		"binLabels":["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1"], "nbins": [0,10]},
+		{"name":"nJetGood",	"texX":"N_{Jet}",       "binLabels":["4","5","6","7","8","9","10","11"], "nbins": [0,8]},
+		{"name":"nBTag",	"texX":"N_{BJet}",      "binLabels":["0","1","2","3","4","5","6"], "nbins": [0,7]},
+		{"name":"ht",       	"texX":"ht",     	"binLabels":None , "nbins": [0,30]},
+       ]
+for plot in plots:
+   for region in selections:
    
-   UHist = getUncertainty(args.inputFile,region,fit)
-   plotter.addPostFitUnc(UHist)
-  
-   #get data
-   if not args.noData:
-	Data = getData(args.inputFile,region,fit)
-	plotter.addData(Data)
+      plotName = plot["name"]+"_"+region
    
-   #draw the plot
-   for log in [False,True]:
-      plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', "all" + ("_log" if log else ""), args.selection )
-      plotter.draw(plot_directory_, log, texX = "2l_4t" , ratio = True )
+      if args.backgroundOnly:	plotter = Plotter(plotName+'_bOnly')
+      else: 			plotter = Plotter(plotName)
+   
+      #get the histos
+      for process in mc:
+      	process["hist"] = getPostFit(process["name"],args.inputFile,plotName,fit)
+   	plotter.addSample(process["name"], process["hist"], process["legendText"], process["color"])
+   	  
+      #get uncertainty
+      
+      UHist = getUncertainty(args.inputFile,plotName,fit)
+      plotter.addPostFitUnc(UHist)
+     
+      #get data
+      if not args.noData:
+   	Data = getData(args.inputFile,plotName,fit)
+   	plotter.addData(Data)
 
+      #draw the plot
+      for log in [False,True]:
+         plot_directory_ = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', "all" + ("_log" if log else ""), args.selection )
+         plotter.draw(plot_directory_, log, texX = plot["texX"] , ratio = True , binLabels = plot["binLabels"] , nbins=plot["nbins"] )
+   

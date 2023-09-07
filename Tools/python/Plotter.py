@@ -8,6 +8,7 @@ from math                                import sqrt, isnan
 
 from tttt.Tools.user                     import plot_directory
 import RootTools.plot.helpers as plot_helpers
+from tttt.Tools.helpers                  import getObjFromFile
 
 
 class Plotter:
@@ -39,6 +40,7 @@ class Plotter:
         self.totalError = ROOT.TGraphAsymmErrors()
         self.stack = ROOT.THStack()
 	self.postFitUnc = ROOT.TH1F()
+	self.prettyhist =ROOT.TH1F()
         
         self.log = False
         self.ratio = False
@@ -256,11 +258,12 @@ class Plotter:
     def getPostFitDataRatio(self,h1,h2):
         ratio = h1.Clone()
         Nbins = ratio.GetN()
-        for i in range(Nbins):
-            bin=i+1
+        for bin in range(Nbins):
+            #bin=i
             if h2.GetBinContent(bin)==0:
                 r=-1
-                e=0
+                eY_hi = 0
+                eY_lo = 0
             else:
    	        d1, d2 = ROOT.Double(0.), ROOT.Double(0.)
    	        h1.GetPoint(bin, d1, d2)
@@ -268,10 +271,15 @@ class Plotter:
    	        Yval = float(d2)
    	        eX = h1.GetErrorXlow(bin)
    
-   		X = h2.GetBinCenter(bin)
+   		#X = h2.GetBinCenter(bin)
                 r = h1.Eval(h2.GetBinCenter(bin))/h2.GetBinContent(bin)
-		eY = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
+		eY_lo = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
+                eY_hi = h1.GetErrorYhigh(bin)/h2.GetBinContent(bin)
+   		
+	    #print bin,h2.GetBinContent(bin),r, eY_lo, eY_hi, h1.GetErrorYlow(bin),h1.GetErrorYhigh(bin)
+	    X = h2.GetBinCenter(bin)
             ratio.SetPoint(bin,X,r)
+	    ratio.SetPointError(bin, 0, 0, eY_lo, eY_hi)
            
 	return ratio
    
@@ -327,7 +335,7 @@ class Plotter:
         ratio.GetYaxis().SetTitle(self.ratioTitle)
 	if self.hasPostFitUnc:
         	ratio.GetYaxis().SetRangeUser(0.5,1.5)
-	else:   ratio.GetYaxis().SetRangeUser(0,2)
+	else:   ratio.GetYaxis().SetRangeUser(0.5,1.5)
         ratio.GetYaxis().SetNdivisions(505)
         ratio.GetYaxis().CenterTitle()
         ratio.GetYaxis().SetTitleSize(22)
@@ -440,7 +448,7 @@ class Plotter:
 #---Public function ------------------------------------------------------------
 
     #Draw and store plots
-    def draw(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False, comparisonPlots = False):
+    def draw(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False, comparisonPlots = False , binLabels = None, nbins = None ):
 
         ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
         ROOT.setTDRStyle()
@@ -491,7 +499,13 @@ class Plotter:
                 self.buildUncertainty()
 
         self.setDrawOptions(self.totalHist)
-        self.totalHist.Draw("hist")
+	if not nbins is None:
+	    self.totalHist.GetXaxis().SetRangeUser(nbins[0], nbins[1])
+	if not binLabels is None:
+            for i in range(len(binLabels)):
+		self.totalHist.GetXaxis().SetBinLabel(i+1,binLabels[i])
+        
+	self.totalHist.Draw("hist")
         self.stack.Draw("hist same")
         self.totalError.Draw("E2 hist same")
 
@@ -499,7 +513,15 @@ class Plotter:
 	    self.postFitUnc.Draw("E2 same")
 	    
         if not self.noData :
-            self.data["hist"].Draw("X0 E0 p same")
+	    if self.hasPostFitUnc :
+        	  Nbins = self.data["hist"].GetN()
+        	  for i in range(Nbins+1):
+            		bin=i
+			self.data["hist"].SetPointEXhigh(bin,0)
+			self.data["hist"].SetPointEXlow(bin,0)
+		  
+		  self.data["hist"].Draw(" E0 P same")
+	    else: self.data["hist"].Draw("X0 E0 p same")
 
         self.legend.SetFillStyle(0)
         self.legend.SetShadowColor(ROOT.kWhite)
@@ -534,7 +556,7 @@ class Plotter:
 		else:
 		    ratio_data = self.getPostFitDataRatio(self.data["hist"], self.postFitUnc)
 		    self.setRatioDrawOptions(ratio_data)
-		    ratio_data.Draw("X0 E1 P SAME")
+		    ratio_data.Draw(" E0 P SAME")
             ROOT.gPad.RedrawAxis()
 
 	#Draw Comparison Plots
