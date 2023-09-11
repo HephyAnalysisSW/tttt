@@ -1,6 +1,12 @@
-#!/bin/bash
+#!/bin/bash -x
+#SBATCH -D /users/cristina.giordano/tttt/CMSSW_10_6_28/src/tttt/analysis/systematics/dataCards/
+#SBATCH --job-name=combine
+#SBATCH --output=combine-%j.log
+#SBATCH --time="08:00:00"
+#SBATCH --mem=20GB
+
+
 #How to run Combine commands without going crazy :)
-# substitute "echo" with "submit" OR "eval" once the files are there!
 
 declare -A regions=(['njet4to5_btag3p']='njet4to5-btag3p' ['njet4to5_btag2']='njet4to5-btag2' ['njet4to5_btag1']='njet4to5-btag1'
                     ['njet6to7_btag2']='njet6to7-btag2' ['njet6to7_btag1']='njet6to7-btag1'
@@ -9,17 +15,17 @@ declare -A variables=(['mva']='2l_4t' ['nJetGood']='nJetGood' ['nBTag']='nBTag' 
 declare -A masking=(['nJetGood']='nJetGood' ['nBTag']='nBTag' ['ht']='ht')
 
 unite=false
-asimov=false
+impact=false
 postfit=false
 multi=false
 
-while getopts "uapm" opt; do
+while getopts "uipm" opt; do
   case $opt in
     u)
       unite=true
       ;;
-    a)
-      asimov=true
+    i)
+      impact=true
       ;;
     p)
       postfit=true
@@ -34,6 +40,7 @@ while getopts "uapm" opt; do
   esac
 done
 
+# customizing of parser in single command
 if $unite;then
   echo "Executing Unite."
   theEndlessScroll="combineCards.py "
@@ -43,19 +50,16 @@ if $unite;then
     done
   done
   theEndlessScroll+=">& CRs_combined.txt"
-  echo "$theEndlessScroll"
+  eval "$theEndlessScroll"
   wait
-  echo "text2workspace.py CRs_combined.txt --channel-masks"
+  submit "text2workspace.py CRs_combined.txt --channel-masks"
   wait
-elif $asimov; then
-  echo "Executing Asimov. Second Impact"
-  echo "python combineTool.py -M Impacts -d CRs_combined.root -m 125 -t -1 --doInitialFit --robustFit 1 --expectSignal=1  --freezeNuisanceGroups=theory"
-  wait
-  echo "python combineTool.py -M Impacts -d CRs_combined.root -m 125 -t -1 --doFits --robustFit 1 --expectSignal=1   --freezeNuisanceGroups=theory --parallel 10"
-  wait
-  echo "python combineTool.py -M Impacts -d CRs_combined.root -m 125 -o impacts_CRs_combined.json"
-  wait
-  echo "python ../plotImpacts.py -i impacts_CRs_combined.json -o impacts_CRs_combined"
+elif $impact; then
+  echo "Executing (Second) Impact"
+  python combineTool.py -M Impacts -d CRs_combined.root -m 125 -t -1 --doInitialFit --robustFit 1 --expectSignal=1  --freezeNuisanceGroups=theory
+  python combineTool.py -M Impacts -d CRs_combined.root -m 125 -t -1 --doFits --robustFit 1 --expectSignal=1   --freezeNuisanceGroups=theory --parallel 10
+  python combineTool.py -M Impacts -d CRs_combined.root -m 125 -o impacts_CRs_combined.json
+  python ../plotImpacts.py -i impacts_CRs_combined.json -o impacts_CRs_combined
 elif $postfit; then
   echo "Executing Postfit."
   neverendingStory="combine CRs_combined.root -M FitDiagnostics --saveShapes --saveWithUnc  -1 -n .postFit_combined --setParameterRange r=-19,20 --expectSignal=1 --plots --freezeNuisanceGroups=theory --ignoreCovWarning --setParameters "
@@ -67,9 +71,8 @@ elif $postfit; then
   length=${#neverendingStory}
   lastHurra="${neverendingStory:0:length-1}"
   lastHurra+=" -t -1"
-  echo "$lastHurra"
-  wait
-  echo "python postFitPlotter.py --inputFile dataCards/fitDiagnostics.postFit_combined.root --backgroundOnly"
+  $lastHurra
+  python postFitPlotter.py --inputFile dataCards/fitDiagnostics.postFit_combined.root --backgroundOnly
 
 elif $impact; then
   echo "Executing Multi."
@@ -82,9 +85,8 @@ elif $impact; then
   length=${#neverendingStory}
   lastHurra="${neverendingStory:0:length-1}"
   lastHurra+=" -t -1"
-  echo "$lastHurra"
-  wait
-  echo "python ../plot1Dscan.py higgsCombine.combinedFit.MultiDimFit.mH120.root  --selection CRs --output -o CRs_combined"
+  $lastHurra
+  python ../plot1Dscan.py higgsCombine.combinedFit.MultiDimFit.mH120.root  --selection CRs --output -o CRs_combined
 else
   echo "Any other business"
 fi
