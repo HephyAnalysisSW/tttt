@@ -38,7 +38,10 @@ for filename in args.files:
 
     for t in names:
         h = helpers.getObjFromFile( filename, t)
-        h.Rebin(args.rebin)
+        try:
+            h.Rebin(args.rebin)
+        except AssertionError:
+            continue
         helpers.writeObjToFile( outfile, h, update=True)
 
     logger.info ("Done with file %s", outfile)
