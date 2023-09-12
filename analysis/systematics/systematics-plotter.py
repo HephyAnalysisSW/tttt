@@ -19,7 +19,7 @@ logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 
-hist_dir = os.path.join(plot_directory, 'analysisPlots', "4t-v10-syst", 'RunII', "all", args.selection)#args.plot_directory, 'RunII', "all", args.selection)
+hist_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'RunII', "all", args.selection)
 if args.small: 
   #hist_dir += "_small"
   args.plot_directory += "_small"
@@ -151,6 +151,13 @@ plots = [{"name" : "nJetGood" ,     "texX": "N_{Jet}", "texY" : 'Number of Event
 	 {"name" : "2l_ttbb",	    "texX" : "tttt_2l_TTLep_bb", "texY" : "Number of Events"},
 	 {"name" : "2l_ttcc",  	    "texX" : "tttt_2l_TTLep_cc", "texY" : "Number of Events"},
 	 {"name" : "2l_ttlight",    "texX" : "tttt_2l_TTLep_other", "texY" : "Number of Events"},
+	 {"name" : "nJetGood_pt30" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
+	 {"name" : "nJetGood_pt40" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
+	 {"name" : "nJetGood_pt50" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
+	 {"name" : "nJetGood_pt80" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
+	 {"name" : "nJetGood_pt100" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
+	 {"name" : "nJetGood_pt150" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
+	 {"name" : "nJetGood_pt200" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
 	 {"name" : "2l_4t_course", 	    "texX" : "tttt_2l_TTTT", "texY" : "Number of Events"},
 	 {"name" : "2l_ttbb_course",	    "texX" : "tttt_2l_TTLep_bb", "texY" : "Number of Events"},
 	 {"name" : "2l_ttcc_course",  	    "texX" : "tttt_2l_TTLep_cc", "texY" : "Number of Events"},
@@ -170,7 +177,7 @@ plots = [{"name" : "nJetGood" ,     "texX": "N_{Jet}", "texY" : 'Number of Event
 for j, plot in enumerate(plots):
     plotter = Plotter(plot["name"])
     for sample in mc:
-        hist = nominalSample.Get(plot["name"]+"__"+sample["name"])
+	hist = nominalSample.Get(plot["name"]+"__"+sample["name"])
         plotter.addSample(sample["name"], hist, sample["legendText"])
 
         for i, syst in enumerate(systematics):

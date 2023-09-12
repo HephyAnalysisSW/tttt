@@ -13,7 +13,7 @@ argParser.add_argument('--config',             action='store', type=str,   defau
 argParser.add_argument('--name',               action='store', type=str,   default='default', help="Name of the training")
 argParser.add_argument('--variable_set',       action='store', type=str,   default='mva_variables', help="List of variables for training")
 argParser.add_argument('--output_directory',   action='store', type=str,   default='/groups/hephy/cms/$USER/www/tttt/plots')
-argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/user/cms/$USER/tttt/training-ntuples-tttt/MVA-training") )
+argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/user/cms/$USER/tttt_2l/training-ntuples-tttt/MVA-training") )
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--add_LSTM',           action='store_true', help="add LSTM?")
 argParser.add_argument('--selectionString',    action='store', type=str,   default='dilepVL-offZ1-njet4p-btag3p')
@@ -55,6 +55,8 @@ np.random.seed(1)
 mva_variables = [ mva_variable[0] for mva_variable in getattr(config, args.variable_set) ]
 
 n_var_flat   = len(mva_variables)
+n_var_flat_1 = n_var_flat*2
+n_var_flat_2 = n_var_flat+5
 
 df_file = {}
 for i_training_sample, training_sample in enumerate(config.training_samples):
@@ -87,6 +89,7 @@ Y = dataset[:, n_var_flat]
 from sklearn.preprocessing import label_binarize
 classes = range(len(config.training_samples))
 Y = label_binarize(Y, classes=classes)
+print(Y)
 
 # loading vector branches for LSTM
 if args.add_LSTM:
@@ -123,6 +126,7 @@ if args.add_LSTM:
 else:
     X_train, X_test, Y_train, Y_test                  = train_test_split(X, Y, **options)
     validation_data = ( X_test,  Y_test)
+    print(Y_test)
     training_data   =   X_train
 
 #########################################################################################
@@ -160,8 +164,7 @@ if args.add_LSTM:
 outputs = Dense(len(config.training_samples), kernel_initializer='normal', activation='sigmoid')(x)
 model = Model( inputs, outputs )
 
-#model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_percentage_error'])
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 model.summary()
 
 # define callback for early stopping
@@ -181,25 +184,73 @@ history = model.fit(training_data,
                     #validation_split=0.1
                     validation_data = validation_data,
                    )
+
+loss_values = history.history['loss']
+other_loss_values = history.history['val_loss']
 print('training finished')
 
 # saving
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 
-output_file = os.path.join(output_directory, 'regression_model.h5')
+output_file = os.path.join(output_directory, 'regression_model_96_53.h5')
+#output_file = os.path.join(output_directory, 'model_.h5')
 model.save(output_file)
 logger.info("Written model to: %s", output_file)
 
+
+
+
 #plot roc curves
 import matplotlib.pyplot as plt
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, roc_auc_score
 
+
+# loss function plot
+plt.plot(range(1,  101), loss_values, label='Training Loss')
+plt.plot(range(1,  101), other_loss_values, label='Test Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.title('Training Loss over Epochs')
+plt.legend()
+plt.savefig(plot_directory+'training_loss.png')
 #Y_predict = model.predict(X_test)
 if args.add_LSTM:
    Y_predict = model.predict( [X_test,  V_test] )
 else:
     Y_predict = model.predict(X_test)
+    print("HELOOOOOOOOO")
+    print(Y_predict)
+
+auc_scores = []
+feature_auc_scores = {}
+
+
+#importance plot
+X_test_original = X_test.copy()
+for i_feature in range(X_test.shape[1]):
+    feature_vals = X_test[:, i_feature].copy()
+    np.random.shuffle(feature_vals)
+    X_test[:, i_feature] = feature_vals
+    Y_predict = model.predict(X_test)
+    auc_score = roc_auc_score(Y_test, Y_predict)
+    auc_scores.append(auc_score)
+    feature_names = mva_variables[i_feature]
+    feature_auc_scores[feature_names] = auc_score
+    print("Feature {}".format(i_feature) + " shuffled, AUC score {}".format(auc_score))
+    # reset to origin
+    X_test[:, i_feature] = X_test_original[:, i_feature]
+
+
+plt.figure(figsize=(10, 6))
+plt.bar(range(len(feature_auc_scores)), list(feature_auc_scores.values()), tick_label=list(feature_auc_scores.keys()))
+plt.xticks(rotation=45, ha='right')
+plt.xlabel('Features')
+plt.ylabel('AUC score')
+plt.title('Feature Importance')
+plt.tight_layout()
+plt.savefig(plot_directory+"feature_importance.png")
+plt.savefig(plot_directory+"feature_importance.pdf")
 
 fpr = dict()
 tpr = dict()

@@ -12,7 +12,7 @@ directory = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, '
 # Open the output file and create a TDirectoryFile
 outFile = ROOT.TFile(os.path.join(directory,"tttt__systematics.root"), "RECREATE")
 #make a list of possible discriminating variables
-theYounglings = ["nJetGood","2l_4t","2l_4t_coarse"]
+theYounglings = ["2l_4t","2l_4t_coarse","ht","nJetGood","nBTag"]
 
 # Possible Syst variations
 variations = ['LeptonSFUp', 
@@ -55,51 +55,40 @@ PSWeights = ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]
 
 variations +=  scaleWeights + PSWeights + PDFWeights
 
+samples = [ "TTLep_bb", "TTLep_cc", "TTLep_other", "ST_tch", "ST_twch", "TTW", "TTH", "TTZ", "TTTT", "DY_inclusive", "DiBoson", "data"]
+
+
 for theChosenOne in theYounglings :
-	category = outFile.mkdir("tttt__"+theChosenOne)
-	
+    category = outFile.mkdir("tttt__"+theChosenOne)
+    for sample in samples :
+	objName = theChosenOne+"__"+sample
 	for variation in variations:
 	    inFile = ROOT.TFile(os.path.join(directory,"tttt_"+variation+".root"), "READ")
 	    for key in inFile.GetListOfKeys():
-	      if theChosenOne in key.GetName() and variation not in key.GetName():
-	        obj = key.ReadObj()
+	      if objName == key.GetName():
+		obj = key.ReadObj()
 	        category.cd()
 	        clonedHist = obj.Clone()
 	        histname = clonedHist.GetName()
-		if "TTLep_bb" in histname: process = "TTLep_bb"
-	        elif "TTLep_cc" in histname: process = "TTLep_cc"
-	        elif "TTLep_other" in histname: process = "TTLep_other"
-	        #elif "ST" in histname: process = "ST"
-		elif "ST_tch" in histname: process = "ST_tch"
-		elif "ST_twch" in histname: process = "ST_twch"
-		elif "TTTT" in histname : process = "TTTT"
-	        elif "TTW" in histname: process = "TTW"
-	        elif "TTZ" in histname: process = "TTZ"
-	        elif "TTH" in histname: process = "TTH"
-		elif "DY" in histname: process = "DY"
-		elif "DiBoson" in histname: process = "DiBoson"
-		#if "data" not in clonedHist.GetTitle(): 
-		if ("coarse" not in histname and theChosenOne=="2l_4t") or not theChosenOne=="2l_4t":
-		    if "data" not in clonedHist.GetTitle():
-			if variation == "central":
-				clonedHist.Write(process)
-				clonedHist.Write(process+"__noTopPtReweightDown")
-				for i in range(1,nPDFs):
-					clonedHist.Write(process+"__PDF_%sDown"%i)
-			elif variation == "ScaleDownDown" :
-				clonedHist.Write(process+"__scaleDown")
-			elif variation == "ScaleUpUp" :
-				clonedHist.Write(process+"__scaleUp")
-			elif variation == "noTopPtReweight" :
-				clonedHist.Write(process+"__noTopPtReweightUp")
-			elif "PDF" in variation :
-				clonedHist.Write(process+"__"+variation+"Up")
-			else:
-	        		clonedHist.Write(process+"__"+variation)
-	#	elif  "coarse"  in clonedHist.GetTitle(): print "course"
-		    if "data" in histname: 
+		if "data" in histname: 
 			clonedHist.Write("data_obs")
 			print "found data", theChosenOne,clonedHist.GetTitle()
+		else:
+			if variation == "central":
+				clonedHist.Write(sample)
+				clonedHist.Write(sample+"__noTopPtReweightDown")
+				for i in range(1,nPDFs):
+					clonedHist.Write(sample+"__PDF_%sDown"%i)
+			elif variation == "ScaleDownDown" :
+				clonedHist.Write(sample+"__scaleDown")
+			elif variation == "ScaleUpUp" :
+				clonedHist.Write(sample+"__scaleUp")
+			elif variation == "noTopPtReweight" :
+				clonedHist.Write(sample+"__noTopPtReweightUp")
+			elif "PDF" in variation :
+				clonedHist.Write(sample+"__"+variation+"Up")
+			else:
+	        		clonedHist.Write(sample+"__"+variation)
 		
 	    inFile.Close()
 	

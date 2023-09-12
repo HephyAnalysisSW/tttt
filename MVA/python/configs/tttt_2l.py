@@ -2,10 +2,11 @@
 
 #Standard imports
 from operator                   import attrgetter
-from math                       import pi, sqrt, cosh, cos, acos
+from math                       import pi, sqrt, cosh, cos, acos, sin
 import ROOT, os
 import copy
 import itertools
+import numpy as np
 
 #From RootTools
 from RootTools.core.standard     import *
@@ -26,7 +27,7 @@ jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCv
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 
 lstm_jets_maxN   = 10
-lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'puId/F', 'qgl/F']
+lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'puId/F', 'qgl/F', 'mass/F']
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
@@ -62,6 +63,7 @@ from tttt.Tools.objectSelection import isBJet
 def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+    event.bJets_medium = filter(lambda j:isBJet(j, WP="medium",year=event.year) and abs(j['eta'])<=2.4    , event.jets)
     event.nonbJets = []
     for b in event.jets:
         if b not in event.bJets:
@@ -69,20 +71,64 @@ def make_jets( event, sample ):
 
     # store all btag flavors in a list
     event.btagDeepFlavB_scores = sorted([jet['btagDeepFlavB'] for jet in event.jets], reverse=True)
-
-    # minDR of all btag combinations
+    event.sortedBJets = sorted(event.bJets, key=lambda x: x['btagDeepFlavB'], reverse=True)
+    if len(event.sortedBJets)>=2:
+        event.dR_bb = deltaR(event.sortedBJets[0], event.sortedBJets[1])
+    else:
+        event.dR_bb = -1
     if len(event.bJets)>=2:
         event.min_dR_bb = min( [deltaR( comb[0], comb[1] ) for comb in itertools.combinations( event.bJets, 2)] )
     else:
         event.min_dR_bb = -1
 
-
 sequence.append( make_jets )
+
+def sphericity(event, sample):
+    event.px, event.py, event.pz = [j['pt']*cos(j['phi']) for j in event.jets], [j['pt']*sin(j['phi']) for j in event.jets], [j['pt']*cosh(j['eta']) for j in event.jets]
+    event.psquared = [((x**2)+(y**2)+(z**2)) for x,y,z in zip(event.px, event.py, event.pz)]
+    p2sum, sqrtp2sum = sum(event.psquared), sqrt(sum(event.psquared))
+
+    msum, msum_lin = np.zeros((3,3)), np.zeros((3,3))
+    msum = np.zeros((3,3))
+
+    x, y, z = np.array(event.px), np.array(event.py), np.array(event.pz)
+    for i in range(3):
+        for j in range(3):
+            if i == 0:
+                if j == 0:
+                    msum[i,j] = np.sum(x**2)/p2sum
+                    msum_lin[i,j] = np.sum(x**2)/sqrtp2sum
+                else:
+                    msum[i,j] = np.sum(x*y)/p2sum
+                    msum_lin[i,j] = np.sum(x*y)/sqrtp2sum
+            else:
+                if j == 0:
+                    msum[i,j] = np.sum(y*x)/p2sum
+                    msum_lin[i,j] = np.sum(y*x)/sqrtp2sum
+                else:
+                    msum[i,j] = np.sum(y**2)/p2sum if i == 1 else np.sum(z**2)/p2sum
+                    msum_lin[i,j] = np.sum(y**2)/sqrtp2sum if i == 1 else np.sum(z**2)/sqrtp2sum
+
+    event.ev = np.linalg.eigvals(msum)
+    event.ev_lin = np.linalg.eigvals(msum_lin)
+
+    event.s = (3*(event.ev[1]+event.ev[2]))/2
+    event.s_lin = (3*(event.ev_lin[1]+event.ev_lin[2]))/2
+    #print(ev, ev_lin)
+
+sequence.append(sphericity)
+
+def jet_energy( event, sample):
+    #to be redone with the correct energy --> see cal activity?
+    event.tmpJets = [getObjDict(event, 'Jet_', lstm_jetVarNames, i) for i in range(int(event.nJetGood))]
+    event.jetEnergy = [(jet['pt']* cosh(jet['eta'])) for jet in event.tmpJets]
+
+sequence.append( jet_energy )
 
 def make_leptons(event, sample):
     event.leptons   = [getObjDict(event, 'lep_', lepVarNames, i) for i in range(int(event.nlep))]
 
-     #(Second) smallest dR between any lepton and medium b-tagged jet
+    #(Second) smallest dR between any lepton and medium b-tagged jet
     dR_vals = sorted([deltaR(event.bJets[i], event.leptons[j]) for i in range(len(event.bJets)) for j in range(len(event.leptons))])
     if len(dR_vals)>=2:
         event.dR_min0 = dR_vals[0]
@@ -145,7 +191,10 @@ all_mva_variables = {
 
      "mva_ht"                    :(lambda event, sample: sum( [j['pt'] for j in event.jets] ) ),
      "mva_htb"                   :(lambda event, sample: sum( [j['pt'] for j in event.bJets] ) ),
+     # "mva_htb_medium"            :(lambda event, sample: sum([j['pt'] for j in event.bJets_medium ]) ),
      "mva_ht_ratio"              :(lambda event, sample: sum( [j['pt'] for j in event.jets[:4]])/ sum( [j['pt'] for j in event.jets ]) if event.nJetGood>=4 else 1 ),
+     # "mva_ht2m"                  :(lambda event, sample: sum( [j['pt'] for j in event.jets[2:]])),
+     # "mva_centrality"            :(lambda event, sample: sum( [j['pt'] for j in event.jets] )/ sum(event.jetEnergy) if event.nJetGood>=1 else 1),
 
      "mva_jet0_pt"               :(lambda event, sample: event.JetGood_pt[0]          if event.nJetGood >=1 else 0),
      "mva_jet0_eta"              :(lambda event, sample: event.JetGood_eta[0]         if event.nJetGood >=1 else -10),
@@ -163,8 +212,6 @@ all_mva_variables = {
      "mva_jet6_pt"               :(lambda event, sample: event.JetGood_pt[6]          if event.nJetGood >=7 else 0),
      "mva_jet7_pt"               :(lambda event, sample: event.JetGood_pt[7]          if event.nJetGood >=8 else 0),
 
-    # there is no other way to obtain a jet counting observale than to actually count the jets. "nJetGood" will always refer to the jet collection it was computed with.
-    # the working points are already implemented in isBJet
      "mva_nBTagJetL"             :(lambda event, sample: len(filter( lambda j:isBJet(j, WP="loose"),  event.jets ))),
      "mva_nBTagJetM"             :(lambda event, sample: len(filter( lambda j:isBJet(j, WP="medium"), event.jets ))),
      "mva_nBTagJetT"             :(lambda event, sample: len(filter( lambda j:isBJet(j, WP="tight"),  event.jets ))),
@@ -172,6 +219,7 @@ all_mva_variables = {
      "mva_dR_min1"               :(lambda event, sample: event.dR_min1),
      #Smallest dR between two b-tagged jets
      "mva_min_dR_bb"             :(lambda event, sample: event.min_dR_bb),
+     # "mva_dR_best_bb"            :(lambda event, sample: event.dR_bb),
      #dR between leading/subleading lepton
      "mva_dR_2l"                 :(lambda event, sample: sqrt(deltaPhi(event.l1_phi, event.l2_phi)**2 + (event.l1_eta - event.l2_eta)**2)),
      #Highest mass to pT ratio of any selected jet
@@ -184,6 +232,10 @@ all_mva_variables = {
      "mva_bTagScore_max1"        :(lambda event, sample: event.btagDeepFlavB_scores[1] if len(event.btagDeepFlavB_scores)>1 else -1),
      "mva_bTagScore_max2"        :(lambda event, sample: event.btagDeepFlavB_scores[2] if len(event.btagDeepFlavB_scores)>2 else -1),
      "mva_bTagScore_max3"        :(lambda event, sample: event.btagDeepFlavB_scores[3] if len(event.btagDeepFlavB_scores)>3 else -1),
+
+     # "mva_sphericity"            :(lambda event, sample: event.s if event.nJetGood>=2 and [i>0 for i in event.ev] else 141),
+     # "mva_sphericity_lin"        :(lambda event, sample: event.s_lin if event.nJetGood>=2 and [i>0 for i in event.ev] else 141 )
+
 }
 
 def lstm_jets(event, sample):
