@@ -43,7 +43,7 @@ for filename in args.files:
         h = helpers.getObjFromFile( filename, t)
         try:
             h.Rebin(args.rebin)
-        except AssertionError:
+        except AttributeError:
             continue
         helpers.writeObjToFile( outfile, h, update=True)
 
