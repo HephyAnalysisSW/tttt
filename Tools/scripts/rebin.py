@@ -36,6 +36,9 @@ for filename in args.files:
 
     outfile = os.path.join( outdir, os.path.basename( filename ))
 
+    if not os.path.exists(outdir):
+        os.makedirs( outdir )
+
     for t in names:
         h = helpers.getObjFromFile( filename, t)
         try:
