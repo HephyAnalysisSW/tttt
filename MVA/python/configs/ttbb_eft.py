@@ -198,7 +198,8 @@ mva_vector_variables    =   {
 }
 
 ## Using all variables
-mva_variables_ = all_mva_variables.keys()
+#mva_variables_ = all_mva_variables.keys()
+mva_variables_ = ["mva_ht", "mva_htb", "mva_nJetGood", "mva_nBTagJetM"] 
 mva_variables_.sort()
 mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() if key in mva_variables_ ]
 

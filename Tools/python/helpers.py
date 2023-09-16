@@ -338,3 +338,28 @@ def cosThetaStarTop(l, W, t):
     W_newSys.Boost(-boostvectortop)
     costhetastar = cos( lepton_newSys.Angle(W_newSys.Vect()) )
     return costhetastar
+
+def make_TH1F( h, ignore_binning = False):
+    # remove infs from thresholds
+    vals, thrs = h
+    if ignore_binning:
+        histo = ROOT.TH1F("h","h",len(vals),0,len(vals))
+    else:
+        histo = ROOT.TH1F("h","h",len(thrs)-1,array('d', thrs))
+    for i_v, v in enumerate(vals):
+        if v<float('inf'): # NAN protection
+            histo.SetBinContent(i_v+1, v)
+    return histo
+
+def make_TH2F( h, ignore_binning = False):
+    # remove infs from thresholds
+    vals, thrs_x, thrs_y = h
+    if ignore_binning:
+        histo = ROOT.TH2F("h","h",len(vals[0]),0,len(vals[0]),len(vals),0,len(vals))
+    else:
+        histo = ROOT.TH2F("h","h",len(thrs_x)-1,array('d', thrs_x),len(thrs_y)-1,array('d', thrs_y))
+    for iy, _ in enumerate(vals):
+        for ix, v in enumerate(vals[iy]):
+            if v<float('inf'): # NAN protection
+                histo.SetBinContent(histo.FindBin(thrs_x[ix], thrs_y[iy]), v)
+    return histo

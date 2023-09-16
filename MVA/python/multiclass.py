@@ -16,6 +16,7 @@ argParser.add_argument('--output_directory',   action='store', type=str,   defau
 argParser.add_argument('--input_directory',    action='store', type=str,   default=os.path.expandvars("/eos/vbc/group/cms/$USER/tttt/training-ntuples-tttt-v3/MVA-training/") )
 argParser.add_argument('--small',              action='store_true', help="small?")
 argParser.add_argument('--add_LSTM',           action='store_true', help="add LSTM?")
+argParser.add_argument('--activation',         action='store', default='sigmoid', help="add LSTM?")
 
 args = argParser.parse_args()
 
@@ -152,18 +153,17 @@ if args.add_LSTM:
     x = Concatenate()( [x, v])
     inputs = ( flat_inputs, vec_inputs)
 
-outputs = Dense(len(config.training_samples), kernel_initializer='normal', activation='sigmoid')(x)
+outputs = Dense(len(config.training_samples), kernel_initializer='normal', activation=args.activation)(x)
 model = Model( inputs, outputs )
 
-#model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_percentage_error'])
+model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+#model.compile(optimizer='adam', loss='mean_squared_error', metrics=['mean_absolute_percentage_error'])
 model.summary()
 
 # define callback for early stopping
 import tensorflow as tf
 callback = tf.keras.callbacks.EarlyStopping(monitor='loss', patience=3) # patience can be higher if a more accurate result is preferred
                                                                         # I would recommmend at least 3, otherwise it might cancel too early
-
 # train the model
 batch_size = 1024*6
 history = model.fit(training_data,
