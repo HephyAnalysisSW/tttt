@@ -50,7 +50,7 @@ variations = ['LeptonSFUp',
               ]
 nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
-scaleWeights = ["ScaleDownDown","ScaleUpUp"]#, "ScaleDownNone", "ScaleNoneDown", "ScaleNoneUp", "ScaleUpNone"
+scaleWeights = ["scaleShapeDown","scaleShapeUp"]#, "ScaleDownNone", "ScaleNoneDown", "ScaleNoneUp", "ScaleUpNone"
 PSWeights = ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]
 
 variations +=  scaleWeights + PSWeights + PDFWeights
@@ -58,6 +58,39 @@ variations +=  scaleWeights + PSWeights + PDFWeights
 samples = [ "TTLep_bb", "TTLep_cc", "TTLep_other", "ST_tch", "ST_twch", "TTW", "TTH", "TTZ", "TTTT", "DY_inclusive", "DiBoson", "data"]
 
 
+#separate the shape and normalization in scale unc.
+for look in ["ScaleDownDown","ScaleUpUp"]:
+    print "Currently rescaling "+ look
+
+    # Output files
+    if look is "ScaleUpUp": newName = "scaleShapeUp"
+    elif look is "ScaleDownDown" : newName = "scaleShapeDown"
+    modified_scale = ROOT.TFile(os.path.join(directory, "tttt_"+newName+".root"), "RECREATE")
+    ratio = open(os.path.join(directory, "scale_ratios_"+newName+".txt"), "w")
+
+    #input files
+    scalefile = ROOT.TFile(os.path.join(directory,"tttt_"+look+".root"), "READ")
+    centralfile = ROOT.TFile(os.path.join(directory,"tttt_central.root"), "READ")
+    
+    #rescale the histograms and write to new file
+    for hKey in scalefile.GetListOfKeys():
+    	SMhKey = centralfile.GetKey(hKey.GetName())
+    	h = hKey.ReadObj()
+    	SMh = SMhKey.ReadObj()
+    	if not h.Integral()==0:
+    	  modified_scale.cd()
+    	  scale_factor = SMh.Integral()/h.Integral() 
+    	  if hKey.GetName().startswith("ht_"):
+    	  	ratio.write(h.GetName()+": "+str(scale_factor)+"\n")
+    	  h.Scale(scale_factor)
+    	  h.Write(hKey.GetName())
+    
+    centralfile.Close()
+    scalefile.Close()
+    modified_scale.Close()
+    ratio.close()
+
+#Create the root file combine desires
 for theChosenOne in theYounglings :
     category = outFile.mkdir("tttt__"+theChosenOne)
     for sample in samples :
@@ -79,10 +112,6 @@ for theChosenOne in theYounglings :
 				clonedHist.Write(sample+"__noTopPtReweightDown")
 				for i in range(1,nPDFs):
 					clonedHist.Write(sample+"__PDF_%sDown"%i)
-			elif variation == "ScaleDownDown" :
-				clonedHist.Write(sample+"__scaleDown")
-			elif variation == "ScaleUpUp" :
-				clonedHist.Write(sample+"__scaleUp")
 			elif variation == "noTopPtReweight" :
 				clonedHist.Write(sample+"__noTopPtReweightUp")
 			elif "PDF" in variation :

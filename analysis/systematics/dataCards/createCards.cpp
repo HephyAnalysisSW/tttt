@@ -24,14 +24,14 @@
 using namespace std;
 
 int main() {
-vector<string> regions = {"njet4to5-btag3p","njet6to7-btag3p","njet8p-btag3p","njet4to5-btag2","njet6to7-btag2","njet8p-btag2"};
-vector<string> theYounglings = {"nJetGood","2l_4t","2l_4t_coarse"};
+vector<string> regions = {"njet4to5-btag3p","njet6to7-btag3p","njet8p-btag3p","njet4to5-btag2","njet6to7-btag2","njet8p-btag2","njet4to5-btag1","njet6to7-btag1","njet8p-btag1"};//, "njet4p-btag2p","njet6p-btag2p"};
+vector<string> theYounglings = {"nJetGood","2l_4t","2l_4t_coarse","nBTag","ht"};
 vector<string> EXPgroup = {	"LeptonSF","PU","L1Prefire","jesTotal","BTagSFHf","BTagSFLf","BTagSFHfs1","BTagSFLfs1","BTagSFHfs2","BTagSFLfs2","BTagSFCfe1","BTagSFCfe2",
 				//"Trigger",
 				"noTopPtReweight",
 				};
 
-vector<string>  THgroup = {"HDamp","ISR", "FSR","scale"}; 
+vector<string>  THgroup = {"HDamp","ISR", "FSR","scaleShape"}; 
 int nPDFs = 100;
 std::vector<std::string> PDFWeights;
 for (int i = 1; i <= nPDFs; ++i) { PDFWeights.push_back("PDF_" + std::to_string(i));}
@@ -40,6 +40,29 @@ THgroup.insert(THgroup.end(), PDFWeights.begin(), PDFWeights.end());
 std::vector<const std::string*> variations;
 for (const std::string& THvariation : THgroup) { variations.push_back(&THvariation);}
 for (const std::string& EXPvariation : EXPgroup) { variations.push_back(&EXPvariation);}
+
+// Define a map to store scale unc. normalization factors
+std::map<std::string, std::map<std::string, double>> scale_factors_Up;
+scale_factors_Up["njet4to5-btag1"]	 = {{"ttbb", 0.72}, {"ttcc", 0.89}, {"ttother", 0.90},{"tttt",0.98},{"DY_inclusive",1.0}};
+scale_factors_Up["njet4to5-btag2"]	 = {{"ttbb", 0.75}, {"ttcc", 0.90}, {"ttother", 0.91},{"tttt",0.99},{"DY_inclusive",1.0}};
+scale_factors_Up["njet4to5-btag3p"]	 = {{"ttbb", 0.84}, {"ttcc", 0.90}, {"ttother", 0.90},{"tttt",0.99},{"DY_inclusive",1.0}};
+scale_factors_Up["njet6to7-btag1"]	 = {{"ttbb", 0.70}, {"ttcc", 0.90}, {"ttother", 0.90},{"tttt",1.02},{"DY_inclusive",1.0}};
+scale_factors_Up["njet6to7-btag2"]	 = {{"ttbb", 0.72}, {"ttcc", 0.90}, {"ttother", 0.91},{"tttt",0.99},{"DY_inclusive",1.0}};
+scale_factors_Up["njet6to7-btag3p"]	 = {{"ttbb", 1.0}, {"ttcc", 1.0}, {"ttother", 1.0},{"tttt",1.0},{"DY_inclusive",1.0}};
+scale_factors_Up["njet8p-btag1"]	 = {{"ttbb", 0.68}, {"ttcc", 0.90}, {"ttother", 0.90},{"tttt",1.03},{"DY_inclusive",1.0}};
+scale_factors_Up["njet8p-btag2"]	 = {{"ttbb", 0.72}, {"ttcc", 0.90}, {"ttother", 0.90},{"tttt",1.04},{"DY_inclusive",1.0}};
+scale_factors_Up["njet8p-btag3p"]	 = {{"ttbb", 1.0}, {"ttcc", 1.0}, {"ttother", 1.0},{"tttt",1.0},{"DY_inclusive",1.0}};
+
+std::map<std::string, std::map<std::string, double>> scale_factors_Down;
+scale_factors_Down["njet4to5-btag1"]	 = {{"ttbb", 1.75}, {"ttcc", 1.17}, {"ttother", 1.16},{"tttt",1.04},{"DY_inclusive",1.0}};
+scale_factors_Down["njet4to5-btag2"]	 = {{"ttbb", 1.66}, {"ttcc", 1.14}, {"ttother", 1.13},{"tttt",1.02},{"DY_inclusive",1.0}};
+scale_factors_Down["njet4to5-btag3p"]	 = {{"ttbb", 1.47}, {"ttcc", 1.14}, {"ttother", 1.14},{"tttt",1.03},{"DY_inclusive",1.0}};
+scale_factors_Down["njet6to7-btag1"]	 = {{"ttbb", 1.78}, {"ttcc", 1.16}, {"ttother", 1.14},{"tttt",0.98},{"DY_inclusive",1.0}};
+scale_factors_Down["njet6to7-btag2"]	 = {{"ttbb", 1.75}, {"ttcc", 1.14}, {"ttother", 1.13},{"tttt",1.01},{"DY_inclusive",1.0}};
+scale_factors_Down["njet6to7-btag3p"]	 = {{"ttbb", 1.0}, {"ttcc", 1.0}, {"ttother", 1.0},{"tttt",1.0},{"DY_inclusive",1.0}};
+scale_factors_Down["njet8p-btag1"]	 = {{"ttbb", 1.85}, {"ttcc", 1.17}, {"ttother", 1.16},{"tttt",0.95},{"DY_inclusive",1.0}};
+scale_factors_Down["njet8p-btag2"]	 = {{"ttbb", 1.72}, {"ttcc", 1.14}, {"ttother", 1.14},{"tttt",0.94},{"DY_inclusive",1.0}};
+scale_factors_Down["njet8p-btag3p"]	 = {{"ttbb", 1.0}, {"ttcc", 1.0}, {"ttother", 1.0},{"tttt",1.0},{"DY_inclusive",1.0}};
 
 for (auto selection:regions){
    for (auto theChosenOne:theYounglings){
@@ -57,7 +80,7 @@ for (auto selection:regions){
    	// ch::Categories is just a typedef of vector<pair<int, string>>
    	
    	//bkg_procs
-   	vector<string> bkg_procs = {"TTLep_bb","TTLep_cc","TTLep_other","ST_tch","ST_twch","TTW","TTZ","TTH","DY","DiBoson"};
+   	vector<string> bkg_procs = {"TTLep_bb","TTLep_cc","TTLep_other","ST_tch","ST_twch","TTW","TTZ","TTH","DY_inclusive","DiBoson"};
    	//signal
    	vector<string>  sig_procs = {"TTTT"}; 
    	
@@ -99,12 +122,29 @@ for (auto selection:regions){
    
     	cb.cp().process({"TTH"})
    	.AddSyst(cb, "ttH_rate", "lnN", SystMap<>::init(1.08));
+
+	//scale unc. normalization factor
+	std::map<std::string, double>& factor_Up = scale_factors_Up[selection];
+	cb.cp().process({"TTLep_bb"}).AddSyst(cb, "scale_normalization_Up_"+selection, "lnN", SystMap<>::init(factor_Up["ttbb"]));
+	cb.cp().process({"TTLep_cc"}).AddSyst(cb, "scale_normalization_Up_"+selection, "lnN", SystMap<>::init(factor_Up["ttcc"]));
+	cb.cp().process({"TTLep_other"}).AddSyst(cb, "scale_normalization_Up_"+selection, "lnN", SystMap<>::init(factor_Up["ttother"]));
+	cb.cp().process({"TTTT"}).AddSyst(cb, "scale_normalization_Up_"+selection, "lnN", SystMap<>::init(factor_Up["tttt"]));
+	cb.cp().process({"DY_inclusive"}).AddSyst(cb, "scale_normalization_Up_"+selection, "lnN", SystMap<>::init(factor_Up["DY_inclusive"]));
     	
+	std::map<std::string, double>& factor_Down = scale_factors_Down[selection];
+	cb.cp().process({"TTLep_bb"}).AddSyst(cb, "scale_normalization_Down_"+selection, "lnN", SystMap<>::init(factor_Down["ttbb"]));
+	cb.cp().process({"TTLep_cc"}).AddSyst(cb, "scale_normalization_Down_"+selection, "lnN", SystMap<>::init(factor_Down["ttcc"]));
+	cb.cp().process({"TTLep_other"}).AddSyst(cb, "scale_normalization_Down_"+selection, "lnN", SystMap<>::init(factor_Down["ttother"]));
+	cb.cp().process({"TTTT"}).AddSyst(cb, "scale_normalization_Down_"+selection, "lnN", SystMap<>::init(factor_Down["tttt"]));
+	cb.cp().process({"DY_inclusive"}).AddSyst(cb, "scale_normalization_Down_"+selection, "lnN", SystMap<>::init(factor_Down["DY_inclusive"]));
+
+
+	//group nuisances
 	cb.cp().SetGroup("theory", THgroup);
 	cb.cp().SetGroup("experimental", EXPgroup);
 
 
-   	string dir = "../../../../../../../../groups/hephy/cms/maryam.shooshtari/www/tttt/plots/analysisPlots/4t-v10-syst/RunII/all/trg-dilep-OS-minDLmass20-offZ1-lepVeto2-"+selection+"-ht500"; // relative link from this dir
+   	string dir = "../../../../../../../../groups/hephy/cms/maryam.shooshtari/www/tttt/plots/analysisPlots/4t-v10.3-syst/RunII/all/trg-dilep-OS-minDLmass20-offZ1-lepVeto2-"+selection+"-ht500"; // relative link from this dir
    	string input_filename = dir+"/tttt__systematics.root";
    	
    	cb.cp().backgrounds().ExtractShapes(
