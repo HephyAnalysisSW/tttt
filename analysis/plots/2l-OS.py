@@ -714,13 +714,13 @@ for i_mode, mode in enumerate(allModes):
     ))
 
     plots.append(Plot(
-      texX = 'H_{T} (GeV)', texY = 'Number of Events / 30 GeV',
+      texX = 'H_{T} (GeV)', texY = 'Number of Events / 100 GeV',
       name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
-      binning=[1500/50,0,1500],
+      binning=[2500/100,0,1500],
     ))
 
     plots.append(Plot(
-      texX = 'H_{T}b (GeV)', texY = 'Number of Events / 30 GeV',
+      texX = 'H_{T}b (GeV)', texY = 'Number of Events / 50 GeV',
       name = 'htb', attribute = lambda event, sample: sum( j['pt'] for j in event.bJets ),
       binning=[1500/50,0,1500],
     ))
