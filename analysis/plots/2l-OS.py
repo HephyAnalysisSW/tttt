@@ -301,6 +301,9 @@ ttreeFormulas = { #"bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_bta
                   "nJetGood_pt100" : "Sum$(JetGood_pt>100)",
                   "nJetGood_pt150" : "Sum$(JetGood_pt>150)",
                   "nJetGood_pt200" : "Sum$(JetGood_pt>200)",
+                  "htPt40" : "Sum$(JetGood_pt*(JetGood_pt>40))",
+                  "htPt50" : "Sum$(JetGood_pt*(JetGood_pt>50))",
+                  "htPt80" : "Sum$(JetGood_pt*(JetGood_pt>80))",
                   "nBTag_loose"   : "Sum$(JetGood_isBJet_loose)",
                   "nBTag_medium"  : "Sum$(JetGood_isBJet_medium)" ,
                   "nBTag_tight"   : "Sum$(JetGood_isBJet_tight)" ,
@@ -502,7 +505,7 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
         name = 'Z1_pt_coarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events / 50 GeV',
         attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[16,0,800],
+        binning=[24,0,1200],
         addOverFlowBin='upper',
     ))
 
@@ -511,18 +514,6 @@ for i_mode, mode in enumerate(allModes):
         attribute = TreeVariable.fromString( "Z1_pt/F" ),
         binning=[3,0,600],
         addOverFlowBin='upper',
-    ))
-
-    plots.append(Plot(
-        name = 'Z1_pt_coarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events / 50 GeV',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[16,0,800],
-    ))
-
-    plots.append(Plot(
-        name = 'Z1_pt_superCoarse', texX = 'p_{T}(Z_{1}) (GeV)', texY = 'Number of Events',
-        attribute = TreeVariable.fromString( "Z1_pt/F" ),
-        binning=[3,0,600],
     ))
 
     plots.append(Plot(
@@ -734,22 +725,40 @@ for i_mode, mode in enumerate(allModes):
       binning=[1500/50,0,1500],
     ))
 
+#    plots.append(Plot(
+#      texX = 'H_{T}soft (GeV)', texY = 'Number of Events / 30 GeV',
+#      name = 'ht_soft', attribute = lambda event, sample: sum( j['pt'] for j in event.softJets ),
+#      binning=[1500/50,0,1500],
+#    ))
+#
+#    plots.append(Plot(
+#      texX = 'H_{T}mid (GeV)', texY = 'Number of Events / 30 GeV',
+#      name = 'ht_mid', attribute = lambda event, sample: sum( j['pt'] for j in event.midJets ),
+#      binning=[1500/50,0,1500],
+#    ))
+#
+#    plots.append(Plot(
+#      texX = 'H_{T}hard (GeV)', texY = 'Number of Events / 30 GeV',
+#      name = 'ht_hard', attribute = lambda event, sample: sum( j['pt'] for j in event.hardJets ),
+#      binning=[1500/50,0,1500],
+#    ))
+
     plots.append(Plot(
-      texX = 'H_{T}soft (GeV)', texY = 'Number of Events / 30 GeV',
-      name = 'ht_soft', attribute = lambda event, sample: sum( j['pt'] for j in event.softJets ),
-      binning=[1500/50,0,1500],
+      texX = 'H_{T} from p_{T}(j)>40 ', texY = 'Number of Events / 100 GeV',
+      name = 'htPt40', attribute = lambda event, sample: event.htPt40,
+      binning=[2500/100,0,2500],
     ))
 
     plots.append(Plot(
-      texX = 'H_{T}mid (GeV)', texY = 'Number of Events / 30 GeV',
-      name = 'ht_mid', attribute = lambda event, sample: sum( j['pt'] for j in event.midJets ),
-      binning=[1500/50,0,1500],
+      texX = 'H_{T} from p_{T}(j)>50 ', texY = 'Number of Events / 100 GeV',
+      name = 'htPt50', attribute = lambda event, sample: event.htPt50,
+      binning=[2500/100,0,2500],
     ))
 
     plots.append(Plot(
-      texX = 'H_{T}hard (GeV)', texY = 'Number of Events / 30 GeV',
-      name = 'ht_hard', attribute = lambda event, sample: sum( j['pt'] for j in event.hardJets ),
-      binning=[1500/50,0,1500],
+      texX = 'H_{T} from p_{T}(j)>80 ', texY = 'Number of Events / 100 GeV',
+      name = 'htPt80', attribute = lambda event, sample: event.htPt80,
+      binning=[2500/100,0,2500],
     ))
 
     plots.append(Plot(
@@ -775,7 +784,6 @@ for i_mode, mode in enumerate(allModes):
       name = 'jet1_phi', attribute = lambda event, sample: event.JetGood_phi[1],
       binning=[10,-pi,pi],
     ))
-
 
 
     plots.append(Plot(

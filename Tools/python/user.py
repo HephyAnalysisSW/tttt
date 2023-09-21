@@ -18,7 +18,7 @@ elif os.environ["USER"] in ["cristina.giordano"]:
 
 elif os.environ["USER"] in ["robert.schoefbeck"]:
     postprocessing_output_directory = "/scratch-cbe/users/robert.schoefbeck/tttt/nanoTuples"
-    postprocessing_tmp_directory    = "/scratch/hephy/cms/robert.schoefbeck/tttt/tmp/"
+    postprocessing_tmp_directory    = "/dev/shm/robert.schoefbeck/tmp_pp_dir/tttt/"
     plot_directory                  = "/groups/hephy/cms/robert.schoefbeck/www/tttt/plots"
     cache_dir                       = "/groups/hephy/cms/robert.schoefbeck/tttt/caches"
     gridpack_directory              = "/eos/vbc/user/robert.schoefbeck/gridpacks/4top/"
