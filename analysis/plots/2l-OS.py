@@ -304,6 +304,10 @@ ttreeFormulas = { #"bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_bta
                   "htPt40" : "Sum$(JetGood_pt*(JetGood_pt>40))",
                   "htPt50" : "Sum$(JetGood_pt*(JetGood_pt>50))",
                   "htPt80" : "Sum$(JetGood_pt*(JetGood_pt>80))",
+                  "ISRJet_pt40":    "sqrt(Sum$(JetGood_pt*cos(JetGood_phi)*(JetGood_pt>40))**2 + Sum$(JetGood_pt*sin(JetGood_phi)*(JetGood_pt>40))**2)",
+                  "ISRJet_pt50":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>50))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>50))**2)",
+                  "ISRJet_pt60":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>60))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>60))**2)",
+                  "ISRJet_pt80":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>80))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>80))**2)",
                   "nBTag_loose"   : "Sum$(JetGood_isBJet_loose)",
                   "nBTag_medium"  : "Sum$(JetGood_isBJet_medium)" ,
                   "nBTag_tight"   : "Sum$(JetGood_isBJet_tight)" ,
@@ -759,6 +763,27 @@ for i_mode, mode in enumerate(allModes):
       texX = 'H_{T} from p_{T}(j)>80 ', texY = 'Number of Events / 100 GeV',
       name = 'htPt80', attribute = lambda event, sample: event.htPt80,
       binning=[2500/100,0,2500],
+    ))
+
+    plots.append(Plot(
+      texX = ' p_{T}(ISR j)>40 ', texY = 'Number of Events / 100 GeV',
+      name = 'ISRJet_pt40', attribute = lambda event, sample: event.ISRJet_pt40,
+      binning=[600/30,0,600],
+    ))
+    plots.append(Plot(
+      texX = ' p_{T}(ISR j)>50 ', texY = 'Number of Events / 100 GeV',
+      name = 'ISRJet_pt50', attribute = lambda event, sample: event.ISRJet_pt50,
+      binning=[600/30,0,600],
+    ))
+    plots.append(Plot(
+      texX = ' p_{T}(ISR j)>60 ', texY = 'Number of Events / 100 GeV',
+      name = 'ISRJet_pt60', attribute = lambda event, sample: event.ISRJet_pt60,
+      binning=[600/30,0,600],
+    ))
+    plots.append(Plot(
+      texX = ' p_{T}(ISR j)>80 ', texY = 'Number of Events / 100 GeV',
+      name = 'ISRJet_pt80', attribute = lambda event, sample: event.ISRJet_pt80,
+      binning=[600/30,0,600],
     ))
 
     plots.append(Plot(
