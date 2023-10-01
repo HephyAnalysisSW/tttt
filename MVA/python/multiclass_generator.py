@@ -67,9 +67,7 @@ from keras.layers import Input, Activation, Dense, Convolution2D, MaxPooling2D, 
 from keras.layers import BatchNormalization
 from keras.utils import np_utils
 
-
 # flat layers
-
 n_var_flat = len(getattr(config, args.variable_set))
 flat_inputs = Input(shape=(n_var_flat, ))
 x = BatchNormalization(input_shape=(n_var_flat, ))(flat_inputs)
