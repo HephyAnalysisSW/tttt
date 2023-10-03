@@ -101,7 +101,7 @@ if args.coeff_ParticleNet:
 
 # reader
 reader = sample.treeReader( \
-    variables =  config.read_variables + coeff_variables,
+    variables = config.read_variables + coeff_variables + (sample.read_variables if hasattr(sample, "read_variables") else []),
     sequence  = config.sequence,
     )
 reader.start()
@@ -126,7 +126,6 @@ def filler( event ):
     for name, func in config.all_mva_variables.iteritems():
         setattr( event, name, func(r, sample=None) )
             
-       
     # copy vector variables
     for name, vector_var in config.mva_vector_variables.iteritems():
         objs = vector_var["func"]( r, sample=None )
