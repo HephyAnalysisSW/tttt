@@ -74,7 +74,6 @@ def get_parser():
     argParser.add_argument('--normalizeSys',                action='store_true',          default=False,                                help="Write collections with normalised PS/Scale/PDF weights?")
     argParser.add_argument('--reduceSizeBy',                action='store',     type=int,                                               help="Reduce the size of the sample by a factor of...")
     argParser.add_argument('--event',                       action='store',     type=int, default=-1,                                   help="Just process event no")
-    argParser.add_argument('--sigmaJEC',                    action='store',     type=float, default=1,                                    help="How many sigma in JEC (don't change this)")
     argParser.add_argument('--pogEleId',                    action='store',               default=None,                                 help="Change electron selection to POG lepton IDs")
     argParser.add_argument('--pogMuId',                     action='store',               default=None,                                 help="Change muon selection to POG lepton IDs")
     return argParser
@@ -715,8 +714,8 @@ if not options.skipNanoTools:
             jetType     = "AK4PFchs",
             metBranchName = METBranchName,
             isFastSim   = False,
-            applySmearing = False,
-            sigma       = options.sigmaJEC)
+            applySmearing = False
+            )
 
         modules = [ JMECorrector() ]
 
