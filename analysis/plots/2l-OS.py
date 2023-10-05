@@ -260,17 +260,12 @@ sequence.append( make_more_jets )
 
 def make_ISRJet(event, sample):
     event.jet40 = filter(lambda j: j['pt']>40 , event.jets)
-    sum_ = []
     cos_pt, sin_pt = 0., 0.
     for j in event.jet40:
         cos_pt += j['pt']*cos(j['phi'])
         sin_pt += j['pt']*sin(j['phi'])
-        sq_cos = cos_pt**2
-        sq_sin = sin_pt**2
-        sum_.append(sqrt(sq_cos+sq_sin))
 
-    setattr(event, "ISRJet_pt40", sum_[-1])
-
+    setattr(event, "ISRJet_pt40", sqrt(cos_pt**2 + sin_pt**2))
 
 sequence.append(make_ISRJet)
 
