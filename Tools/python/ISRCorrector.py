@@ -10,7 +10,7 @@ directory = os.path.expandvars("$CMSSW_BASE/src/tttt/Tools/data/isrJetReweightin
 f_4to5 = "trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1to2-ht500_ISRJet_pt40.root"
 f_6p   = "trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1to2-ht500_ISRJet_pt40.root"
 
-class isrJetCorrector:
+class ISRCorrector:
     def __init__(self, era = None, MC = "HTbinned"):
         ''' apply constant SF to leading lepton, if SF is larger than uncertainty inflate uncertainty accordingly
         '''
@@ -67,7 +67,7 @@ class isrJetCorrector:
         return h.GetBinContent(h.FindBin(isrJetPt))
 
 if __name__=="__main__":
-    corr = isrJetCorrector()
+    corr = ISRJetCorrector()
 
     import tttt.Tools.user as user
     from RootTools.core.standard import *
