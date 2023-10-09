@@ -748,6 +748,7 @@ for i_mode, mode in enumerate(allModes):
       attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
       binning=[7, -0.5,6.5],
     ))
+    
     plots.append(Plot(
       name = "ISRJet_pt40",
       texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
@@ -756,6 +757,14 @@ for i_mode, mode in enumerate(allModes):
       #binning=[600/30,0,600],
     ))
     
+    plots.append(Plot(
+      name = "ISRJet_pt40_course",
+      texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
+      attribute = lambda event, sample: event.ISRJet_pt40,
+      binning=Binning.fromThresholds([0,50,100,150,200,250,300,350,400,450,500,600,800,1000,2000]),
+      #binning=[600/30,0,600],
+    ))
+
 #    plots.append(Plot(
 #      name = "ISRJet_pt40_fromTree",
 #      texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
