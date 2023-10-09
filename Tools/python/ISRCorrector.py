@@ -68,7 +68,7 @@ class ISRCorrector:
         return h.GetBinContent(h.FindBin(isrJetPt))
 
 if __name__=="__main__":
-    corr = ISRJetCorrector()
+    corr = ISRCorrector()
 
     import tttt.Tools.user as user
     from RootTools.core.standard import *
