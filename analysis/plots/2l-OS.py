@@ -4,7 +4,10 @@
 
 #Standard imports and batch mode
 
-import ROOT, os
+import ROOT
+ROOT.TH1.AddDirectory(False)
+
+import os
 import itertools
 import copy
 import array
@@ -23,14 +26,12 @@ from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList, isBJet
 from tttt.Tools.helpers                  import getObjDict
 
-
 #Analysis Tools imports
 
 from Analysis.Tools.helpers              import deltaPhi, deltaR
 from Analysis.Tools.puProfileCache       import *
 from Analysis.Tools.puReweighting        import getReweightingFunction
 import Analysis.Tools.syncer
-
 
 #Argument Parser
 
@@ -45,20 +46,23 @@ argParser.add_argument('--plot_directory', action='store', default='4t')
 argParser.add_argument('--selection',      action='store', default='trg-dilepL-OS-minDLmass20-onZ1-njet4p-btag2p-ht500')
 argParser.add_argument('--era',           action='store', default='RunII', help= 'Plot year split or inclusively')
 argParser.add_argument('--DY',            action='store', default='ht', help= 'what kind of DY do you want?')
+argParser.add_argument('--reweightISR',   action='store_true', help= 'reweight ISR?')
 args = argParser.parse_args()
 
 # DIrectory naming parser options
 
 #if args.noData: args.plot_directory += "_noData"
 if args.small: args.plot_directory += "_small"
+if args.reweightISR: 
+    args.plot_directory += "_rwISR"
+    from tttt.Tools.ISRCorrector import ISRCorrector
+    isrCorrector = ISRCorrector()
 
 #Logger
-
 import tttt.Tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
-
 
 #Simulated samples
 
@@ -257,25 +261,24 @@ def make_more_jets( event, sample ):
     event.hardJets    = filter(lambda j: j['pt']>150    , event.jets)
 sequence.append( make_more_jets )
 
-
 def make_ISRJet(event, sample):
     event.jet40 = filter(lambda j: j['pt']>40 , event.jets)
     cos_pt, sin_pt = 0., 0.
     for j in event.jet40:
         cos_pt += j['pt']*cos(j['phi'])
         sin_pt += j['pt']*sin(j['phi'])
-
-    setattr(event, "ISRJet_pt40", sqrt(cos_pt**2 + sin_pt**2))
+    event.ISRJet_pt40 = sqrt(cos_pt**2 + sin_pt**2)
 
 sequence.append(make_ISRJet)
 
-# def make_ISRJet_BETTER(event, sample):
-#     pt_thresholds = [40, 60, 80, 100, 150, 200]
-#     for th in pt_threshold:
-#         print("{}".format(th))
+def makeISRSF( event, sample ):
+    event.reweightISR = 1
+    if args.reweightISR and args.DY=='ht':
+        if sample.name.startswith("DY"):
+            event.reweightISR = isrCorrector.getSF( event.nJetGood, event.ISRJet_pt40 ) 
 
-# sequence.append(make_ISRJet_BETTER)
-
+sequence.append( makeISRSF )
+            
 #Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
 ele_string = lepString('ele','VL')
@@ -368,7 +371,7 @@ for i_mode, mode in enumerate(allModes):
     #Apply reweighting to MC for specific detector effects
     for sample in mc:
       sample.read_variables = read_variables_MC
-      sample.weight = lambda event, sample: event.reweightBTagSF_central*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger*event.reweightLeptonSF*event.reweightTopPt
+      sample.weight = lambda event, sample: event.reweightBTagSF_central*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger*event.reweightLeptonSF*event.reweightTopPt*event.reweightISR
 
     #Stack : Define what we want to see.
     if not args.noData:
