@@ -201,42 +201,42 @@
 #python 2l-OS.py --plot_directory 4t-v10 --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag4p-ht500 --noData
 #
 
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1to2-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag1to2-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1to2-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag1to2-ht500
-
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag1-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag1-ht500
-
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag2-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag2-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag2-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag2-ht500
-
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag3p-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag3p-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag3p-ht500
-python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag3p-ht500
-
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1to2-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag1to2-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1to2-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag1to2-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1to2-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag1to2-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1to2-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag1to2-ht500
 #
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag1-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag1-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag1-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag1-ht500
 #
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag2-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag2-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag2-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag2-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag2-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag2-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag2-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag2-ht500
 #
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag3p-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag3p-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag3p-ht500
-#python 2l-OS.py --reweightISR --plot_directory 4t-v11 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag3p-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag3p-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag3p-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag3p-ht500
+#python 2l-OS.py --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag3p-ht500
+
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1to2-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag1to2-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1to2-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag1to2-ht500
+
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag1-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag1-ht500
+
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag2-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag2-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag2-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag2-ht500
+
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag3p-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6to7-btag3p-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag3p-ht500
+python 2l-OS.py --reweightISR --plot_directory 4t-v12 --selection trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet8p-btag3p-ht500
