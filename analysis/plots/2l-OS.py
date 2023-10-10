@@ -259,6 +259,7 @@ def make_more_jets( event, sample ):
     event.softJets    = filter(lambda j: j['pt']<=50    , event.jets)
     event.midJets     = filter(lambda j: j['pt']>50 and j['pt']<=150    , event.jets)
     event.hardJets    = filter(lambda j: j['pt']>150    , event.jets)
+
 sequence.append( make_more_jets )
 
 # def make_ISRJet(event, sample):
@@ -272,15 +273,16 @@ sequence.append( make_more_jets )
 #     print("ISRJet_pt60:", event.ISRJet_pt60)
 # sequence.append(make_ISRJet)
 
-def make_ISRJet(event, sample):
-    thresholds = [40, 60, 80, 100, 150, 200]
-    threshold_jets = {}
+def make_manyJets(event, sample):
+    thresholds = [30, 40, 60, 80, 100, 150, 200]
+    # threshold_jets = {}
     for threshold in thresholds:
-        jet_name = 'jet{}'.format(threshold)
+        # jet_name = 'jet{}'.format(threshold)
         filtered_jets = [j for j in event.jets if j['pt'] > threshold]
-        threshold_jets[jet_name] = filtered_jets
-        # setattr(event, 'jet_thresholds', threshold_jets)
-        # print(event.jet_thresholds['jet40'])
+        # threshold_jets[jet_name] = filtered_jets
+        ht_threshold = sum(jet['pt'] for jet in filtered_jets)#event.jets if jet['pt'] > threshold)
+        setattr(event, 'nJetGood_pt{}'.format(threshold), len(filtered_jets))
+        setattr(event, 'htPt{}_new'.format(threshold), ht_threshold)
         cos_pt, sin_pt = 0., 0.
         for j in filtered_jets:
             cos_pt += j['pt'] * cos(j['phi'])
@@ -288,7 +290,7 @@ def make_ISRJet(event, sample):
 
         setattr(event, 'ISRJet_pt{}'.format(threshold), sqrt(cos_pt**2 + sin_pt**2))
 
-sequence.append(make_ISRJet)
+sequence.append(make_manyJets)
 
 def makeISRSF( event, sample ):
     event.reweightISR = 1
@@ -335,20 +337,22 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 
 # TTreeFormulas are faster than if we compute things in the event loop.
 ttreeFormulas = { #"bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_btagDeepFlavb+JetGood_btagDeepFlavlepb))",
-		          # "nJetGood_pt30" : "Sum$(JetGood_pt>30)",
+		          # "nJetGood_pt30_fromTree" : "Sum$(JetGood_pt>30)",
                   # "nJetGood_pt40" : "Sum$(JetGood_pt>40)",
                   # "nJetGood_pt50" : "Sum$(JetGood_pt>50)",
                   # "nJetGood_pt80" : "Sum$(JetGood_pt>80)",
                   # "nJetGood_pt100" : "Sum$(JetGood_pt>100)",
                   # "nJetGood_pt150" : "Sum$(JetGood_pt>150)",
                   # "nJetGood_pt200" : "Sum$(JetGood_pt>200)",
-                  # "htPt40" : "Sum$(JetGood_pt*(JetGood_pt>40))",
+                  # DONE NJetGOOD
+                  # "htPt30_fromTree" : "Sum$(JetGood_pt*(JetGood_pt>30))",
                   # "htPt50" : "Sum$(JetGood_pt*(JetGood_pt>50))",
                   # "htPt60" : "Sum$(JetGood_pt*(JetGood_pt>50))",
                   # "htPt80" : "Sum$(JetGood_pt*(JetGood_pt>80))",
                   # "htPt100" : "Sum$(JetGood_pt*(JetGood_pt>100))",
                   # "htPt150" : "Sum$(JetGood_pt*(JetGood_pt>150))",
                   # "htPt200" : "Sum$(JetGood_pt*(JetGood_pt>200))",
+                  # DONE HTPT
                   # "ISRJet_pt40_fromTree":    "sqrt(Sum$(JetGood_pt*cos(JetGood_phi)*(JetGood_pt>40))**2 + Sum$(JetGood_pt*sin(JetGood_phi)*(JetGood_pt>40))**2)",
                   # "ISRJet_pt50":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>50))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>50))**2)",
                   # "ISRJet_pt60_fromTree":    "sqrt(Sum$(JetGood_pt*cos(JetGood_phi)*(JetGood_pt>60))**2 + Sum$(JetGood_pt*sin(JetGood_phi)*(JetGood_pt>60))**2)",
@@ -356,10 +360,11 @@ ttreeFormulas = { #"bbTag_max_value" : "Max$(JetGood_btagDeepFlavbb/(JetGood_bta
                   # "ISRJet_pt100":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>100))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>100))**2)",
                   # "ISRJet_pt150":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>150))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>150))**2)",
                   # "ISRJet_pt200":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>200))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>200))**2)",
-                  # "nBTag_loose"   : "Sum$(JetGood_isBJet_loose)",
-                  # "nBTag_medium"  : "Sum$(JetGood_isBJet_medium)" ,
+                  # DONE ISR
+                  # "nBTag_loose_fromTree"   : "Sum$(JetGood_isBJet_loose)",
+                  # "nBTag_medium_fromTree"  : "Sum$(JetGood_isBJet_medium)" ,
                   # "nBTag_tight"   : "Sum$(JetGood_isBJet_tight)" ,
-                  # "nBTag_loose_pt30"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>30)",
+                  "nBTag_loose_pt30_fromTree"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>30)",
                   # "nBTag_medium_pt30"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>30)" ,
                   # "nBTag_tight_pt30"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>30)"  ,
                   # "nBTag_loose_pt40"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>40)",
@@ -643,12 +648,20 @@ for i_mode, mode in enumerate(allModes):
       binning=[8,3.5,11.5],
     ))
 
-#    plots.append(Plot(
-#      name = "nJetGood_pt30",
-#      texX = 'N_{jets}', texY = 'Number of Events',
-#      attribute = lambda event, sample:event.nJetGood_pt30, #nJetSelected_pt>30
-#      binning=[8,3.5,11.5],
-#    ))
+    # plots.append(Plot(
+    #  name = "nJetGood_pt30_fromTree",
+    #  texX = 'N_{jets}', texY = 'Number of Events',
+    #  attribute = lambda event, sample:event.nJetGood_pt30_fromTree, #nJetSelected_pt>30
+    #  binning=[8,3.5,11.5],
+    # ))
+    plots.append(Plot(
+     name = "nJetGood_pt30",
+     texX = 'N_{jets}', texY = 'Number of Events',
+     attribute = lambda event, sample:event.nJetGood_pt30, #nJetSelected_pt>30
+     binning=[8,3.5,11.5],
+    ))
+
+
 #
 #    plots.append(Plot(
 #      name = "nJetGood_pt40",
@@ -692,12 +705,18 @@ for i_mode, mode in enumerate(allModes):
 #      binning=[8,3.5,11.5],
 #    ))
 #
-#    plots.append(Plot(
-#      name = "nBTag_loose_pt30",
-#      texX = 'N_{jets}', texY = 'Number of Events',
-#      attribute = lambda event, sample:event.nBTag_loose_pt30, #nJetSelected_pt>30
-#      binning=[7,-0.5,6.5],
-#    ))
+    plots.append(Plot(
+     name = "nBTag_loose_fromTree",
+     texX = 'N_{b-tag} L', texY = 'Number of Events',
+     attribute = lambda event, sample:event.nBTag_loose_fromTree, #nJetSelected_pt>30
+     binning=[7,-0.5,6.5],
+    ))
+    plots.append(Plot(
+     name = "nBTag_medium_fromTree",
+     texX = 'N_{b-tag} L', texY = 'Number of Events',
+     attribute = lambda event, sample:event.nBTag_medium_fromTree, #nJetSelected_pt>30
+     binning=[7,-0.5,6.5],
+    ))
 #
 #    plots.append(Plot(
 #      name = "nBTag_loose_pt40",
@@ -755,26 +774,33 @@ for i_mode, mode in enumerate(allModes):
 #      binning=[7, -0.5,6.5],
 #    ))
 #
-#    plots.append(Plot(
-#      name = "nBTag_loose",
-#      texX = 'N_{jets}', texY = 'Number of Events',
-#      attribute = lambda event, sample:event.nBTag_loose, #nBJetLoose
-#      binning=[7, -0.5,6.5],
-#    ))
-#
-    plots.append(Plot(
-      texX = 'N_{b-tag}', texY = 'Number of Events',
-      attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
-      binning=[7, -0.5,6.5],
-    ))
 
     plots.append(Plot(
-      name = "ISRJet_pt40",
-      texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ISRJet_pt40,
-      binning=Binning.fromThresholds(isr_binning),
-      # binning=[600/30,0,600],
+     name = "nBTag_loose",
+     texX = 'N_{b-tag} L', texY = 'Number of Events',
+     attribute = lambda event, sample: sum( 1 for j in event.bJets_loose ), #nBJetLoose
+     binning=[7, -0.5,6.5],
     ))
+#
+    plots.append(Plot(
+     name = "nBTag_medium",
+     texX = 'N_{b-tag} L', texY = 'Number of Events',
+     attribute = lambda event, sample: sum( 1 for j in event.bJets_medium ), #nBJetLoose
+     binning=[7, -0.5,6.5],
+    ))
+    # plots.append(Plot(
+    #   texX = 'N_{b-tag}', texY = 'Number of Events',
+    #   attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
+    #   binning=[7, -0.5,6.5],
+    # ))
+
+    # plots.append(Plot(
+    #   name = "ISRJet_pt40",
+    #   texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
+    #   attribute = lambda event, sample: event.ISRJet_pt40,
+    #   binning=Binning.fromThresholds(isr_binning),
+    #   # binning=[600/30,0,600],
+    # ))
 
     # plots.append(Plot(
     #     name = "ISRJet_pt60_fromTree",
@@ -783,53 +809,53 @@ for i_mode, mode in enumerate(allModes):
     #     binning=[600/30,0,600],
     #     ))
 
-    plots.append(Plot(
-      name = "ISRJet_pt60",
-      texX = 'p_{T}(ISR)>60', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ISRJet_pt60, #nBJetLoose
-      binning=Binning.fromThresholds(isr_binning),
-      # binning=[600/30,0,600],
-    ))
-    plots.append(Plot(
-      name = "ISRJet_pt80",
-      texX = 'p_{T}(ISR)>80', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ISRJet_pt80, #nBJetLoose
-      binning=Binning.fromThresholds(isr_binning),
-      # binning=[600/30,0,600],
-    ))
-    plots.append(Plot(
-      name = "ISRJet_pt100",
-      texX = 'p_{T}(ISR)>100', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ISRJet_pt100, #nBJetLoose
-      binning=Binning.fromThresholds(isr_binning),
-      # binning=[600/30,0,600],
-    ))
-    plots.append(Plot(
-      name = "ISRJet_pt150",
-      texX = 'p_{T}(ISR)>150', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ISRJet_pt150, #nBJetLoose
-      binning=Binning.fromThresholds(isr_binning),
-      # binning=[600/30,0,600],
-    ))
-    plots.append(Plot(
-      name = "ISRJet_pt200",
-      texX = 'p_{T}(ISR)>200', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ISRJet_pt200, #nBJetLoose
-      binning=Binning.fromThresholds(isr_binning),
-      # binning=[600/30,0,600],
-    ))
-
-    plots.append(Plot(
-      texX = 'H_{T} (GeV)', texY = 'Number of Events / 100 GeV',
-      name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
-      binning=[2500/100,0,1500],
-    ))
-
-    plots.append(Plot(
-      texX = 'H_{T}b (GeV)', texY = 'Number of Events / 50 GeV',
-      name = 'htb', attribute = lambda event, sample: sum( j['pt'] for j in event.bJets ),
-      binning=[1500/50,0,1500],
-    ))
+    # plots.append(Plot(
+    #   name = "ISRJet_pt60",
+    #   texX = 'p_{T}(ISR)>60', texY = 'Number of Events',
+    #   attribute = lambda event, sample: event.ISRJet_pt60, #nBJetLoose
+    #   binning=Binning.fromThresholds(isr_binning),
+    #   # binning=[600/30,0,600],
+    # ))
+    # plots.append(Plot(
+    #   name = "ISRJet_pt80",
+    #   texX = 'p_{T}(ISR)>80', texY = 'Number of Events',
+    #   attribute = lambda event, sample: event.ISRJet_pt80, #nBJetLoose
+    #   binning=Binning.fromThresholds(isr_binning),
+    #   # binning=[600/30,0,600],
+    # ))
+    # plots.append(Plot(
+    #   name = "ISRJet_pt100",
+    #   texX = 'p_{T}(ISR)>100', texY = 'Number of Events',
+    #   attribute = lambda event, sample: event.ISRJet_pt100, #nBJetLoose
+    #   binning=Binning.fromThresholds(isr_binning),
+    #   # binning=[600/30,0,600],
+    # ))
+    # plots.append(Plot(
+    #   name = "ISRJet_pt150",
+    #   texX = 'p_{T}(ISR)>150', texY = 'Number of Events',
+    #   attribute = lambda event, sample: event.ISRJet_pt150, #nBJetLoose
+    #   binning=Binning.fromThresholds(isr_binning),
+    #   # binning=[600/30,0,600],
+    # ))
+    # plots.append(Plot(
+    #   name = "ISRJet_pt200",
+    #   texX = 'p_{T}(ISR)>200', texY = 'Number of Events',
+    #   attribute = lambda event, sample: event.ISRJet_pt200, #nBJetLoose
+    #   binning=Binning.fromThresholds(isr_binning),
+    #   # binning=[600/30,0,600],
+    # ))
+    #
+    # plots.append(Plot(
+    #   texX = 'H_{T} (GeV)', texY = 'Number of Events / 100 GeV',
+    #   name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
+    #   binning=[2500/100,0,1500],
+    # ))
+    #
+    # plots.append(Plot(
+    #   texX = 'H_{T}b (GeV)', texY = 'Number of Events / 50 GeV',
+    #   name = 'htb', attribute = lambda event, sample: sum( j['pt'] for j in event.bJets ),
+    #   binning=[1500/50,0,1500],
+    # ))
 
 #    plots.append(Plot(
 #      texX = 'H_{T}soft (GeV)', texY = 'Number of Events / 30 GeV',
@@ -849,11 +875,12 @@ for i_mode, mode in enumerate(allModes):
 #      binning=[1500/50,0,1500],
 #    ))
 #
-#     plots.append(Plot(
-#       texX = 'H_{T} from p_{T}(j)>40 ', texY = 'Number of Events / 100 GeV',
-#       name = 'htPt40', attribute = lambda event, sample: event.htPt40,
-#       binning=[2500/100,0,2500],
-#     ))
+
+    # plots.append(Plot(
+    #   texX = 'H_{T} from p_{T}(j)>30 ', texY = 'Number of Events / 100 GeV',
+    #   name = 'htPt30_new', attribute = lambda event, sample: event.htPt30_new,
+    #   binning=[2500/100,0,2500],
+    # ))
 #
 #     plots.append(Plot(
 #       texX = 'H_{T} from p_{T}(j)>50 ', texY = 'Number of Events / 100 GeV',

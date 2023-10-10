@@ -27,7 +27,7 @@ jetVars          = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCv
 jetVarNames      = [x.split('/')[0] for x in jetVars]
 
 lstm_jets_maxN   = 10
-lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F', 'puId/F', 'qgl/F', 'mass/F']
+lstm_jetVars     = ['pt/F', 'eta/F', 'phi/F', 'btagDeepFlavB/F', 'btagDeepFlavCvB/F', 'btagDeepFlavQG/F']#, 'puId/F', 'qgl/F', 'mass/F']
 lstm_jetVarNames = [x.split('/')[0] for x in lstm_jetVars]
 
 lepVars          = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTOP/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I']
@@ -64,6 +64,9 @@ def make_jets( event, sample ):
     event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
     event.bJets    = filter(lambda j:isBJet(j, year=event.year) and abs(j['eta'])<=2.4    , event.jets)
     event.bJets_medium = filter(lambda j:isBJet(j, WP="medium",year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+    event.bJets_loose = filter(lambda j:isBJet(j, WP="loose",year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+    event.bJets_tight = filter(lambda j:isBJet(j, WP="tight",year=event.year) and abs(j['eta'])<=2.4    , event.jets)
+    
     event.nonbJets = []
     for b in event.jets:
         if b not in event.bJets:
@@ -257,7 +260,7 @@ mva_variables  = [ (key, value) for key, value in all_mva_variables.iteritems() 
 import numpy as np
 import operator
 
-def predict_inputs( event, sample, jet_lstm = False):
+def predict_inputs( event, sample, jet_lstm = True):
     flat_variables = np.array([[getattr( event, mva_variable) for mva_variable, _ in mva_variables]])
     if jet_lstm:
         lstm_jets_maxN = 10 #remove after retraining
