@@ -36,7 +36,6 @@ import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
-
 if args.target_subdir is not None:
     target = os.path.join( args.target, args.target_subdir)
 else:

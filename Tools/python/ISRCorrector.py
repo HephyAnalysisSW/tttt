@@ -20,24 +20,25 @@ class ISRCorrector:
         if era is not None:
             raise NotImplementedError("We might have eras ... but not now.")
 
-        # FIXME load histograms here
-
         self.h_reweight = {}
         self.stuff = []
         if MC == "HTbinned":
             for name, file in [ ( "4to5", f_4to5), ("6p", f_6p) ]:
-                gDir = ROOT.gDirectory.GetName()
-                f = ROOT.TFile(os.path.join(directory, file))
-                assert not f.IsZombie()
-                f.cd()
-                c_ = f.Get(f.GetListOfKeys().At(0).GetName()) 
-                canvas = c_.Clone()
-                self.stuff.append( canvas ) 
-                ROOT.gDirectory.cd('PyROOT:/')
-                f.Close()
-                DYMC = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(1) 
-                bkgMC   = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(2) 
-                data    = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(11)
+                #gDir = ROOT.gDirectory.GetName()
+                #f = ROOT.TFile(os.path.join(directory, file))
+                #assert not f.IsZombie()
+                #f.cd()
+                #c_ = f.Get(f.GetListOfKeys().At(0).GetName()) 
+                #canvas = c_.Clone()
+                #self.stuff.append( canvas ) 
+                #ROOT.gDirectory.cd('PyROOT:/')
+                #f.Close()
+
+                canvas = getObjFromFile( os.path.join(directory, file), "canvas" ) 
+
+                DYMC = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(1).Clone() 
+                bkgMC   = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(2).Clone()
+                data    = canvas.GetListOfPrimitives().At(0).GetListOfPrimitives().At(11).Clone()
 
                 # subtract background from data and MC
                 bkgMC.Scale(-1)
@@ -67,7 +68,7 @@ class ISRCorrector:
         return h.GetBinContent(h.FindBin(isrJetPt))
 
 if __name__=="__main__":
-    corr = ISRJetCorrector()
+    corr = ISRCorrector()
 
     import tttt.Tools.user as user
     from RootTools.core.standard import *
