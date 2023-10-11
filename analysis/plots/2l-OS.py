@@ -47,6 +47,8 @@ argParser.add_argument('--selection',      action='store', default='trg-dilepL-O
 argParser.add_argument('--era',           action='store', default='RunII', help= 'Plot year split or inclusively')
 argParser.add_argument('--DY',            action='store', default='ht', help= 'what kind of DY do you want?')
 argParser.add_argument('--reweightISR',   action='store_true', help= 'reweight ISR?')
+argParser.add_argument('--mva_cut',	   action='store',	default=None,				 help= 'Do you want to apply a cut on mva? which one?', choices=["tttt_2l_2l_4t","tttt_2l_2l_ttbb","tttt_2l_2l_ttcc","tttt_2l_2l_ttlight"])
+argParser.add_argument('--cut_point',        action='store',      default=None,                            help= 'Where do you want the cut?')
 args = argParser.parse_args()
 
 # DIrectory naming parser options
@@ -63,6 +65,9 @@ import tttt.Tools.logger as logger
 import RootTools.core.logger as logger_rt
 logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
+
+if not args.mva_cut is None:
+    logger.info("Applying a cut on events based on {} with threshold {}".format(args.mva_cut, args.cut_point))
 
 #Simulated samples
 
@@ -251,8 +256,18 @@ def keras_predict( event, sample ):
 sequence.append( keras_predict )
 
 def cut_MVA(event,sample):
- 	this = getattr(event, "tttt_2l_2l_4t")
- 	setattr(event,"cut_tttt_MVA",1 if this>=0.8 else 0)
+    if not args.mva_cut is None:
+	this = getattr(event, args.mva_cut)
+	if args.cut_point == "0.1m":
+		setattr(event,"cut_tttt_MVA",1 if this<0.1 else 0)
+	elif args.cut_point == "0.1p":
+		setattr(event,"cut_tttt_MVA",1 if this>=0.1 else 0)
+	elif args.cut_point == "0.2m":
+		setattr(event,"cut_tttt_MVA",1 if this<0.2 else 0)
+	elif args.cut_point == "0.2p":
+		setattr(event,"cut_tttt_MVA",1 if this>=0.2 else 0)
+    else: setattr(event,"cut_tttt_MVA",1)
+
 sequence.append(cut_MVA)
 
 def make_more_jets( event, sample ):
@@ -360,8 +375,8 @@ for i_mode, mode in enumerate(allModes):
     # "event.weight" is 0/1 for data, depending on whether it is from a certified lumi section. For MC, it corresponds to the 1/fb*cross-section/Nsimulated. So we multiply with the lumi in /fb.
 
 # This weight goes to the plot. DO NOT apply it again to the samples
-    weight_ = lambda event, sample: event.weight if sample.isData else event.weight
-    #weight_ = lambda event, sample: event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
+    #weight_ = lambda event, sample: event.weight if sample.isData else event.weight
+    weight_ = lambda event, sample: event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
 
     #Plot styling
     for sample in mc: sample.style = styles.fillStyle(sample.color)

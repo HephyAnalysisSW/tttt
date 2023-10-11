@@ -11,6 +11,7 @@ import array
 import operator
 import numpy as np
 from math                                import sqrt, cos, sin, pi, atan2, cosh, isnan
+ROOT.TH1.AddDirectory(False)
 
 #Standard imports and batch mode
 
@@ -22,6 +23,7 @@ from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList, isBJet
 from tttt.Tools.helpers                  import getObjDict
+from tttt.Tools.ISRCorrector 		 import ISRCorrector
 
 #Analysis Tools
 from Analysis.Tools.helpers              import deltaPhi, deltaR
@@ -36,6 +38,9 @@ argParser.add_argument('--plot_directory', action='store',      default='4t')
 argParser.add_argument('--selection',      action='store',      default='trg-dilepL-minDLmass20-offZ1-njet4p-btag2p-ht500')
 argParser.add_argument('--sys',            action='store',      default='central')
 argParser.add_argument('--era',            action='store',      default='RunII', type=str,                help="Which era?" )
+argParser.add_argument('--mva_cut',	   action='store',	default=None,				 help= 'Do you want to apply a cut on mva? which one?', choices=["tttt_2l_2l_4t","tttt_2l_2l_ttbb","tttt_2l_2l_ttcc","tttt_2l_2l_ttlight"])
+argParser.add_argument('--cut_point',        action='store',      default=None,                            help= 'Where do you want the cut?')
+argParser.add_argument('--DY',            action='store', default='ht', help= 'what kind of DY do you want?')
 args = argParser.parse_args()
 
 #Directory naming parser options
@@ -80,6 +85,7 @@ variations = ['LeptonSFDown',
 	      'noTopPtReweight',
 	      'HDampUp',
 	      'HDampDown',
+	      'noDYISRReweight',
              ]
 
 jesUncertainties = [
@@ -140,6 +146,9 @@ if noData:
 else:
     logger.info( "Data included in analysis cycle")
 
+if not args.mva_cut is None:
+    logger.info("Applying a cut on events based on {} with threshold {}".format(args.mva_cut, args.cut_point))
+
 if args.era == '2016_preVFP':
         from tttt.samples.nano_mc_private_UL20_Summer16_preVFP_postProcessed_dilep import *
         from tttt.samples.nano_data_private_UL20_Run2016_preVFP_postProcessed_dilep import Run2016_preVFP as data_sample
@@ -186,7 +195,10 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 #Merge simulated background samples
-mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DY_inclusive, DiBoson]
+mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DiBoson]
+if args.DY == 'ht': mc += [DY]
+elif args.DY == 'inclusive': mc += [DY_inclusive]
+
 #Add the data
 if not noData:
     data_sample.name = "data"
@@ -432,6 +444,43 @@ def getTheorySystematics(event,sample):
 
 sequence.append( getTheorySystematics )
 
+def cut_MVA(event,sample):
+    if not args.mva_cut is None:
+	this = getattr(event, args.mva_cut)
+	if args.cut_point == "0.1m":
+		setattr(event,"cut_tttt_MVA",1 if this<0.1 else 0)
+	elif args.cut_point == "0.1p":
+		setattr(event,"cut_tttt_MVA",1 if this>=0.1 else 0)
+	elif args.cut_point == "0.2m":
+		setattr(event,"cut_tttt_MVA",1 if this<0.2 else 0)
+	elif args.cut_point == "0.2p":
+		setattr(event,"cut_tttt_MVA",1 if this>=0.2 else 0)
+    else: setattr(event,"cut_tttt_MVA",1)
+
+sequence.append(cut_MVA)
+
+# ISR jets and corrector
+isrCorrector = ISRCorrector()
+
+def make_ISRJet(event, sample):
+    event.jet40 = filter(lambda j: j['pt']>40 , event.jets)
+    cos_pt, sin_pt = 0., 0.
+    for j in event.jet40:
+        cos_pt += j['pt']*cos(j['phi'])
+        sin_pt += j['pt']*sin(j['phi'])
+    event.ISRJet_pt40 = sqrt(cos_pt**2 + sin_pt**2)
+
+sequence.append(make_ISRJet)
+
+def makeISRSF( event, sample ):
+    event.reweightISR = 1
+    if not args.sys == "noDYISRReweight" and args.DY=='ht':
+        if sample.name.startswith("DY"):
+            event.reweightISR = isrCorrector.getSF( event.nJetGood, event.ISRJet_pt40 ) 
+
+sequence.append( makeISRSF )
+
+
 #TTree formulas
 
 ttreeFormulas = { "nJetGood_pt30" : "Sum$(JetGood_pt>30)",
@@ -453,6 +502,14 @@ ttreeFormulas = { "nJetGood_pt30" : "Sum$(JetGood_pt>30)",
                   "nBTag_loose_pt50"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>50)",
                   "nBTag_medium_pt50"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>50)" ,
                   "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)",
+                  "htPt40" : "Sum$(JetGood_pt*(JetGood_pt>40))",
+                  "htPt50" : "Sum$(JetGood_pt*(JetGood_pt>50))",
+                  "htPt80" : "Sum$(JetGood_pt*(JetGood_pt>80))",
+#                  "ISRJet_pt40":    "sqrt(Sum$(JetGood_pt*cos(JetGood_phi)*(JetGood_pt>40))**2 + Sum$(JetGood_pt*sin(JetGood_phi)*(JetGood_pt>40))**2)",
+                  "ISRJet_pt50":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>50))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>50))**2)",
+                  "ISRJet_pt60":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>60))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>60))**2)",
+                  "ISRJet_pt80":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>80))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>80))**2)",
+
 		}
 
 if args.sys in jetVariations:
@@ -462,6 +519,7 @@ if args.sys in jetVariations:
 ##list all the reweights
 weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger','reweightScale','reweightPS','reweightPDF']
 if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
+if not args.sys == "noDYISRReweight": weightnames += ['reweightISR']
 
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
@@ -529,7 +587,8 @@ for i_mode, mode in enumerate(allModes):
         return w
 
     # This weight goes to the plot - do not reweight the sample with it
-    weight_ = lambda event, sample: event.weight if sample.isData else event.weight
+    #weight_ = lambda event, sample: event.weight if sample.isData else event.weight
+    weight_ = lambda event, sample: event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
 
     #Plot styling
     for sample in mc: sample.style = styles.fillStyle(sample.color)
@@ -901,6 +960,61 @@ for i_mode, mode in enumerate(allModes):
       name = 'htb', attribute = lambda event, sample: sum( j['pt'] for j in event.bJets ),
       binning=[1500/50,0,1500],
     ))
+    
+    plots.append(Plot(
+      texX = 'H_{T} from p_{T}(j)>40 ', texY = 'Number of Events / 100 GeV',
+      name = 'htPt40', attribute = lambda event, sample: event.htPt40,
+      binning=[2500/100,0,2500],
+    ))
+
+    plots.append(Plot(
+      texX = 'H_{T} from p_{T}(j)>50 ', texY = 'Number of Events / 100 GeV',
+      name = 'htPt50', attribute = lambda event, sample: event.htPt50,
+      binning=[2500/100,0,2500],
+    ))
+
+    plots.append(Plot(
+      texX = 'H_{T} from p_{T}(j)>80 ', texY = 'Number of Events / 100 GeV',
+      name = 'htPt80', attribute = lambda event, sample: event.htPt80,
+      binning=[2500/100,0,2500],
+    ))
+
+#    plots.append(Plot(
+#      texX = ' p_{T}(ISR j)>40 ', texY = 'Number of Events / 100 GeV',
+#      name = 'ISRJet_pt40', attribute = lambda event, sample: event.ISRJet_pt40,
+#      binning=[600/30,0,600],
+#    ))
+    plots.append(Plot(
+      texX = ' p_{T}(ISR j)>50 ', texY = 'Number of Events / 100 GeV',
+      name = 'ISRJet_pt50', attribute = lambda event, sample: event.ISRJet_pt50,
+      binning=[600/30,0,600],
+    ))
+    plots.append(Plot(
+      texX = ' p_{T}(ISR j)>60 ', texY = 'Number of Events / 100 GeV',
+      name = 'ISRJet_pt60', attribute = lambda event, sample: event.ISRJet_pt60,
+      binning=[600/30,0,600],
+    ))
+    plots.append(Plot(
+      texX = ' p_{T}(ISR j)>80 ', texY = 'Number of Events / 100 GeV',
+      name = 'ISRJet_pt80', attribute = lambda event, sample: event.ISRJet_pt80,
+      binning=[600/30,0,600],
+    ))
+    
+    plots.append(Plot(
+      name = "ISRJet_pt40",
+      texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
+      attribute = lambda event, sample: event.ISRJet_pt40,
+      binning=Binning.fromThresholds([0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340,360,380,400,450,500,600,800,1000,2000]),
+      #binning=[600/30,0,600],
+    ))
+    
+    plots.append(Plot(
+      name = "ISRJet_pt40_course",
+      texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
+      attribute = lambda event, sample: event.ISRJet_pt40,
+      binning=Binning.fromThresholds([0,50,100,150,200,250,300,350,400,450,500,600,800,1000,2000]),
+      #binning=[600/30,0,600],
+    ))
 
     plots.append(Plot(
       texX = 'p_{T}(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',
@@ -1145,7 +1259,7 @@ if not os.path.exists(plot_dir):
 
 outfilename = plot_dir+'/tttt_'+args.sys+'.root'
 logger.info( "Saving in %s", outfilename )
-outfile = ROOT.TFile(outfilename, 'recreate')
+outfile = ROOT.TFile(outfilename, 'recreate')#'update'
 outfile.cd()
 for plot in allPlots[allModes[0]]:
     for idx, histo_list in enumerate(plot.histos):
