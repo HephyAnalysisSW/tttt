@@ -27,6 +27,7 @@ python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose
 python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose --skim dilep --era UL2016 --processingEra tttt_v8 --sample DYJetsToLL_M4to50_HT600toInf #SPLIT11
 python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose --skim dilep --era UL2016 --processingEra tttt_v8 --sample DYJetsToLL_M10to50_LO #SPLIT34
 python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose --skim dilep --era UL2016 --processingEra tttt_v8 --sample DYJetsToLL_M50 #SPLIT50
+python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose --skim dilep --era UL2016 --processingEra tttt_v8 --sample DYJetsToLL_M50_NLO #SPLIT41
 
 
 python nanoPostProcessing.py  --overwrite --forceProxy --central --btag_WP loose --skim dilep --era UL2016 --processingEra tttt_v8 --sample WZTo3LNu #SPLIT31

@@ -116,10 +116,29 @@ for i_bin, (lower, higher) in enumerate(isrJetPtBins):
     if higher>0:
         selection.append( "{isr}<{higher}".format(isr=isr, higher=higher) )
 
-    hist_ht[(lower, higher)] = sample.get1DHistoFromDraw('ht', [40, 500, 2500], selectionString = "&&".join(selection)) 
-    hist_ht[(lower, higher)].legendText = repr((lower, higher))
+    hist_ht[(lower, higher)] = sample.get1DHistoFromDraw('ht', [40, 500, 2500], selectionString = "&&".join(selection), weightString="weight") 
+    hist_ht[(lower, higher)].legendText = str(lower)+"\leq p_{T}(ISR)" + ("<"+str(higher) if higher>0 else "") 
     hist_ht[(lower, higher)].style = styles.lineStyle( ROOT.kMagenta-10+i_bin )
 
 p = Plot.fromHisto( "ht", histos = [[hist_ht[isrJetPtBin]] for isrJetPtBin in isrJetPtBins ], texX = "H_{T} (GeV)") 
 
-plotting.draw( p, plot_directory = plot_directory, legend = ([0.15,0.75, 0.85, 0.94], 2)) 
+plotting.draw( p, plot_directory = plot_directory, legend = ([0.15,0.75, 0.85, 0.90], 2), yRange=(0.02, "auto")) 
+
+
+htBins = ( (500, 700), (700,900), (1000,1100), (1100, 1500 ), (1500, -1))
+
+hist_isr = {}
+for i_bin, (lower, higher) in enumerate(htBins):
+    selection = []
+    if lower>0:
+        selection.append( "ht>={lower}".format(lower=lower) )
+    if higher>0:
+        selection.append( "ht<{higher}".format(higher=higher) )
+
+    hist_isr[(lower, higher)] = sample.get1DHistoFromDraw(isr, [40, 0, 1500], selectionString = "&&".join(selection), weightString="weight") 
+    hist_isr[(lower, higher)].legendText = str(lower)+"\leq H_{T}" + ("<"+str(higher) if higher>0 else "") 
+    hist_isr[(lower, higher)].style = styles.lineStyle( ROOT.kMagenta-10+i_bin )
+
+p = Plot.fromHisto( "ISRJetPt", histos = [[hist_isr[htBin]] for htBin in htBins ], texX = "p_{T}(ISR) (GeV)") 
+
+plotting.draw( p, plot_directory = plot_directory, legend = ([0.15,0.75, 0.85, 0.90], 2), yRange=(0.02, "auto")) 
