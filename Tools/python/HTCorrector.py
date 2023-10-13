@@ -7,10 +7,10 @@ logger = logging.getLogger(__name__)
 
 directory = os.path.expandvars("$CMSSW_BASE/src/tttt/Tools/data/DYReweighting/")
 
-f_4to5 = "trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1to2-ht500_ISRJet_pt40.root"
-f_6p   = "trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1to2-ht500_ISRJet_pt40.root"
+f_4to5 = "trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet4to5-btag1to2-ht500_htPt30.root"
+f_6p   = "trg-dilep-OS-minDLmass20-onZ1-lepVeto2-njet6p-btag1to2-ht500_htPt30.root"
 
-class ISRCorrector:
+class HTCorrector:
     def __init__(self, era = None, MC = "HTbinned"):
         ''' apply constant SF to leading lepton, if SF is larger than uncertainty inflate uncertainty accordingly
         '''
@@ -50,12 +50,12 @@ class ISRCorrector:
                 self.h_reweight[name] = data 
                 self.h_reweight[name].Divide(DYMC)
 
-        self.max_isrJetPt = self.h_reweight['4to5'].GetXaxis().GetXmax()
+        self.max_htPt30 = self.h_reweight['4to5'].GetXaxis().GetXmax()
 
-    def getSF(self, nJetGood, isrJetPt):
+    def getSF(self, nJetGood, htPt30):
 
-        if isrJetPt<0: isrJetPt=0
-        if isrJetPt>=self.max_isrJetPt: isrJetPt = self.max_isrJetPt-.1
+        if htPt30<0: htPt30=0
+        if htPt30>=self.max_htPt30: htPt30 = self.max_htPt30-.1
 
         if nJetGood>=4 and nJetGood<=5:
             h = self.h_reweight["4to5"] 
@@ -65,10 +65,11 @@ class ISRCorrector:
             logger.warning("No ISR jet correction for nJet",nJetGood)
             return 1 
 
-        return h.GetBinContent(h.FindBin(isrJetPt))
+        print (h.GetBinContent(h.FindBin(htPt30)))
+        return h.GetBinContent(h.FindBin(htPt30))
 
 if __name__=="__main__":
-    corr = ISRCorrector()
+    corr = HTCorrector()
 
     import tttt.Tools.user as user
     from RootTools.core.standard import *
@@ -79,7 +80,7 @@ if __name__=="__main__":
     corr.h_reweight["6p"].legendText = "6p"
     corr.h_reweight["4to5"].style = styles.lineStyle(ROOT.kBlue)
     corr.h_reweight["6p"].style = styles.lineStyle(ROOT.kRed)
-    plot = Plot.fromHisto( "isrJetReweight", [[corr.h_reweight["4to5"]], [corr.h_reweight["6p"]]], texX="ISR Jet pt 40", texY="reweight")
+    plot = Plot.fromHisto( "htPt30Reweight", [[corr.h_reweight["4to5"]], [corr.h_reweight["6p"]]], texX="HTPt30", texY="reweight")
     plotting.draw(plot, plot_directory = os.path.join( user.plot_directory, "isrJetReweighting", ), copyIndexPHP=True, logY=False, yRange=(0,1.5))
 
 #OBJ: TList  TList   Doubly linked list : 0

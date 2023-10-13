@@ -47,6 +47,7 @@ argParser.add_argument('--selection',      action='store', default='trg-dilepL-O
 argParser.add_argument('--era',           action='store', default='RunII', help= 'Plot year split or inclusively')
 argParser.add_argument('--DY',            action='store', default='ht', help= 'what kind of DY do you want?')
 argParser.add_argument('--reweightISR',   action='store_true', help= 'reweight ISR?')
+argParser.add_argument('--reweightHT',    action='store_true', help= 'reweight HT?')
 args = argParser.parse_args()
 
 # DIrectory naming parser options
@@ -57,6 +58,10 @@ if args.reweightISR:
     args.plot_directory += "_rwISR"
     from tttt.Tools.ISRCorrector import ISRCorrector
     isrCorrector = ISRCorrector()
+if args.reweightHT:
+    args.plot_directory += "_rwHT"
+    from tttt.Tools.HTCorrector import HTCorrector
+    htCorrector = HTCorrector()
 
 #Logger
 import tttt.Tools.logger as logger
@@ -292,12 +297,20 @@ def make_manyJets(event, sample):
 sequence.append(make_manyJets)
 
 def makeISRSF( event, sample ):
-    event.reweightISR = 1
+    event.reweightDY = 1
     if args.reweightISR and args.DY=='ht':
         if sample.name.startswith("DY"):
-            event.reweightISR = isrCorrector.getSF( event.nJetGood, event.ISRJetPt40 )
+            event.reweightDY = isrCorrector.getSF( event.nJetGood, event.ISRJetPt40 )
 
 sequence.append( makeISRSF )
+
+def makeHTSF( event, sample ):
+    event.reweightDY = 1
+    if args.reweightHT and args.DY=='ht':
+        if sample.name.startswith("DY"):
+            event.reweightDY = htCorrector.getSF( event.nJetGood, event.htPt30 )
+
+sequence.append( makeHTSF )
 
 #Let's make a function that provides string-based lepton selection
 mu_string  = lepString('mu','VL')
@@ -394,7 +407,7 @@ for i_mode, mode in enumerate(allModes):
     #Apply reweighting to MC for specific detector effects
     for sample in mc:
       sample.read_variables = read_variables_MC
-      sample.weight = lambda event, sample: event.reweightBTagSF_central*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger*event.reweightLeptonSF*event.reweightTopPt*event.reweightISR
+      sample.weight = lambda event, sample: event.reweightBTagSF_central*event.reweightPU*event.reweightL1Prefire*event.reweightTrigger*event.reweightLeptonSF*event.reweightTopPt*event.reweightDY
 
     #Stack : Define what we want to see.
     if not args.noData:
@@ -716,7 +729,8 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
       texX = 'H_{T} (GeV)', texY = 'Number of Events / 100 GeV',
       name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
-      binning=[2500/100,0,1500],
+      #binning=[2500/100,0,1500],
+      binning=[2000/200,500,2500],
     ))
     
     plots.append(Plot(
@@ -746,19 +760,19 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
       texX = 'H_{T} from p_{T}(j)>30 ', texY = 'Number of Events / 100 GeV',
       name = 'htPt30', attribute = lambda event, sample: event.htPt30,
-      binning=[2500/100,0,2500],
+      binning=[2000/200,500,2500],
     ))
 
     plots.append(Plot(
       texX = 'H_{T} from p_{T}(j)>40 ', texY = 'Number of Events / 100 GeV',
       name = 'htPt40', attribute = lambda event, sample: event.htPt40,
-      binning=[2500/100,0,2500],
+      binning=[2000/200,500,2500],
     ))
 
     plots.append(Plot(
       texX = 'H_{T} from p_{T}(j)>80 ', texY = 'Number of Events / 100 GeV',
       name = 'htPt80', attribute = lambda event, sample: event.htPt80,
-      binning=[2500/100,0,2500],
+      binning=[2000/200,500,2500],
     ))
 
     plots.append(Plot(
