@@ -65,7 +65,7 @@ class HTCorrector:
             logger.warning("No ISR jet correction for nJet",nJetGood)
             return 1 
 
-        print (h.GetBinContent(h.FindBin(htPt30)))
+        #print (h.GetBinContent(h.FindBin(htPt30)))
         return h.GetBinContent(h.FindBin(htPt30))
 
 if __name__=="__main__":

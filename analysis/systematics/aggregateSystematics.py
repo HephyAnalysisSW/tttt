@@ -50,12 +50,12 @@ variations = ['LeptonSFUp',
               ]
 nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
-scaleWeights = ["scaleShapeDown","scaleShapeUp"]#, "ScaleDownNone", "ScaleNoneDown", "ScaleNoneUp", "ScaleUpNone"
+scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp","TTscaleShapeDown","TTscaleShapeUp"]#, "ScaleDownNone", "ScaleNoneDown", "ScaleNoneUp", "ScaleUpNone"
 PSWeights = ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]
 
 variations +=  scaleWeights + PSWeights + PDFWeights
 
-samples = [ "TTLep_bb", "TTLep_cc", "TTLep_other", "ST_tch", "ST_twch", "TTW", "TTH", "TTZ", "TTTT", "DY_inclusive", "DiBoson", "data"]
+samples = [ "TTLep_bb", "TTLep_cc", "TTLep_other", "ST_tch", "ST_twch", "TTW", "TTH", "TTZ", "TTTT", "DY", "DiBoson", "data"]
 
 
 #separate the shape and normalization in scale unc.
@@ -65,29 +65,52 @@ for look in ["ScaleDownDown","ScaleUpUp"]:
     # Output files
     if look is "ScaleUpUp": newName = "scaleShapeUp"
     elif look is "ScaleDownDown" : newName = "scaleShapeDown"
-    modified_scale = ROOT.TFile(os.path.join(directory, "tttt_"+newName+".root"), "RECREATE")
+    modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+newName+".root"), "RECREATE")
+    modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+newName+".root"), "RECREATE")
     ratio = open(os.path.join(directory, "scale_ratios_"+newName+".txt"), "w")
 
     #input files
     scalefile = ROOT.TFile(os.path.join(directory,"tttt_"+look+".root"), "READ")
     centralfile = ROOT.TFile(os.path.join(directory,"tttt_central.root"), "READ")
     
+    #for ttbar
     #rescale the histograms and write to new file
     for hKey in scalefile.GetListOfKeys():
     	SMhKey = centralfile.GetKey(hKey.GetName())
     	h = hKey.ReadObj()
     	SMh = SMhKey.ReadObj()
+    	modified_scale_tt.cd() 
     	if not h.Integral()==0:
-    	  modified_scale.cd()
     	  scale_factor = SMh.Integral()/h.Integral() 
     	  if hKey.GetName().startswith("ht_"):
     	  	ratio.write(h.GetName()+": "+str(scale_factor)+"\n")
-    	  h.Scale(scale_factor)
+	  if "DY" in hKey.GetName():
+		h = SMh
+	  else:	h.Scale(scale_factor)
     	  h.Write(hKey.GetName())
+    print "finished the ttbar file"
+    
+    #for DY
+    #rescale the histograms and write to new file
+    for hKey in scalefile.GetListOfKeys():
+    	SMhKey = centralfile.GetKey(hKey.GetName())
+    	h = hKey.ReadObj()
+    	SMh = SMhKey.ReadObj()
+    	modified_scale_DY.cd() 
+    	if not h.Integral()==0:
+    	  scale_factor = SMh.Integral()/h.Integral() 
+#    	  if hKey.GetName().startswith("ht_"):
+#    	  	ratio.write(h.GetName()+": "+str(scale_factor)+"\n")
+	  if "DY" in hKey.GetName():
+	  	h.Scale(scale_factor)
+	  else : h = SMh
+    	  h.Write(hKey.GetName())
+    print "finished the DY file"
     
     centralfile.Close()
     scalefile.Close()
-    modified_scale.Close()
+    modified_scale_tt.Close()
+    modified_scale_DY.Close()
     ratio.close()
 
 #Create the root file combine desires
@@ -98,6 +121,7 @@ for theChosenOne in theYounglings :
 	for variation in variations:
 	    inFile = ROOT.TFile(os.path.join(directory,"tttt_"+variation+".root"), "READ")
 	    for key in inFile.GetListOfKeys():
+	      #if key.GetName()=="ht__data": print "found",key.GetName()
 	      if objName == key.GetName():
 		obj = key.ReadObj()
 	        category.cd()

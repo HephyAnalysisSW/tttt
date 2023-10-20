@@ -24,6 +24,7 @@ from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList, isBJet
 from tttt.Tools.helpers                  import getObjDict
 from tttt.Tools.ISRCorrector 		 import ISRCorrector
+from tttt.Tools.HTCorrector 		 import HTCorrector
 
 #Analysis Tools
 from Analysis.Tools.helpers              import deltaPhi, deltaR
@@ -133,8 +134,8 @@ variations += jetVariations + scaleWeights + PSWeights + PDFWeights
 if args.sys not in variations:
     if args.sys == "central":
         logger.info( "Running central samples (no sys variation)")
-        #noData = False
-	noData = True
+        noData = False
+	#noData = True
     else:
         raise RuntimeError( "Variation %s not among the known: %s", args.sys, ",".join( variations ) )
 else:
@@ -148,6 +149,7 @@ else:
 
 if not args.mva_cut is None:
     logger.info("Applying a cut on events based on {} with threshold {}".format(args.mva_cut, args.cut_point))
+    args.plot_directory += "_mvaCut"+args.cut_point
 
 if args.era == '2016_preVFP':
         from tttt.samples.nano_mc_private_UL20_Summer16_preVFP_postProcessed_dilep import *
@@ -459,56 +461,86 @@ def cut_MVA(event,sample):
 
 sequence.append(cut_MVA)
 
+def make_manyJets(event, sample):
+    thresholds = [30, 40, 50, 80, 100, 150, 200]
+    # threshold_jets = {}
+    for threshold in thresholds:
+        # jet_name = 'jet{}'.format(threshold)
+        filtered_jets = [j for j in event.jets if j['pt'] > threshold]
+        # threshold_jets[jet_name] = filtered_jets
+        ht_threshold = sum(jet['pt'] for jet in filtered_jets)#event.jets if jet['pt'] > threshold)
+        setattr(event, 'nJetGood_pt{}'.format(threshold), len(filtered_jets))
+	#setattr(event, 'nBTag_pt{}'.format(threshold), len(filtered_jets))
+        setattr(event, 'htPt{}'.format(threshold), ht_threshold)
+        cos_pt, sin_pt = 0., 0.
+        for j in filtered_jets:
+            cos_pt += j['pt'] * cos(j['phi'])
+            sin_pt += j['pt'] * sin(j['phi'])
+
+        setattr(event, 'ISRJet_pt{}'.format(threshold), sqrt(cos_pt**2 + sin_pt**2))
+
+sequence.append(make_manyJets)
+
 # ISR jets and corrector
 isrCorrector = ISRCorrector()
+htCorrector = HTCorrector()
 
-def make_ISRJet(event, sample):
-    event.jet40 = filter(lambda j: j['pt']>40 , event.jets)
-    cos_pt, sin_pt = 0., 0.
-    for j in event.jet40:
-        cos_pt += j['pt']*cos(j['phi'])
-        sin_pt += j['pt']*sin(j['phi'])
-    event.ISRJet_pt40 = sqrt(cos_pt**2 + sin_pt**2)
-
-sequence.append(make_ISRJet)
+#def make_ISRJet(event, sample):
+#    event.jet40 = filter(lambda j: j['pt']>40 , event.jets)
+#    cos_pt, sin_pt = 0., 0.
+#    for j in event.jet40:
+#        cos_pt += j['pt']*cos(j['phi'])
+#        sin_pt += j['pt']*sin(j['phi'])
+#    event.ISRJet_pt40 = sqrt(cos_pt**2 + sin_pt**2)
+#
+#sequence.append(make_ISRJet)
 
 def makeISRSF( event, sample ):
-    event.reweightISR = 1
+    event.reweightDY = 1
     if not args.sys == "noDYISRReweight" and args.DY=='ht':
         if sample.name.startswith("DY"):
-            event.reweightISR = isrCorrector.getSF( event.nJetGood, event.ISRJet_pt40 ) 
+            event.reweightDY = isrCorrector.getSF( event.nJetGood, event.ISRJet_pt40 ) 
 
-sequence.append( makeISRSF )
+#sequence.append( makeISRSF )
+
+def makeHTSF( event, sample ):
+    event.reweightDY = 1
+    if not args.sys == "noDYISRReweight" and args.DY=='ht':
+        if sample.name.startswith("DY"):
+            event.reweightDY = htCorrector.getSF( event.nJetGood, event.htPt30 )
+
+sequence.append( makeHTSF )
 
 
 #TTree formulas
 
-ttreeFormulas = { "nJetGood_pt30" : "Sum$(JetGood_pt>30)",
-                  "nJetGood_pt40" : "Sum$(JetGood_pt>40)",
-                  "nJetGood_pt50" : "Sum$(JetGood_pt>50)",
-                  "nJetGood_pt80" : "Sum$(JetGood_pt>80)",
-                  "nJetGood_pt100" : "Sum$(JetGood_pt>100)",
-                  "nJetGood_pt150" : "Sum$(JetGood_pt>150)",
-                  "nJetGood_pt200" : "Sum$(JetGood_pt>200)",
-                  "nBTag_loose"   : "Sum$(JetGood_isBJet_loose)",
-                  "nBTag_medium"  : "Sum$(JetGood_isBJet_medium)" ,
-                  "nBTag_tight"   : "Sum$(JetGood_isBJet_tight)" ,
-                  "nBTag_loose_pt30"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>30)",
-                  "nBTag_medium_pt30"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>30)" ,
-                  "nBTag_tight_pt30"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>30)"  ,
-                  "nBTag_loose_pt40"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>40)",
-                  "nBTag_medium_pt40"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>40)" ,
-                  "nBTag_tight_pt40"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>40)"  ,
-                  "nBTag_loose_pt50"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>50)",
-                  "nBTag_medium_pt50"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>50)" ,
-                  "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)",
-                  "htPt40" : "Sum$(JetGood_pt*(JetGood_pt>40))",
-                  "htPt50" : "Sum$(JetGood_pt*(JetGood_pt>50))",
-                  "htPt80" : "Sum$(JetGood_pt*(JetGood_pt>80))",
+ttreeFormulas = { 
+#		  "nJetGood_pt30" : "Sum$(JetGood_pt>30)",
+#                  "nJetGood_pt40" : "Sum$(JetGood_pt>40)",
+#                  "nJetGood_pt50" : "Sum$(JetGood_pt>50)",
+#                  "nJetGood_pt80" : "Sum$(JetGood_pt>80)",
+#                  "nJetGood_pt100" : "Sum$(JetGood_pt>100)",
+#                  "nJetGood_pt150" : "Sum$(JetGood_pt>150)",
+#                  "nJetGood_pt200" : "Sum$(JetGood_pt>200)",
+#                  "nBTag_loose"   : "Sum$(JetGood_isBJet_loose)",
+#                  "nBTag_medium"  : "Sum$(JetGood_isBJet_medium)" ,
+#                  "nBTag_tight"   : "Sum$(JetGood_isBJet_tight)" ,
+#                  "nBTag_loose_pt30"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>30)",
+#                  "nBTag_medium_pt30"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>30)" ,
+#                  "nBTag_tight_pt30"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>30)"  ,
+#                  "nBTag_loose_pt40"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>40)",
+#                  "nBTag_medium_pt40"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>40)" ,
+#                  "nBTag_tight_pt40"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>40)"  ,
+#                  "nBTag_loose_pt50"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>50)",
+#                  "nBTag_medium_pt50"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>50)" ,
+#                  "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)",
+#                  "htPt40" : "Sum$(JetGood_pt*(JetGood_pt>40))",
+#                  "htPt50" : "Sum$(JetGood_pt*(JetGood_pt>50))",
+#                  "htPt80" : "Sum$(JetGood_pt*(JetGood_pt>80))",
 #                  "ISRJet_pt40":    "sqrt(Sum$(JetGood_pt*cos(JetGood_phi)*(JetGood_pt>40))**2 + Sum$(JetGood_pt*sin(JetGood_phi)*(JetGood_pt>40))**2)",
-                  "ISRJet_pt50":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>50))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>50))**2)",
-                  "ISRJet_pt60":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>60))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>60))**2)",
-                  "ISRJet_pt80":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>80))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>80))**2)",
+#                  "ISRJet_pt50":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>50))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>50))**2)",
+#                  "ISRJet_pt60":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>60))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>60))**2)",
+#                  "ISRJet_pt80":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>80))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>80))**2)",
 
 		}
 
@@ -519,7 +551,7 @@ if args.sys in jetVariations:
 ##list all the reweights
 weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger','reweightScale','reweightPS','reweightPDF']
 if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
-if not args.sys == "noDYISRReweight": weightnames += ['reweightISR']
+if not args.sys == "noDYISRReweight": weightnames += ['reweightDY']
 
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
@@ -873,86 +905,92 @@ for i_mode, mode in enumerate(allModes):
       binning=[8,3.5,11.5],
     ))
 
-    plots.append(Plot(
-      name = "nBTag_loose_pt30",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_loose_pt30, #nJetSelected_pt>30
-      binning=[7,-0.5,6.5],
-    ))
-
-    plots.append(Plot(
-      name = "nBTag_loose_pt40",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_loose_pt40, #nJetSelected_pt>40
-      binning=[7,-0.5,6.5],
-    ))
-
-    plots.append(Plot(
-      name = "nBTag_loose_pt50",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_loose_pt50, #nJetSelected_pt>50
-      binning=[7,-0.5,6.5],
-    ))
-
-    plots.append(Plot(
-      name = "nBTag_medium_pt30",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_medium_pt30, #nJetSelected_pt>30
-      binning=[7,-0.5,6.5],
-    ))
-
-    plots.append(Plot(
-      name = "nBTag_medium_pt40",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_medium_pt40, #nJetSelected_pt>40
-      binning=[7,-0.5,6.5],
-    ))
-
-    plots.append(Plot(
-      name = "nBTag_medium_pt50",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_medium_pt50, #nJetSelected_pt>50
-      binning=[7,-0.5,6.5],
-    ))
-
-    plots.append(Plot(
-      name = "nBTag_tight_pt30",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_tight_pt30, #nJetSelected_pt>30
-      binning=[7,-0.5,6.5],
-    ))
-    
-    plots.append(Plot(
-      name = "nBTag_tight",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_tight, #nBJetTight
-      binning=[7, -0.5,6.5],
-    ))
-
-    plots.append(Plot(
-      name = "nBTag_medium",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_medium, #nBJetMedium
-      binning=[7, -0.5,6.5],
-    ))
-
-    plots.append(Plot(
-      name = "nBTag_loose",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nBTag_loose, #nBJetLoose
-      binning=[7, -0.5,6.5],
-    ))
+#    plots.append(Plot(
+#      name = "nBTag_loose_pt30",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_loose_pt30, #nJetSelected_pt>30
+#      binning=[7,-0.5,6.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nBTag_loose_pt40",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_loose_pt40, #nJetSelected_pt>40
+#      binning=[7,-0.5,6.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nBTag_loose_pt50",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_loose_pt50, #nJetSelected_pt>50
+#      binning=[7,-0.5,6.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nBTag_medium_pt30",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_medium_pt30, #nJetSelected_pt>30
+#      binning=[7,-0.5,6.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nBTag_medium_pt40",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_medium_pt40, #nJetSelected_pt>40
+#      binning=[7,-0.5,6.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nBTag_medium_pt50",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_medium_pt50, #nJetSelected_pt>50
+#      binning=[7,-0.5,6.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nBTag_tight_pt30",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_tight_pt30, #nJetSelected_pt>30
+#      binning=[7,-0.5,6.5],
+#    ))
+#    
+#    plots.append(Plot(
+#      name = "nBTag_tight",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_tight, #nBJetTight
+#      binning=[7, -0.5,6.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nBTag_medium",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_medium, #nBJetMedium
+#      binning=[7, -0.5,6.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nBTag_loose",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nBTag_loose, #nBJetLoose
+#      binning=[7, -0.5,6.5],
+#    ))
 
     plots.append(Plot(
       texX = 'N_{b-tag}', texY = 'Number of Events',
       attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
       binning=[7, -0.5,6.5],
     ))
+    
+    plots.append(Plot(
+      texX = 'H_{T} (GeV)', texY = 'Number of Events / 40 Gev',
+      name = 'ht_fineBinning', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
+      binning=[2000/50,500,2500],
+    ))
 
     plots.append(Plot(
-      texX = 'H_{T} (GeV)', texY = 'Number of Events / 30 GeV',
+      texX = 'H_{T} (GeV)', texY = 'Number of Events',
       name = 'ht', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
-      binning=[1500/50,0,1500],
+      binning=[2000/200,500,2500],
     ))
 
     plots.append(Plot(
@@ -962,38 +1000,41 @@ for i_mode, mode in enumerate(allModes):
     ))
     
     plots.append(Plot(
+      texX = 'H_{T} from p_{T}(j)>30 ', texY = 'Number of Events / 100 GeV',
+      name = 'htPt30', attribute = lambda event, sample: event.htPt30,
+      binning=[2500/200,500,2500],
+    ))
+
+    plots.append(Plot(
       texX = 'H_{T} from p_{T}(j)>40 ', texY = 'Number of Events / 100 GeV',
       name = 'htPt40', attribute = lambda event, sample: event.htPt40,
-      binning=[2500/100,0,2500],
+      binning=[2500/200,500,2500],
     ))
 
     plots.append(Plot(
       texX = 'H_{T} from p_{T}(j)>50 ', texY = 'Number of Events / 100 GeV',
       name = 'htPt50', attribute = lambda event, sample: event.htPt50,
-      binning=[2500/100,0,2500],
+      binning=[2500/200,500,2500],
     ))
 
     plots.append(Plot(
       texX = 'H_{T} from p_{T}(j)>80 ', texY = 'Number of Events / 100 GeV',
       name = 'htPt80', attribute = lambda event, sample: event.htPt80,
-      binning=[2500/100,0,2500],
+      binning=[2500/200,500,2500],
+    ))
+ 
+    plots.append(Plot(
+      texX = ' p_{T}(ISR j)>30 ', texY = 'Number of Events / 100 GeV',
+      name = 'ISRJet_pt30', attribute = lambda event, sample: event.ISRJet_pt30,
+      binning=[600/30,0,600],
     ))
 
-#    plots.append(Plot(
-#      texX = ' p_{T}(ISR j)>40 ', texY = 'Number of Events / 100 GeV',
-#      name = 'ISRJet_pt40', attribute = lambda event, sample: event.ISRJet_pt40,
-#      binning=[600/30,0,600],
-#    ))
     plots.append(Plot(
       texX = ' p_{T}(ISR j)>50 ', texY = 'Number of Events / 100 GeV',
       name = 'ISRJet_pt50', attribute = lambda event, sample: event.ISRJet_pt50,
       binning=[600/30,0,600],
     ))
-    plots.append(Plot(
-      texX = ' p_{T}(ISR j)>60 ', texY = 'Number of Events / 100 GeV',
-      name = 'ISRJet_pt60', attribute = lambda event, sample: event.ISRJet_pt60,
-      binning=[600/30,0,600],
-    ))
+    
     plots.append(Plot(
       texX = ' p_{T}(ISR j)>80 ', texY = 'Number of Events / 100 GeV',
       name = 'ISRJet_pt80', attribute = lambda event, sample: event.ISRJet_pt80,
