@@ -50,68 +50,85 @@ variations = ['LeptonSFUp',
               ]
 nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
-scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp","TTscaleShapeDown","TTscaleShapeUp"]#, "ScaleDownNone", "ScaleNoneDown", "ScaleNoneUp", "ScaleUpNone"
-PSWeights = ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]
+scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp","TTscaleShapeDown","TTscaleShapeUp","DYrenormalizationShapeUp","DYrenormalizationShapeDown", "DYFactorizationShapeUp","DYFactorizationShapeDown","TTrenormalizationShapeUp","TTrenormalizationShapeDown","TTFactorizationShapeUp","TTFactorizationShapeDown"]
+PSWeights = ["DYISRUp", "DYISRDown", "DYFSRUp", "DYFSRDown" , "TTISRUp", "TTISRDown", "TTFSRUp", "TTFSRDown" ]
 
 variations +=  scaleWeights + PSWeights + PDFWeights
 
 samples = [ "TTLep_bb", "TTLep_cc", "TTLep_other", "ST_tch", "ST_twch", "TTW", "TTH", "TTZ", "TTTT", "DY", "DiBoson", "data"]
 
 
+centralfile = ROOT.TFile(os.path.join(directory,"tttt_central.root"), "READ")
+
 #separate the shape and normalization in scale unc.
-for look in ["ScaleDownDown","ScaleUpUp"]:
+scales = {"ScaleDownDown" : "scaleShapeDown",
+	  "ScaleUpUp" : "scaleShapeUp",
+	  "ScaleUpNone" : "renormalizationShapeUp",
+	  "ScaleNoneUp" : "FactorizationShapeUp",
+	  "ScaleDownNone" : "renormalizationShapeDown",
+	  "ScaleNoneDown" : "FactorizationShapeDown"} 
+ratio = open(os.path.join(directory, "scale_ratios.txt"), "w")
+for look in scales:
     print "Currently rescaling "+ look
+    ratio.write("normalization factor for "+scales[look]+":\n")
 
     # Output files
-    if look is "ScaleUpUp": newName = "scaleShapeUp"
-    elif look is "ScaleDownDown" : newName = "scaleShapeDown"
-    modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+newName+".root"), "RECREATE")
-    modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+newName+".root"), "RECREATE")
-    ratio = open(os.path.join(directory, "scale_ratios_"+newName+".txt"), "w")
+    modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
+    modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+scales[look]+".root"), "RECREATE")
 
     #input files
     scalefile = ROOT.TFile(os.path.join(directory,"tttt_"+look+".root"), "READ")
-    centralfile = ROOT.TFile(os.path.join(directory,"tttt_central.root"), "READ")
     
-    #for ttbar
     #rescale the histograms and write to new file
     for hKey in scalefile.GetListOfKeys():
     	SMhKey = centralfile.GetKey(hKey.GetName())
     	h = hKey.ReadObj()
     	SMh = SMhKey.ReadObj()
-    	modified_scale_tt.cd() 
     	if not h.Integral()==0:
     	  scale_factor = SMh.Integral()/h.Integral() 
     	  if hKey.GetName().startswith("ht_"):
-    	  	ratio.write(h.GetName()+": "+str(scale_factor)+"\n")
-	  if "DY" in hKey.GetName():
-		h = SMh
+    	  	ratio.write("\t"+h.GetName()+": "+str(scale_factor)+"\n")
+    	  #ttbar
+	  modified_scale_tt.cd() 
+	  if "DY" in hKey.GetName(): h = SMh
 	  else:	h.Scale(scale_factor)
     	  h.Write(hKey.GetName())
-    print "finished the ttbar file"
-    
-    #for DY
-    #rescale the histograms and write to new file
-    for hKey in scalefile.GetListOfKeys():
-    	SMhKey = centralfile.GetKey(hKey.GetName())
-    	h = hKey.ReadObj()
-    	SMh = SMhKey.ReadObj()
-    	modified_scale_DY.cd() 
-    	if not h.Integral()==0:
-    	  scale_factor = SMh.Integral()/h.Integral() 
-#    	  if hKey.GetName().startswith("ht_"):
-#    	  	ratio.write(h.GetName()+": "+str(scale_factor)+"\n")
-	  if "DY" in hKey.GetName():
-	  	h.Scale(scale_factor)
-	  else : h = SMh
-    	  h.Write(hKey.GetName())
-    print "finished the DY file"
-    
-    centralfile.Close()
+	  #DY
+	  modified_scale_DY.cd()
+	  h = hKey.ReadObj()
+    	  if not "DY" in hKey.GetName(): h = SMh
+	  else: h.Scale(scale_factor)
+	  h.Write(hKey.GetName())
+ 
     scalefile.Close()
     modified_scale_tt.Close()
     modified_scale_DY.Close()
-    ratio.close()
+ratio.close()
+
+
+#separate PS weights in ttbar and DY
+for PS in ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]:
+    jointPS = ROOT.TFile(os.path.join(directory,"tttt_"+PS+".root"), "READ")
+    TT_PS = ROOT.TFile(os.path.join(directory, "tttt_TT"+PS+".root"), "RECREATE") 
+    DY_PS = ROOT.TFile(os.path.join(directory, "tttt_DY"+PS+".root"), "RECREATE") 
+    for hKey in jointPS.GetListOfKeys():
+    	SMhKey = centralfile.GetKey(hKey.GetName())
+    	SMh = SMhKey.ReadObj()
+    	h = hKey.ReadObj()
+    	TT_PS.cd() 
+	if "DY" in hKey.GetName(): h = SMh
+    	h.Write(hKey.GetName())
+    	h = hKey.ReadObj()
+	DY_PS.cd()
+	if not "DY" in hKey.GetName(): h = SMh
+	h.Write(hKey.GetName())
+    print "finished the {} decorellation".format(PS)
+    jointPS.Close()
+    TT_PS.Close()
+    DY_PS.Close()
+		
+centralfile.Close()
+
 
 #Create the root file combine desires
 for theChosenOne in theYounglings :
