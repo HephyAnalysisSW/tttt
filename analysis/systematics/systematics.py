@@ -23,8 +23,8 @@ from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList, isBJet
 from tttt.Tools.helpers                  import getObjDict
-from tttt.Tools.ISRCorrector 		 import ISRCorrector
-from tttt.Tools.HTCorrector 		 import HTCorrector
+from tttt.Tools.ISRCorrector             import ISRCorrector
+from tttt.Tools.HTCorrector              import HTCorrector
 
 #Analysis Tools
 from Analysis.Tools.helpers              import deltaPhi, deltaR
@@ -39,15 +39,19 @@ argParser.add_argument('--plot_directory', action='store',      default='4t')
 argParser.add_argument('--selection',      action='store',      default='trg-dilepL-minDLmass20-offZ1-njet4p-btag2p-ht500')
 argParser.add_argument('--sys',            action='store',      default='central')
 argParser.add_argument('--era',            action='store',      default='RunII', type=str,                help="Which era?" )
-argParser.add_argument('--mva_cut',	   action='store',	default=None,				 help= 'Do you want to apply a cut on mva? which one?', choices=["tttt_2l_2l_4t","tttt_2l_2l_ttbb","tttt_2l_2l_ttcc","tttt_2l_2l_ttlight"])
-argParser.add_argument('--cut_point',        action='store',      default=None,                            help= 'Where do you want the cut?')
-argParser.add_argument('--DY',            action='store', default='ht', help= 'what kind of DY do you want?')
+argParser.add_argument('--mva_cut',        action='store',      default=None, help= 'Do you want to apply a cut on mva? which one?', choices=["tttt_2l_2l_4t","tttt_2l_2l_ttbb","tttt_2l_2l_ttcc","tttt_2l_2l_ttlight"])
+argParser.add_argument('--cut_point',      action='store',      default=None,                            help= 'Where do you want the cut?')
+argParser.add_argument('--DY',             action='store', default='ht', help= 'what kind of DY do you want?')
+argParser.add_argument('--wc',             action='store', nargs = '*', default=[], help= 'Which wilson coefficients?')
 args = argParser.parse_args()
 
 #Directory naming parser options
 
 if args.small: args.plot_directory += "_small"
-
+isEFT = len(args.wc)>0
+if isEFT:
+    args.sys='central'
+    print "Will produce templates for EFT coefficients:", args.wc
 #Logger
 
 import tttt.Tools.logger as logger
@@ -83,10 +87,10 @@ variations = ['LeptonSFDown',
               'BTagSFCfe1Up',
               'BTagSFCfe2Down',
               'BTagSFCfe2Up',
-	      'noTopPtReweight',
-	      'HDampUp',
-	      'HDampDown',
-	      'noDYISRReweight',
+              'noTopPtReweight',
+              'HDampUp',
+              'HDampDown',
+              'noDYISRReweight',
              ]
 
 jesUncertainties = [
@@ -134,8 +138,7 @@ variations += jetVariations + scaleWeights + PSWeights + PDFWeights
 if args.sys not in variations:
     if args.sys == "central":
         logger.info( "Running central samples (no sys variation)")
-        noData = False
-	#noData = True
+        noData = isEFT
     else:
         raise RuntimeError( "Variation %s not among the known: %s", args.sys, ",".join( variations ) )
 else:
@@ -197,6 +200,7 @@ TTLep_other.texName = "t#bar{t} + light j."
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 #Merge simulated background samples
+
 mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DiBoson]
 if args.DY == 'ht': mc += [DY]
 elif args.DY == 'inclusive': mc += [DY_inclusive]
@@ -208,14 +212,62 @@ if not noData:
 else:
     all_samples = mc
 
-#Luminosity scaling. Here we compute the scaling of the simulation to the data luminosity (event.weight corresponds to 1/fb for simulation, hence we divide the data lumi in pb^-1 by 1000)
+if isEFT:
+    noData      = True
+    sample      = TTbb_EFT
+    from Analysis.Tools.WeightInfo import WeightInfo
+    sample.weightInfo  = WeightInfo( sample.reweight_pkl )
+    sample.weightInfo.set_order(2)
+
+    mc          = [ sample for _ in range(sample.weightInfo.get_ndof(len(args.wc), 2)) ]
+
+    coefficient = np.zeros( len(sample.weightInfo.combinations) )
+    coefficient[0]=1
+    eft_w_points= [coefficient]
+    eft_w_names = ["central"]
+    for wc in args.wc:
+        index_lin  = sample.weightInfo.combinations.index((wc,))
+        index_quad = sample.weightInfo.combinations.index((wc,wc))
+       
+        # +/-1 values 
+        for val in [+1, -1]:
+            coefficient = np.zeros( len(sample.weightInfo.combinations) )
+            coefficient[0] = 1
+            coefficient[index_lin] =val
+            coefficient[index_quad]=val**2
+            eft_w_names.append(wc+"_%+3.3f"%val)
+            eft_w_points.append( coefficient )
+
+    # mixed terms
+    for wc in args.wc:
+        index_lin  = sample.weightInfo.combinations.index((wc,))
+        index_quad = sample.weightInfo.combinations.index((wc,wc))
+        for wc2 in args.wc:
+            index_lin2  = sample.weightInfo.combinations.index((wc2,))
+            index_quad2 = sample.weightInfo.combinations.index((wc2,wc2))
+            if not index_lin2>index_lin: continue
+            index_mixed = sample.weightInfo.combinations.index((wc,wc2))
+            coefficient = np.zeros( len(sample.weightInfo.combinations) )
+            coefficient[0] = 1
+            coefficient[index_lin] =1 
+            coefficient[index_quad]=1
+            coefficient[index_lin2] =1 
+            coefficient[index_quad2]=1
+            coefficient[index_mixed]=1
+            eft_w_names.append(wc+"_%+3.3f"%1+"_"+wc2+"_%+3.3f"%1)
+            eft_w_points.append( coefficient )
+
+    # Multiply this matrix with p_C to get a vector of weights according to what is in base_points_names
+    sample.eft_base_point_matrix = np.vstack( eft_w_points)
+    #print sample.base_point_matrix.shape, sample.base_point_matrix
+    #print sample.eft_w_names
 
 if args.small:
     if not noData:
         data_sample.reduceFiles( factor = 100 )
     for sample in mc :
         sample.normalization = 1.
-	sample.reduceFiles( to = 1 )
+        sample.reduceFiles( to = 1 )
         #sample.scale /= sample.normalization
 
 read_variables = []
@@ -236,12 +288,12 @@ jetVars     =   ['pt/F',
                  'neEmEF/F',
                  'neHEF/F',
                  'index/I',
-		 'isBJet/O',
-		 'isBJet_loose/O',
-		 'isBJet_medium/O',
-		 'isBJet_tight/O'
+                 'isBJet/O',
+                 'isBJet_loose/O',
+                 'isBJet_medium/O',
+                 'isBJet_tight/O'
 
-		 ]
+                 ]
 
 if args.sys in jetVariations:
   jetVars += ["pt_"+args.sys+"/F"]
@@ -272,7 +324,7 @@ sequence = []
 
 def debug(event, sample):
     try:
-        event.jets     = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
+        event.jets = [getObjDict(event, 'JetGood_', jetVarNames, i) for i in range(int(event.nJetGood))]
         mass = sqrt(2*event.jets[0]['pt']*event.jets[1]['pt']*(cosh(event.jets[0]['eta']-event.jets[1]['eta'])-cos(event.jets[0]['phi']-event.jets[1]['phi']))) if event.nJetGood >=2 else 0
         #print event.jets[0]['phi'], event.jets[0]['pt'], event.jets[1]['phi'], event.jets[1]['pt'], event.jets[0]['eta'], event.jets[1]['eta']
         if mass <0:
@@ -302,7 +354,6 @@ classes = [ts.name for ts in config.training_samples] if not hasattr( config, "c
 
 models  = [{'name':'tttt_2l', 'has_lstm':False, 'classes':classes, 'model':load_model("/groups/hephy/cms/cristina.giordano/www/tttt/plots/tttt_2l/tttt_2l/regression_model.h5")}]
 
-
 def keras_predict( event, sample ):
     flat_variables, lstm_jets = config.predict_inputs( event, sample, jet_lstm = True)
     for model in models:
@@ -312,6 +363,7 @@ def keras_predict( event, sample ):
             prediction = model['model'].predict( [flat_variables] )
         for i_class_, class_ in enumerate(model['classes']):
             setattr( event, model['name']+'_'+class_, prediction[0][i_class_] )
+
 sequence.append( keras_predict )
 
 #Jet Selection modifier
@@ -383,16 +435,16 @@ def lep_getter( branch, index, abs_pdg = None, functor = None, debug=False):
 #    "ScaleDownDown": 0,
 #    "ScaleDownNone": 1,
 #    "ScaleNoneDown": 3,
-#    "ScaleNoneUp":	 5,
-#    "ScaleUpNone":	 7,
-#    "ScaleUpUp":	 8,}
+#    "ScaleNoneUp": 5,
+#    "ScaleUpNone": 7,
+#    "ScaleUpUp" 8,}
 #WhichWay8 = {
 #    "ScaleDownDown": 0,
 #    "ScaleDownNone": 1,
 #    "ScaleNoneDown": 3,
-#    "ScaleNoneUp":	 4,
-#    "ScaleUpNone":	 6,
-#    "ScaleUpUp":	 7,}
+#    "ScaleNoneUp": 4,
+#    "ScaleUpNone": 6,
+#    "ScaleUpUp": 7,}
 scaleMap = {
     9: {
     "ScaleDownDown": 0,
@@ -413,50 +465,51 @@ scaleMap = {
 def getTheorySystematics(event,sample):
     #if event.nscale<8 : print event.nscale
     if args.sys in scaleWeights and event.nscale>=8 :
-	    #if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
-	    #elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
- 	    #else: print "Unexpected number of Scale weights!"
-	    #print "We are at scale weight number:" , WhichWay9[args.sys
+    #if event.nscale == 9 : event.reweightScale = event.scale_Weight[WhichWay9[args.sys]]
+    #elif event.nscale == 8 : event.reweightScale = event.scale_Weight[WhichWay8[args.sys]]
+    #else: print "Unexpected number of Scale weights!"
+    #print "We are at scale weight number:" , WhichWay9[args.sys
         event.reweightScale = event.scale_Weight[scaleMap[event.nscale][args.sys]]
     else:
         event.reweightScale = 1.0
 
     if args.sys in PDFWeights:# and event.nPDF > 0:
-	    WhichOne = int(args.sys.split("_")[1])
-	    #print WhichOne
-	    if WhichOne == -1 or WhichOne > event.nPDF-1:
-	                print "PDF index out of range!"
-	    if not isnan(event.PDF_Weight[WhichOne]): 
-		    event.reweightPDF = event.PDF_Weight[WhichOne]
-	    else :
-		    event.reweightPDF = 1.0
-	    #print "we are at PDF weight"
+        WhichOne = int(args.sys.split("_")[1])
+        #print WhichOne
+        if WhichOne == -1 or WhichOne > event.nPDF-1:
+            print "PDF index out of range!"
+        if not isnan(event.PDF_Weight[WhichOne]): 
+            event.reweightPDF = event.PDF_Weight[WhichOne]
+        else :
+            event.reweightPDF = 1.0
+        #print "we are at PDF weight"
     else:event.reweightPDF = 1.0
 
     if args.sys in PSWeights:
-	    WhichSide = {	"ISRUp": 	0,
-			"FSRUp":	1,
-			"ISRDown": 	2,
-			"FSRDown": 	3,
-			}
-	    event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
-	    #print WhichSide[args.sys]
-	    #print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
+        WhichSide = {
+            "ISRUp":    0,
+            "FSRUp":    1,
+            "ISRDown":  2,
+            "FSRDown":  3,
+            }
+        event.reweightPS = event.PS_Weight[WhichSide[args.sys]]
+        #print WhichSide[args.sys]
+        #print "We have the PS weight:",event.PS_Weight[WhichSide[args.sys]]
     else:event.reweightPS = 1.0
 
 sequence.append( getTheorySystematics )
 
 def cut_MVA(event,sample):
     if not args.mva_cut is None:
-	this = getattr(event, args.mva_cut)
-	if args.cut_point == "0.1m":
-		setattr(event,"cut_tttt_MVA",1 if this<0.1 else 0)
-	elif args.cut_point == "0.1p":
-		setattr(event,"cut_tttt_MVA",1 if this>=0.1 else 0)
-	elif args.cut_point == "0.2m":
-		setattr(event,"cut_tttt_MVA",1 if this<0.2 else 0)
-	elif args.cut_point == "0.2p":
-		setattr(event,"cut_tttt_MVA",1 if this>=0.2 else 0)
+        this = getattr(event, args.mva_cut)
+    if args.cut_point == "0.1m":
+        setattr(event,"cut_tttt_MVA",1 if this<0.1 else 0)
+    elif args.cut_point == "0.1p":
+        setattr(event,"cut_tttt_MVA",1 if this>=0.1 else 0)
+    elif args.cut_point == "0.2m":
+        setattr(event,"cut_tttt_MVA",1 if this<0.2 else 0)
+    elif args.cut_point == "0.2p":
+        setattr(event,"cut_tttt_MVA",1 if this>=0.2 else 0)
     else: setattr(event,"cut_tttt_MVA",1)
 
 sequence.append(cut_MVA)
@@ -470,7 +523,7 @@ def make_manyJets(event, sample):
         # threshold_jets[jet_name] = filtered_jets
         ht_threshold = sum(jet['pt'] for jet in filtered_jets)#event.jets if jet['pt'] > threshold)
         setattr(event, 'nJetGood_pt{}'.format(threshold), len(filtered_jets))
-	#setattr(event, 'nBTag_pt{}'.format(threshold), len(filtered_jets))
+        #setattr(event, 'nBTag_pt{}'.format(threshold), len(filtered_jets))
         setattr(event, 'htPt{}'.format(threshold), ht_threshold)
         cos_pt, sin_pt = 0., 0.
         for j in filtered_jets:
@@ -511,38 +564,19 @@ def makeHTSF( event, sample ):
 
 sequence.append( makeHTSF )
 
+def makeEFTWeights( event, sample):
+    if not hasattr( sample, "reweight_pkl" ):
+        return
+    # we're here if the sample has a reweight_pkl
+
+    np.eft_base_point_weights = np.dot( sample.eft_base_point_matrix, np.array( [event.p_C[i] for i in range(len(sample.weightInfo.combinations))] ) )
+    for name, val in zip( eft_w_names, np.eft_base_point_weights):
+        setattr( event, name, val/event.p_C[0])
+
+sequence.append( makeEFTWeights )
 
 #TTree formulas
-
-ttreeFormulas = { 
-#		  "nJetGood_pt30" : "Sum$(JetGood_pt>30)",
-#                  "nJetGood_pt40" : "Sum$(JetGood_pt>40)",
-#                  "nJetGood_pt50" : "Sum$(JetGood_pt>50)",
-#                  "nJetGood_pt80" : "Sum$(JetGood_pt>80)",
-#                  "nJetGood_pt100" : "Sum$(JetGood_pt>100)",
-#                  "nJetGood_pt150" : "Sum$(JetGood_pt>150)",
-#                  "nJetGood_pt200" : "Sum$(JetGood_pt>200)",
-#                  "nBTag_loose"   : "Sum$(JetGood_isBJet_loose)",
-#                  "nBTag_medium"  : "Sum$(JetGood_isBJet_medium)" ,
-#                  "nBTag_tight"   : "Sum$(JetGood_isBJet_tight)" ,
-#                  "nBTag_loose_pt30"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>30)",
-#                  "nBTag_medium_pt30"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>30)" ,
-#                  "nBTag_tight_pt30"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>30)"  ,
-#                  "nBTag_loose_pt40"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>40)",
-#                  "nBTag_medium_pt40"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>40)" ,
-#                  "nBTag_tight_pt40"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>40)"  ,
-#                  "nBTag_loose_pt50"   : "Sum$(JetGood_isBJet_loose&&JetGood_pt>50)",
-#                  "nBTag_medium_pt50"  : "Sum$(JetGood_isBJet_medium&&JetGood_pt>50)" ,
-#                  "nBTag_tight_pt50"   : "Sum$(JetGood_isBJet_tight&&JetGood_pt>50)",
-#                  "htPt40" : "Sum$(JetGood_pt*(JetGood_pt>40))",
-#                  "htPt50" : "Sum$(JetGood_pt*(JetGood_pt>50))",
-#                  "htPt80" : "Sum$(JetGood_pt*(JetGood_pt>80))",
-#                  "ISRJet_pt40":    "sqrt(Sum$(JetGood_pt*cos(JetGood_phi)*(JetGood_pt>40))**2 + Sum$(JetGood_pt*sin(JetGood_phi)*(JetGood_pt>40))**2)",
-#                  "ISRJet_pt50":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>50))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>50))**2)",
-#                  "ISRJet_pt60":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>60))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>60))**2)",
-#                  "ISRJet_pt80":    "sqrt((Sum$(JetGood_pt*cos(JetGood_phi))*(JetGood_pt>80))**2 + (Sum$(JetGood_pt*sin(JetGood_phi))*(JetGood_pt>80))**2)",
-
-		}
+ttreeFormulas = {}
 
 if args.sys in jetVariations:
   ttreeFormulas.update({"ht_"+args.sys :"Sum$(JetGood_pt_"+args.sys+")"})
@@ -556,8 +590,8 @@ if not args.sys == "noDYISRReweight": weightnames += ['reweightDY']
 sys_weights = {
         'LeptonSFDown'  : ('reweightLeptonSF','reweightLeptonSFDown'),
         'LeptonSFUp'    : ('reweightLeptonSF','reweightLeptonSFUp'),
-	'PUUp'		: ('reweightPU','reweightPUUp'),
-	'PUDown'        : ('reweightPU','reweightPUDown'),
+        'PUUp'          : ('reweightPU','reweightPUUp'),
+        'PUDown'        : ('reweightPU','reweightPUDown'),
         'BTagSFJesUp'   : ('reweightBTagSF_central','reweightBTagSF_up_jes'),
         'BTagSFJesDown' : ('reweightBTagSF_central','reweightBTagSF_down_jes'),
         'BTagSFHfDown'  : ('reweightBTagSF_central','reweightBTagSF_down_hf'),
@@ -589,7 +623,6 @@ if args.sys in sys_weights:
           weightnames[i] = newname
           read_variables_MC += ['%s/F'%(newname)]
 
-
 if "jesTotal" in args.sys:
     if "Up" in args.sys:
       oldname, newname = sys_weights['BTagSFJesUp']
@@ -600,6 +633,7 @@ if "jesTotal" in args.sys:
           weightnames[i] = newname
           read_variables_MC += ['%s/F'%(newname)]
 
+
 yields     = {}
 allPlots   = {}
 allModes   = ['mumu','mue', 'ee']
@@ -607,20 +641,18 @@ for i_mode, mode in enumerate(allModes):
     yields[mode] = {}
 
     #Calculate the reweight
-    getters = map( operator.attrgetter, weightnames)
-    def weight_function( event, sample):
-        # Calculate weight, this becomes: w = event.weightnames[0]*event.weightnames[1]*...
-	weights = [g(event) for g in getters]
-	# Check if any weight is nan
-	if any(not isinstance(w, (int, float)) or isnan(w) for w in weights):
-		weights = [1 if (not isinstance(w, (int, float)) or isnan(w) )else w for w in weights]
-		for w in weights : print w
-        w = reduce(operator.mul, weights, 1)
-        return w
 
-    # This weight goes to the plot - do not reweight the sample with it
-    #weight_ = lambda event, sample: event.weight if sample.isData else event.weight
-    weight_ = lambda event, sample: event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
+    def make_weight_function( weightnames=weightnames):
+        def weight_function( event, sample, weightnames=weightnames):
+            # Calculate weight, this becomes: w = event.weightnames[0]*event.weightnames[1]*...
+            weights = [g(event) for g in map( operator.attrgetter, weightnames)]
+            # Check if any weight is nan
+            if any(not isinstance(w, (int, float)) or isnan(w) for w in weights):
+                weights = [1 if (not isinstance(w, (int, float)) or isnan(w) )else w for w in weights]
+                for w in weights : print "We really should not have NANs. There is something to fix for:", w
+            w = reduce(operator.mul, weights, 1)
+            return w
+        return weight_function
 
     #Plot styling
     for sample in mc: sample.style = styles.fillStyle(sample.color)
@@ -630,18 +662,23 @@ for i_mode, mode in enumerate(allModes):
     #Apply reweighting to MC for specific detector effects
     for sample in mc:
       sample.read_variables = read_variables_MC
-      sample.weight = weight_function
-
-
+      sample.weight = make_weight_function()
+      if hasattr( sample, "reweight_pkl" ):
+          sample.read_variables += [VectorTreeVariable.fromString("p[C/F]", nMax=200)]
+        
     #Stack : Define what we want to see.
+    weight_ = lambda event, sample: event.cut_tttt_MVA*event.weight
     if not noData:
         stack = Stack(mc, [data_sample])
+    elif isEFT:
+        stack = Stack(*list([s] for s in mc))
+        weight_ = [ [lambda event, sample, eft_w=eft_w: event.cut_tttt_MVA*event.weight*getattr( event, eft_w)] for eft_w in eft_w_names]
     else:
         stack = Stack(mc)
 
     # Define everything we want to have common to all plots
     selection_string = selectionModifier(cutInterpreter.cutString(args.selection)) if selectionModifier is not None else cutInterpreter.cutString(args.selection)
-    Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+selection_string+")")
+    Plot.setDefaults(stack = stack, weight = weight_, selectionString = "("+getLeptonSelection(mode)+")&&("+selection_string+")")
 
     plots = []
 
@@ -1305,20 +1342,7 @@ outfile.cd()
 for plot in allPlots[allModes[0]]:
     for idx, histo_list in enumerate(plot.histos):
         for j, h in enumerate(histo_list):
-            #histname = h.GetName()
-            #if "TTLep_bb" in histname: process = "TTLep_bb_"+args.era if not args.era=='RunII' else "TTLep_bb"
-            #elif "TTLep_cc" in histname: process = "TTLep_cc_"+args.era if not args.era=='RunII' else "TTLep_cc"
-            #elif "TTLep_other" in histname: process = "TTLep_other_"+args.era if not args.era=='RunII' else "TTLep_other"
-            #elif "ST_tch" in histname: process = "ST_tch_"+args.era if not args.era=='RunII' else "ST_tch"
-            #elif "ST_twch" in histname: process = "ST_twch_"+args.era if not args.era=='RunII' else "ST_twch"
-            #elif "TTW" in histname: process = "TTW_"+args.era if not args.era=='RunII' else "TTW"
-            #elif "TTZ" in histname: process = "TTZ_"+args.era if not args.era=='RunII' else "TTZ"
-            #elif "TTH" in histname: process = "TTH_"+args.era if not args.era=='RunII' else "TTH"
-            #elif "DY" in histname: process = "DY_"+args.era if not args.era=='RunII' else "DY"
-            #elif "DiBoson" in histname: process = "DiBoson_"+args.era if not args.era=='RunII' else "DiBoson"
-            #elif "data" in histname: process = "data_"+args.era if not args.era=='RunII' else "data"
-            #elif "TTTT" in histname: process = "TTTT_"+args.era if not args.era=='RunII' else "TTTT"
-            h.Write( plot.name + "__" + stack[idx][j].name + ('_'+args.era if args.era != 'RunII' else '') )
+            h.Write( plot.name + "__" + stack[idx][j].name + ('_'+args.era if args.era != 'RunII' else '') + (('_'+eft_w_names[idx]) if isEFT else '') )
 outfile.Close()
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )
