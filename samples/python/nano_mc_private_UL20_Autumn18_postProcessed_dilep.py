@@ -35,7 +35,7 @@ TTLepHUp	= Sample.fromDirectory(name="TTLepHUp", treeName="Events", isData=False
 TTLepHDown      = Sample.fromDirectory(name="TTLepHDown", treeName="Events", isData=False, color=color.TT, texName="t#bar{t}", directory=make_dirs( ['TTLep_pow_CP5_hDown'] ))
 
 TTbb_EFT	= Sample.fromDirectory(name="TTbb_EFT", treeName="Events", isData=False, color=color.TTbb, texName="t#bar{t}b#bar{b}", directory=make_dirs( ['TTbb_MS_EFT']))
-TTbb_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
+TTbb_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
 #TTTT_EFT        = Sample.fromDirectory(name="TTTT_EFT", treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}", directory=make_dirs( ['TTTT_MS_EFT']))
 #TTTT_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
 #TTTT_sync = Sample.fromDirectory(name="TTTT_sync",  treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}_sync", directory=["/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v5/UL2018/dilep/TTTT_sync"] )
