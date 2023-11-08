@@ -1,0 +1,11 @@
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag1-ht500 --plot_directory 4t-v12-syst
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag2-ht500 --plot_directory 4t-v12-syst
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag3p-ht500 --plot_directory 4t-v12-syst_mvacut0.2m
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag3p-ht500 --plot_directory 4t-v12-syst_mvacut0.2p
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag1-ht500 --plot_directory 4t-v12-syst
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag2-ht500 --plot_directory 4t-v12-syst
+python checksystfiles.py --selection trg-dilep-os-mindlmass20-offz1-lepveto2-njet6to7-btag3p-ht500 --plot_directory 4t-v12-syst_mvacut0.1m
+python checksystfiles.py --selection trg-dilep-os-mindlmass20-offz1-lepveto2-njet6to7-btag3p-ht500 --plot_directory 4t-v12-syst_mvacut0.1p
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag1-ht500 --plot_directory 4t-v12-syst
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag2-ht500 --plot_directory 4t-v12-syst
+python checkSystFiles.py --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag3p-ht500 --plot_directory 4t-v12-syst

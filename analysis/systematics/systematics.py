@@ -642,8 +642,8 @@ for i_mode, mode in enumerate(allModes):
 
     #Calculate the reweight
 
-    def make_weight_function( weightnames=weightnames):
-        def weight_function( event, sample, weightnames=weightnames):
+    #def make_weight_function( weightnames=weightnames):
+    def weight_function( event, sample, weightnames=weightnames):
             # Calculate weight, this becomes: w = event.weightnames[0]*event.weightnames[1]*...
             weights = [g(event) for g in map( operator.attrgetter, weightnames)]
             # Check if any weight is nan
@@ -652,7 +652,7 @@ for i_mode, mode in enumerate(allModes):
                 for w in weights : print "We really should not have NANs. There is something to fix for:", w
             w = reduce(operator.mul, weights, 1)
             return w
-        return weight_function
+    #    return weight_function
 
     #Plot styling
     for sample in mc: sample.style = styles.fillStyle(sample.color)
@@ -662,7 +662,7 @@ for i_mode, mode in enumerate(allModes):
     #Apply reweighting to MC for specific detector effects
     for sample in mc:
       sample.read_variables = read_variables_MC
-      sample.weight = make_weight_function()
+      sample.weight = weight_function
       if hasattr( sample, "reweight_pkl" ):
           sample.read_variables += [VectorTreeVariable.fromString("p[C/F]", nMax=200)]
         
@@ -678,7 +678,7 @@ for i_mode, mode in enumerate(allModes):
 
     # Define everything we want to have common to all plots
     selection_string = selectionModifier(cutInterpreter.cutString(args.selection)) if selectionModifier is not None else cutInterpreter.cutString(args.selection)
-    Plot.setDefaults(stack = stack, weight = weight_, selectionString = "("+getLeptonSelection(mode)+")&&("+selection_string+")")
+    Plot.setDefaults(stack = stack, weight = staticmethod(weight_), selectionString = "("+getLeptonSelection(mode)+")&&("+selection_string+")")
 
     plots = []
 
@@ -1336,6 +1336,7 @@ if not os.path.exists(plot_dir):
         pass 
 
 outfilename = plot_dir+'/tttt_'+args.sys+'.root'
+if isEFT: outfilename = plot_dir+'/tttt_EFTs.root'
 logger.info( "Saving in %s", outfilename )
 outfile = ROOT.TFile(outfilename, 'recreate')#'update'
 outfile.cd()
