@@ -167,8 +167,10 @@ elif args.era == '2018':
         from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import *
         from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
 elif args.era == 'RunII':
-        from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
-        data_sample = RunII
+	if isEFT: from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import * 
+	else :  
+		from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
+        	data_sample = RunII
 else:
     raise Exception("Era %s not known"%args.era)
 
@@ -575,6 +577,12 @@ def makeEFTWeights( event, sample):
 
 sequence.append( makeEFTWeights )
 
+##FIX ME
+#scaling EFT sample from 2018 to RunII. Should be updated asap
+lumifact = 137.62/59.83 if args.era=="RunII" and isEFT else 1
+logger.info("scaling EFT sample by lumi factor : ",lumifact )
+
+
 #TTree formulas
 ttreeFormulas = {}
 
@@ -667,12 +675,12 @@ for i_mode, mode in enumerate(allModes):
           sample.read_variables += [VectorTreeVariable.fromString("p[C/F]", nMax=200)]
         
     #Stack : Define what we want to see.
-    weight_ = lambda event, sample: event.cut_tttt_MVA*event.weight
+    weight_ = lambda event, sample: event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
     if not noData:
         stack = Stack(mc, [data_sample])
     elif isEFT:
         stack = Stack(*list([s] for s in mc))
-        weight_ = [ [lambda event, sample, eft_w=eft_w: event.cut_tttt_MVA*event.weight*getattr( event, eft_w)] for eft_w in eft_w_names]
+        weight_ = [ [lambda event, sample, eft_w=eft_w: lumifact*event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)*getattr( event, eft_w)] for eft_w in eft_w_names]
     else:
         stack = Stack(mc)
 

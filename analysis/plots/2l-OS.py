@@ -49,7 +49,7 @@ argParser.add_argument('--DY',            action='store', default='ht', help= 'w
 argParser.add_argument('--reweightISR',   action='store_true', help= 'reweight ISR?')
 argParser.add_argument('--reweightHT',    action='store_true', help= 'reweight HT?')
 argParser.add_argument('--mva_cut',	   action='store',	default=None,				 help= 'Do you want to apply a cut on mva? which one?', choices=["tttt_2l_2l_4t","tttt_2l_2l_ttbb","tttt_2l_2l_ttcc","tttt_2l_2l_ttlight"])
-argParser.add_argument('--mva_cut_point',        action='store',      default=None,                            help= 'Where do you want the cut?')
+argParser.add_argument('--cut_point',        action='store',      default=None,                            help= 'Where do you want the cut?')
 args = argParser.parse_args()
 
 # DIrectory naming parser options
@@ -72,7 +72,7 @@ logger    = logger.get_logger(   args.logLevel, logFile = None)
 logger_rt = logger_rt.get_logger(args.logLevel, logFile = None)
 
 if not args.mva_cut is None:
-    logger.info("Applying a cut on events based on {} with threshold {}".format(args.mva_cut, args.mva_cut_point))
+    logger.info("Applying a cut on events based on {} with threshold {}".format(args.mva_cut, args.cut_point))
 
 #Simulated samples
 
@@ -263,14 +263,14 @@ sequence.append( keras_predict )
 def cut_MVA(event,sample):
     if not args.mva_cut is None:
 	this = getattr(event, args.mva_cut)
-	if args.mva_cut_point == "0.1m":
+	if args.cut_point == "0.1m":
 		event.cut_tttt_MVA = 1 if this<0.1 else 0
-	elif args.mva_cut_point == "0.1p":
+	elif args.cut_point == "0.1p":
 		event.cut_tttt_MVA = 1 if this>=0.1 else 0
-	elif args.mva_cut_point == "0.2m":
+	elif args.cut_point == "0.2m":
 		event.cut_tttt_MVA = 1 if this<0.2 else 0
-	elif args.mva_cut_point == "0.2p":
-		eventi.cut_tttt_MVA = 1 if this>=0.2 else 0
+	elif args.cut_point == "0.2p":
+		event.cut_tttt_MVA = 1 if this>=0.2 else 0
     else: event.cut_tttt_MVA = 1
 
 sequence.append(cut_MVA)

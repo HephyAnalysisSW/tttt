@@ -36,7 +36,7 @@ argParser.add_argument('--others', nargs='*', help='add secondary scans processe
 argParser.add_argument('--breakdown', help='do quadratic error subtraction using --others')
 argParser.add_argument('--logo', default='CMS')
 argParser.add_argument('--logo-sub', default='Internal')
-argParser.add_argument('--plot_directory', action='store', default='4t-limits')
+argParser.add_argument('--plot_directory', action='store', default='4t-limits-v2')
 argParser.add_argument('--selection',      action='store', default='combined')
 argParser.add_argument('--logLevel',       action='store',      default='INFO', nargs='?', choices=['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'TRACE', 'NOTSET'], help="Log level for logging")
 
@@ -101,9 +101,11 @@ def BuildScan(scan, param, files, color, yvals, ycut):
             cr["contains_bf"] = cr["lo"] <= bestfit and cr["hi"] >= bestfit
     for cr in crossings[yvals[0]]:
         if cr['contains_bf']:
+	    print ("it has bf")
             val = (bestfit, cr['hi'] - bestfit, cr['lo'] - bestfit)
             cross_1sig = cr
         else:
+	    print ("it has  no bf")
             other_1sig.append(cr)
     if len(yvals) > 1:
         for cr in crossings[yvals[1]]:
@@ -301,10 +303,10 @@ if not os.path.exists(plot_directory_):
 plot_helpers.copyIndexPHP(plot_directory_)
 
 save_graph = main_scan['graph'].Clone()
+print (val_nom[0], val_nom[2], val_nom[1])
 save_graph.GetXaxis().SetTitle('%s = %.3f %+.3f/%+.3f' % (fixed_name, val_nom[0], val_nom[2], val_nom[1]))
 outfile = ROOT.TFile(plotName+'.root', 'RECREATE')
 outfile.WriteTObject(save_graph)
 outfile.Close()
 canv.Print(plotName+'.pdf')
 canv.Print(plotName+'.png')
-
