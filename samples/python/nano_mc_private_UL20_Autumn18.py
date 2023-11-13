@@ -105,11 +105,11 @@ ZZZ.xSection = 0.01476
 
 
 TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTTT_MS_EFT-22-05-12/", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/")
-TTTT_MS_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
+TTTT_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
 TTTT_MS_EFT.normalization = 4080634.0
 
 TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTbb_MS_EFT-22-05-12/", xSection=4.59, redirector = "root://eos.grid.vbc.ac.at/")
-TTbb_MS_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
+TTbb_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
 TTbb_MS_EFT.normalization = 4657390.0
 
 EFT_samples = [TTTT_MS_EFT, TTbb_MS_EFT]
