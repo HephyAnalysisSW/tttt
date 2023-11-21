@@ -22,38 +22,38 @@ outFile = ROOT.TFile(os.path.join(plot_directory, 'analysisPlots', out_directory
 theYounglings = ["2l_4t","2l_4t_coarse","ht","nJetGood","nBTag"]
 
 # Possible Syst variations
-variations = ['LeptonSFUp', 
+variations = ['LeptonSFUp',
               'LeptonSFDown',
-	      'PUUp',
-	      'PUDown',
+	          'PUUp',
+	          'PUDown',
               'L1PrefireUp',
-	      'L1PrefireDown',
-	      #'TriggerUp',
+	          'L1PrefireDown',
+	          #'TriggerUp',
               #'TriggerDown',
               'BTagSFJesUp',
-	      'BTagSFJesDown',
-	      'BTagSFHfUp',
+	          'BTagSFJesDown',
+	          'BTagSFHfUp',
               'BTagSFHfDown',
               'BTagSFLfUp',
-	      'BTagSFLfDown',
+	          'BTagSFLfDown',
               'BTagSFHfs1Up',
-	      'BTagSFHfs1Down',
-	      'BTagSFLfs1Up',
+	          'BTagSFHfs1Down',
+	          'BTagSFLfs1Up',
               'BTagSFLfs1Down',
               'BTagSFHfs2Up',
-	      'BTagSFHfs2Down',
+	          'BTagSFHfs2Down',
               'BTagSFLfs2Up',
-	      'BTagSFLfs2Down',
+	          'BTagSFLfs2Down',
               'BTagSFCfe1Up',
-	      'BTagSFCfe1Down',
+	          'BTagSFCfe1Down',
               'BTagSFCfe2Up',
-	      'BTagSFCfe2Down',
+	          'BTagSFCfe2Down',
               'jesTotalUp',
-	      'jesTotalDown',
-	      'noTopPtReweight',
-	      'HDampUp',
-	      'HDampDown',
-	      'central'
+	          'jesTotalDown',
+	          'noTopPtReweight',
+	          'HDampUp',
+	          'HDampDown',
+	          'central'
               ]
 nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
@@ -69,11 +69,11 @@ centralfile = ROOT.TFile(os.path.join(directory,"tttt_central.root"), "READ")
 
 #separate the shape and normalization in scale unc.
 scales = {"ScaleDownDown" : "scaleShapeDown",
-	  "ScaleUpUp" : "scaleShapeUp",
-	  "ScaleUpNone" : "renormalizationShapeUp",
-	  "ScaleNoneUp" : "FactorizationShapeUp",
-	  "ScaleDownNone" : "renormalizationShapeDown",
-	  "ScaleNoneDown" : "FactorizationShapeDown"} 
+	      "ScaleUpUp" : "scaleShapeUp",
+	      "ScaleUpNone" : "renormalizationShapeUp",
+	      "ScaleNoneUp" : "FactorizationShapeUp",
+	      "ScaleDownNone" : "renormalizationShapeDown",
+	      "ScaleNoneDown" : "FactorizationShapeDown"}
 ratio = open(os.path.join(directory, "scale_ratios.txt"), "w")
 for look in scales:
     print "Currently rescaling "+ look
@@ -82,64 +82,65 @@ for look in scales:
     # Output files
     modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
     modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+scales[look]+".root"), "RECREATE")
-
+    print(modified_scale_tt)
     #input files
     scalefile = ROOT.TFile(os.path.join(directory,"tttt_"+look+".root"), "READ")
-    
+
     #rescale the histograms and write to new file
     for hKey in scalefile.GetListOfKeys():
-    	SMhKey = centralfile.GetKey(hKey.GetName())
+        SMhKey = centralfile.GetKey(hKey.GetName())
     	h = hKey.ReadObj()
     	SMh = SMhKey.ReadObj()
     	if not h.Integral()==0:
-    	  scale_factor = SMh.Integral()/h.Integral() 
-    	  if hKey.GetName().startswith("ht_"):
-    	  	ratio.write("\t"+h.GetName()+": "+str(scale_factor)+"\n")
-    	  #ttbar
-	  modified_scale_tt.cd() 
-	  if "DY" in hKey.GetName(): h = SMh
-	  else:	h.Scale(scale_factor)
-    	  h.Write(hKey.GetName())
-	  #DY
-	  modified_scale_DY.cd()
-	  h = hKey.ReadObj()
-    	  if not "DY" in hKey.GetName(): h = SMh
-	  else: h.Scale(scale_factor)
-	  h.Write(hKey.GetName())
- 
+            scale_factor = SMh.Integral()/h.Integral()
+            if hKey.GetName().startswith("ht_"):
+                ratio.write("\t"+h.GetName()+": "+str(scale_factor)+"\n")
+            #ttbar
+            modified_scale_tt.cd()
+            if "DY" in hKey.GetName(): h = SMh
+            else:	h.Scale(scale_factor)
+    	    h.Write(hKey.GetName())
+            #DY
+            modified_scale_DY.cd()
+            h = hKey.ReadObj()
+            if not "DY" in hKey.GetName(): h = SMh
+            else: h.Scale(scale_factor)
+            h.Write(hKey.GetName())
+
     scalefile.Close()
     modified_scale_tt.Close()
     modified_scale_DY.Close()
 ratio.close()
+print(ratio)
 
 
 #separate PS weights in ttbar and DY
 for PS in ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]:
     jointPS = ROOT.TFile(os.path.join(directory,"tttt_"+PS+".root"), "READ")
-    TT_PS = ROOT.TFile(os.path.join(directory, "tttt_TT"+PS+".root"), "RECREATE") 
-    DY_PS = ROOT.TFile(os.path.join(directory, "tttt_DY"+PS+".root"), "RECREATE") 
+    TT_PS = ROOT.TFile(os.path.join(directory, "tttt_TT"+PS+".root"), "RECREATE")
+    DY_PS = ROOT.TFile(os.path.join(directory, "tttt_DY"+PS+".root"), "RECREATE")
     for hKey in jointPS.GetListOfKeys():
     	SMhKey = centralfile.GetKey(hKey.GetName())
     	SMh = SMhKey.ReadObj()
     	h = hKey.ReadObj()
-    	TT_PS.cd() 
-	if "DY" in hKey.GetName(): h = SMh
-    	h.Write(hKey.GetName())
-    	h = hKey.ReadObj()
-	DY_PS.cd()
-	if not "DY" in hKey.GetName(): h = SMh
-	h.Write(hKey.GetName())
-    print "finished the {} decorellation".format(PS)
-    jointPS.Close()
-    TT_PS.Close()
-    DY_PS.Close()
-		
+    	TT_PS.cd()
+        if "DY" in hKey.GetName(): h = SMh
+        h.Write(hKey.GetName())
+        h = hKey.ReadObj()
+        DY_PS.cd()
+        if not "DY" in hKey.GetName(): h = SMh
+        h.Write(hKey.GetName())
+        print "finished the {} decorrellation".format(PS)
+        jointPS.Close()
+        TT_PS.Close()
+        DY_PS.Close()
+
 centralfile.Close()
 
 isEFT = True
 wcList = ["cQQ1"]
 def getQuadratic(hist_sm, hist_plus, hist_minus):
-#create quad term for EFT 
+#create quad term for EFT
 # Since the quadratic term does not change sign, we can get it from the
 # histograms where c = +1, c = 0, and c = -1
 # (1) c = +1 is SM + LIN + QUAD
@@ -155,70 +156,143 @@ def getQuadratic(hist_sm, hist_plus, hist_minus):
    hist_quad.Scale(0.5)
    return hist_quad
 
+
+
 #Create the root file combine desires
 for theChosenOne in theYounglings :
     category = outFile.mkdir("tttt__"+theChosenOne)
     for sample in samples :
-	objName = theChosenOne+"__"+sample
-	for variation in variations:
-	    inFile = ROOT.TFile(os.path.join(directory,"tttt_"+variation+".root"), "READ")
-	    for key in inFile.GetListOfKeys():
-	      if key.GetName().startswith(objName):
-		obj = key.ReadObj()
-	        category.cd()
-	        clonedHist = obj.Clone()
-	        histname = clonedHist.GetName()
-		if "data" in histname: 
-			clonedHist.Write("data_obs")
-			print "found data", theChosenOne,clonedHist.GetTitle()
-		else:
-			if not args.era == "RunII": sample = sample +"_"+args.era
-			if variation == "central":
-				clonedHist.Write(sample)
-				clonedHist.Write(sample+"__noTopPtReweightDown")
-				for i in range(1,nPDFs):
-					clonedHist.Write(sample+"__PDF_%sDown"%i)
-			elif variation == "noTopPtReweight" :
-				clonedHist.Write(sample+"__noTopPtReweightUp")
-			elif "PDF" in variation :
-				clonedHist.Write(sample+"__"+variation+"Up")
-			else:
-	        		clonedHist.Write(sample+"__"+variation)
-		
-	    inFile.Close()
-    if not args.noEFT:
-	eftFile = ROOT.TFile(os.path.join(directory,"tttt_EFTs.root"), "READ")
-	print "found eft file"
-	histos = {}
-	for wc in wcList:
-	    SMhistName = theChosenOne+"__TTbb_EFT_central"
-	    plushistName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000"
-	    minushistName = theChosenOne+"__TTbb_EFT_"+wc+"_-1.000"
-	    for key in eftFile.GetListOfKeys():
-		obj = key.ReadObj()
-		clonedHist = obj.Clone()
-		if key.GetName() == SMhistName:
-		  histos["SM"] = clonedHist
-		  print "found the sm hist" 
-		#else :  print "nothing found"
-		elif key.GetName() == plushistName : 
-			histos["plus"] = clonedHist
-			print "found the plus hist"
-		elif key.GetName() == minushistName : histos["minus"] = clonedHist
-	    quadHist = getQuadratic(histos["SM"], histos["plus"], histos["minus"])
-	    category.cd()
-	    histos["SM"].Write("sm")
-	    histos["plus"].Write("sm_lin_quad_"+wc)
-	    quadHist.Write("quad_"+wc)
-	    if len(wcList)>=2 :
-		    for wc2 in wcList:
-			    mixedName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000_"+wc2+"_+1.000_"
-			    for key in eftFile.GetListOfKeys():
-				    if key.GetName() == mixedName:
-					    obj = key.ReadObj()
-					    clonedHist = obj.Clone()
-					    category.cd()
-					    clonedHist.Write("sm_lin_quad_mixed_"+wc+"_"+wc2)
+        objName = theChosenOne+"__"+sample
+        # print(objName)
+    	for variation in variations:
+    	    inFile = ROOT.TFile(os.path.join(directory,"tttt_"+variation+".root"), "READ")
+            # print "found syst file in dir %s" %os.path.join(directory, "tttt_"+variation+".root")
+            for key in inFile.GetListOfKeys():
+                if key.GetName().startswith(objName):
+                    obj = key.ReadObj()
+                    category.cd()
+                    clonedHist = obj.Clone()
+                    histname = clonedHist.GetName()
+                    if "data" in histname:
+                        clonedHist.Write("data_obs")
+                        print "found data", theChosenOne,clonedHist.GetTitle()
+                    else:
+                        # if not args.era == "RunII":
+                        #     sample = sample +"_"+args.era
+                        if not args.era == "RunII": sample = sample +"_"+args.era
+                        if variation == "central":
+                            clonedHist.Write(sample)
+                            clonedHist.Write(sample+"__noTopPtReweightDown")
+                            for i in range(1,nPDFs):
+                                clonedHist.Write(sample+"__PDF_%sDown"%i)
+                        elif variation == "noTopPtReweight" :
+                            clonedHist.Write(sample+"__noTopPtReweightUp")
+                        elif "PDF" in variation :
+                            clonedHist.Write(sample+"__"+variation+"Up")
+                        else:
+                            clonedHist.Write(sample+"__"+variation)
+                            # if sample != "ST_tch" and variation == "TTFactorizationShapeUp":
+                            #     print(sample+"__"+variation)
+                            # elif sample == "ST_tch" and variation == "TTFactorizationShapeUp":
+                            #     print "OILLOC"
+                            # if variation == "TTFactorizationShapeUp" and sample == "ST_tch":
+                                # print "OTA (Oh tappost?)"
 
+            inFile.Close()
+        if not args.noEFT:
+            eftFile = ROOT.TFile(os.path.join(directory,"tttt_EFTs.root"), "READ")
+            # print "found eft file in dir %s" %os.path.join(directory, "tttt_EFTs.root")
+            histos = {}
+            for wc in wcList:
+                SMhistName = theChosenOne+"__TTbb_EFT_2018_central"
+                plushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000"
+                minushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_-1.000"
+                for key in eftFile.GetListOfKeys():
+                    obj = key.ReadObj()
+                    # print(obj)
+                    clonedHist = obj.Clone()
+                    if key.GetName() == SMhistName:
+                        histos["SM"] = clonedHist
+                        # print "found the sm hist"
+                    elif key.GetName() == plushistName :
+                        histos["plus"] = clonedHist
+                        # print "found the plus hist"
+                    elif key.GetName() == minushistName :
+                        histos["minus"] = clonedHist
+                        # print "found the minus hist"
+                # insert here the new histograms
+                quadHist = getQuadratic(histos["SM"], histos["plus"], histos["minus"])
+                category.cd()
+                histos["SM"].Write("sm")
+                histos["plus"].Write("sm_lin_quad_"+wc)
+                quadHist.Write("quad_"+wc)
+                quad_direct_hist = quadHist.Clone()
+                # print(quadHist)
+                # sm_hist, sm_lin_quad_hist, quad_hist = None, None, None
+                # multipliedhistos = {}
+                for variation in variations:
+                    # Open the file for the current variation
+                    inFile = ROOT.TFile(os.path.join(directory, "tttt_" + variation + ".root"), "READ")
+                    objName = theChosenOne+"__"+sample
+                    # Loop over keys in inFile
+                    if sample == "TTLep_bb":
+                        for key in inFile.GetListOfKeys():
+                            # print("KEYS", key)
+                            if key.GetName().startswith(objName):
+                                obj = key.ReadObj()
+                                clonedHist = obj.Clone()
+                                category.cd()
+                                for hist_type, hist in histos.items():
+                                    multipliedHist = hist.Clone()
+                                    if hist_type == "SM":
+                                        multipliedHist.Multiply(clonedHist)
+                                        # multipliedHist.Write("sm_"+variation)
+                                        if variation == "central":
+                                            multipliedHist.Write("sm__noTopPtReweightDown")
+                                            for i in range(1,nPDFs):
+                                                clonedHist.Write("sm__PDF_%sDown"%i)
+                                        elif variation == "noTopPtReweight" :
+                                            clonedHist.Write("sm__noTopPtReweightUp")
+                                        elif "PDF" in variation :
+                                            clonedHist.Write("sm__"+variation+"Up")
+                                        else:
+                                            clonedHist.Write("sm__"+variation)
+                                    elif hist_type == "plus":
+                                        multipliedHist.Multiply(clonedHist)
+                                        if variation == "central":
+                                            multipliedHist.Write("sm_lin_quad_"+wc+"__noTopPtReweightDown")
+                                            for i in range(1,nPDFs):
+                                                multipliedHist.Write("sm_lin_quad_"+wc+"__PDF_%sDown"%i)
+                                        elif variation == "noTopPtReweight" :
+                                            multipliedHist.Write("sm_lin_quad_"+wc+"__noTopPtReweightUp")
+                                        elif "PDF" in variation :
+                                            multipliedHist.Write("sm_lin_quad_"+wc+"__"+variation+"Up")
+                                        else:
+                                            multipliedHist.Write("sm_lin_quad_"+wc+"__"+variation)
+                                        # multipliedHist.Write("sm_lin_quad_"+wc+"_"+variation)
 
+                                quad_direct_hist.Multiply(clonedHist)
+                                if variation == "central":
+                                    quad_direct_hist.Write("quad_"+wc+"__noTopPtReweightDown")
+                                    for i in range(1,nPDFs):
+                                        quad_direct_hist.Write("quad_"+wc+"__PDF_%sDown"%i)
+                                elif variation == "noTopPtReweight" :
+                                    quad_direct_hist.Write("quad_"+wc+"__noTopPtReweightUp")
+                                elif "PDF" in variation :
+                                    quad_direct_hist.Write("quad_"+wc+"__"+variation+"Up")
+                                else:
+                                    quad_direct_hist.Write("quad_"+wc+"__"+variation)
+                                # quad_direct_hist.Write("quad_"+wc+"_"+variation)
+
+                if len(wcList)>=2 :
+                    for wc2 in wcList:
+                        mixedName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000_"+wc2+"_+1.000_"
+                        for key in eftFile.GetListOfKeys():
+                            if key.GetName() == mixedName:
+                                obj = key.ReadObj()
+                                clonedHist = obj.Clone()
+                                category.cd()
+                                clonedHist.Write("sm_lin_quad_mixed_"+wc+"_"+wc2)
+
+print("Written output file: %s"%outFile)
 outFile.Close()
