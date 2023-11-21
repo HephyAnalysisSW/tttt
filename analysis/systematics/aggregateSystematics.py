@@ -82,7 +82,7 @@ for look in scales:
     # Output files
     modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
     modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+scales[look]+".root"), "RECREATE")
-    print(modified_scale_tt)
+    #print(modified_scale_tt)
     #input files
     scalefile = ROOT.TFile(os.path.join(directory,"tttt_"+look+".root"), "READ")
 
@@ -111,7 +111,7 @@ for look in scales:
     modified_scale_tt.Close()
     modified_scale_DY.Close()
 ratio.close()
-print(ratio)
+#print(ratio)
 
 
 #separate PS weights in ttbar and DY
@@ -130,10 +130,10 @@ for PS in ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]:
         DY_PS.cd()
         if not "DY" in hKey.GetName(): h = SMh
         h.Write(hKey.GetName())
-        print "finished the {} decorrellation".format(PS)
-        jointPS.Close()
-        TT_PS.Close()
-        DY_PS.Close()
+    print "finished the {} decorrellation".format(PS)
+    jointPS.Close()
+    TT_PS.Close()
+    DY_PS.Close()
 
 centralfile.Close()
 
@@ -163,10 +163,8 @@ for theChosenOne in theYounglings :
     category = outFile.mkdir("tttt__"+theChosenOne)
     for sample in samples :
         objName = theChosenOne+"__"+sample
-        # print(objName)
     	for variation in variations:
     	    inFile = ROOT.TFile(os.path.join(directory,"tttt_"+variation+".root"), "READ")
-            # print "found syst file in dir %s" %os.path.join(directory, "tttt_"+variation+".root")
             for key in inFile.GetListOfKeys():
                 if key.GetName().startswith(objName):
                     obj = key.ReadObj()
@@ -177,8 +175,6 @@ for theChosenOne in theYounglings :
                         clonedHist.Write("data_obs")
                         print "found data", theChosenOne,clonedHist.GetTitle()
                     else:
-                        # if not args.era == "RunII":
-                        #     sample = sample +"_"+args.era
                         if not args.era == "RunII": sample = sample +"_"+args.era
                         if variation == "central":
                             clonedHist.Write(sample)
@@ -191,12 +187,8 @@ for theChosenOne in theYounglings :
                             clonedHist.Write(sample+"__"+variation+"Up")
                         else:
                             clonedHist.Write(sample+"__"+variation)
-                            # if sample != "ST_tch" and variation == "TTFactorizationShapeUp":
-                            #     print(sample+"__"+variation)
-                            # elif sample == "ST_tch" and variation == "TTFactorizationShapeUp":
-                            #     print "OILLOC"
-                            # if variation == "TTFactorizationShapeUp" and sample == "ST_tch":
-                                # print "OTA (Oh tappost?)"
+                            #if variation == "TTISRUp" : print "Working on : ", sample,variation, histname
+
 
             inFile.Close()
         if not args.noEFT:
@@ -204,9 +196,9 @@ for theChosenOne in theYounglings :
             # print "found eft file in dir %s" %os.path.join(directory, "tttt_EFTs.root")
             histos = {}
             for wc in wcList:
-                SMhistName = theChosenOne+"__TTbb_EFT_2018_central"
-                plushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000"
-                minushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_-1.000"
+                SMhistName = theChosenOne+"__TTbb_EFT_central"
+                plushistName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000"
+                minushistName = theChosenOne+"__TTbb_EFT_"+wc+"_-1.000"
                 for key in eftFile.GetListOfKeys():
                     obj = key.ReadObj()
                     # print(obj)
