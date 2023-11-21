@@ -259,29 +259,26 @@ class Plotter:
         ratio = h1.Clone()
         Nbins = ratio.GetN()
         for bin in range(Nbins):
-            #bin=i
-            if h2.GetBinContent(bin)==0:
-                r=-1
-                eY_hi = 0
-                eY_lo = 0
-            else:
-   	        d1, d2 = ROOT.Double(0.), ROOT.Double(0.)
-   	        h1.GetPoint(bin, d1, d2)
-   	        Xval = float(d1)
-   	        Yval = float(d2)
-   	        eX = h1.GetErrorXlow(bin)
-   
-   		#X = h2.GetBinCenter(bin)
-                r = h1.Eval(h2.GetBinCenter(bin))/h2.GetBinContent(bin)
-		eY_lo = h1.GetErrorYlow(bin)/h2.GetBinContent(bin)
-                eY_hi = h1.GetErrorYhigh(bin)/h2.GetBinContent(bin)
-   		
-	    #print bin,h2.GetBinContent(bin),r, eY_lo, eY_hi, h1.GetErrorYlow(bin),h1.GetErrorYhigh(bin)
-	    X = h2.GetBinCenter(bin)
-            ratio.SetPoint(bin,X,r)
-	    ratio.SetPointError(bin, 0, 0, eY_lo, eY_hi)
-           
-	return ratio
+			#bin=i
+			if h2.GetBinContent(bin)==0:
+			    r=-1
+			    eY_hi = 0
+			    eY_lo = 0
+			else:
+				d1, d2 = ROOT.Double(0.), ROOT.Double(0.)
+				h1.GetPoint(bin-1, d1, d2)
+				Xval = float(d1)
+				Yval = float(d2)
+				eX = h1.GetErrorXlow(bin-1)
+				r = h1.Eval(h2.GetBinCenter(bin))/h2.GetBinContent(bin)
+				eY_lo = h1.GetErrorYlow(bin-1)/h2.GetBinContent(bin)
+				eY_hi = h1.GetErrorYhigh(bin-1)/h2.GetBinContent(bin)
+			
+			X = h2.GetBinCenter(bin)
+			ratio.SetPoint(bin,X,r)
+			ratio.SetPointError(bin, 0, 0, eY_lo, eY_hi)
+
+        return ratio
    
     def getPostFitRatioUnc(self,h1):
        ratio = h1.Clone()
