@@ -25,7 +25,8 @@ outFile = ROOT.TFile(os.path.join(plot_directory, 'analysisPlots', out_directory
 theYounglings = ["2l_4t","2l_4t_coarse","ht","nJetGood","nBTag"]
 #theYounglings = ["2l_4t"]
 # Possible Syst variations
-variations = ['LeptonSFUp',
+variations = [
+              'LeptonSFUp',
               'LeptonSFDown',
 	          'PUUp',
 	          'PUDown',
@@ -59,8 +60,8 @@ variations = ['LeptonSFUp',
 	          'central'
               ]
 
-# nPDFs = 10
-nPDFs = 101
+nPDFs = 10
+# nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
 scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp","TTscaleShapeDown","TTscaleShapeUp","DYrenormalizationShapeUp","DYrenormalizationShapeDown", "DYFactorizationShapeUp","DYFactorizationShapeDown","TTrenormalizationShapeUp","TTrenormalizationShapeDown","TTFactorizationShapeUp","TTFactorizationShapeDown"]
 PSWeights = ["DYISRUp", "DYISRDown", "DYFSRUp", "DYFSRDown" , "TTISRUp", "TTISRDown", "TTFSRUp", "TTFSRDown" ]
@@ -226,7 +227,7 @@ for theChosenOne in theYounglings :
                 histos["SM"].Write("sm")
                 histos["plus"].Write("sm_lin_quad_"+wc)
                 quadHist.Write("quad_"+wc)
-                quad_direct_hist = quadHist.Clone()
+                histos["quad"] = quadHist.Clone()
                 # compute the ratios and integrals here
                 ratios_integrals = {}
                 for key, histogram_info in tmp_histograms.items():
@@ -251,17 +252,16 @@ for theChosenOne in theYounglings :
                     integral_factor = ratios_integrals[key]["integral"]
                     # print(integral_factor)
                     sm_integral = histos['SM']
-
                     sm_new = sm_integral.Clone()
                     sm_new.Scale(integral_factor)
-                    sm_new.Write('sm_'+key)
+                    sm_new.Write('sm__'+key)
                     lin_integral = histos['plus']
                     lin_new = lin_integral.Clone()
                     lin_new.Scale(integral_factor)
-                    lin_new.Write('sm_lin_quad_'+wc+'_'+key)
-                    quad_integral = quad_direct_hist
+                    lin_new.Write('sm_lin_quad_'+wc+'__'+key)
+                    quad_integral = histos["quad"]
                     quad_integral.Scale(integral_factor)
-                    quad_integral.Write('quad_'+wc+'_'+key)
+                    quad_integral.Write('quad_'+wc+'__'+key)
 
                 if len(wcList)>=2 :
                     for wc2 in wcList:
