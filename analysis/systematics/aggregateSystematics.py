@@ -60,8 +60,8 @@ variations = [
 	          'central'
               ]
 
-nPDFs = 10
-# nPDFs = 101
+#nPDFs = 10
+nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
 scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp","TTscaleShapeDown","TTscaleShapeUp","DYrenormalizationShapeUp","DYrenormalizationShapeDown", "DYFactorizationShapeUp","DYFactorizationShapeDown","TTrenormalizationShapeUp","TTrenormalizationShapeDown","TTFactorizationShapeUp","TTFactorizationShapeDown"]
 PSWeights = ["DYISRUp", "DYISRDown", "DYFSRUp", "DYFSRDown" , "TTISRUp", "TTISRDown", "TTFSRUp", "TTFSRDown" ]
@@ -184,6 +184,7 @@ for theChosenOne in theYounglings :
                         #if not args.era == "RunII": sample = sample +"_"+args.era
                         if variation == "central":
                             clonedHist.Write(sample)
+                            tmp_histograms[sample] = clonedHist
                             clonedHist.Write(sample+"__noTopPtReweightDown")
                             tmp_histograms['noTopPtReweightDown'] = clonedHist
                             for i in range(1,nPDFs):
@@ -214,13 +215,13 @@ for theChosenOne in theYounglings :
                     clonedHist = obj.Clone()
                     if key.GetName() == SMhistName:
                         histos["SM"] = clonedHist
-                        print "found the sm hist"
+                        # print "found the sm hist"
                     elif key.GetName() == plushistName :
                         histos["plus"] = clonedHist
-                        print "found the plus hist"
+                        # print "found the plus hist"
                     elif key.GetName() == minushistName :
                         histos["minus"] = clonedHist
-                        print "found the minus hist"
+                        # print "found the minus hist"
                 # insert here the new histograms
                 quadHist = getQuadratic(histos["SM"], histos["plus"], histos["minus"])
                 category.cd()
@@ -228,6 +229,8 @@ for theChosenOne in theYounglings :
                 histos["plus"].Write("sm_lin_quad_"+wc)
                 quadHist.Write("quad_"+wc)
                 histos["quad"] = quadHist.Clone()
+
+
                 # compute the ratios and integrals here
                 ratios_integrals = {}
                 for key, histogram_info in tmp_histograms.items():
@@ -242,15 +245,26 @@ for theChosenOne in theYounglings :
                             if sm_histogram.Integral() != 0:
                                 ratio_histogram = histogram.Clone()
                                 ratio_histogram.Divide(sm_histogram)
+                                has_zero_bin = any(sm_histogram.GetBinContent(bin) == 0 for bin in range(1, sm_histogram.GetNbinsX() + 1))
+                                if has_zero_bin:
+                                    # print("The histogram has at least one bin with 0 content. Set corresponding bin to 0")
+                                    for bin in range(1, sm_histogram.GetNbinsX() + 1):
+                                        if sm_histogram.GetBinContent(bin) == 0:
+                                            ratio_histogram.SetBinContent(bin, 0)
+                                else:
+                                    pass
 
                                 integral_value = ratio_histogram.Integral()
+                                # print('integrale merda, '+ histogram_info.GetName()+' '+key)
+                                # print(integral_value )
+
                                 ratios_integrals[key] = {"histogram": ratio_histogram, "integral": integral_value}
                         else:
                             pass
+
                 for key in ratios_integrals:
                     category.cd()
                     integral_factor = ratios_integrals[key]["integral"]
-                    # print(integral_factor)
                     sm_integral = histos['SM']
                     sm_new = sm_integral.Clone()
                     sm_new.Scale(integral_factor)
@@ -260,8 +274,11 @@ for theChosenOne in theYounglings :
                     lin_new.Scale(integral_factor)
                     lin_new.Write('sm_lin_quad_'+wc+'__'+key)
                     quad_integral = histos["quad"]
-                    quad_integral.Scale(integral_factor)
-                    quad_integral.Write('quad_'+wc+'__'+key)
+                    quad_new = quad_integral.Clone()
+                    if quad_new.GetMaximum()==0.0:
+                        print('problema quad')
+                    quad_new.Scale(integral_factor)
+                    quad_new.Write('quad_'+wc+'__'+key)
 
                 if len(wcList)>=2 :
                     for wc2 in wcList:
