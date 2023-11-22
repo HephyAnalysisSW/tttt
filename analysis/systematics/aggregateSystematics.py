@@ -1,5 +1,6 @@
 import ROOT,os
 from tttt.Tools.user    import plot_directory
+import re
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
@@ -9,6 +10,7 @@ argParser.add_argument('--user_directory', action = 'store', default = None)
 argParser.add_argument('--selection',      action='store', default='trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag3p-ht500')
 argParser.add_argument('--noEFT',	   action='store_true', default=False)
 argParser.add_argument('--era',		   action='store', default='RunII', choices=['RunII','2018','2017','2016','2016_preVFP'])
+argParser.add_argument('--small',	   action='store_true', default=False)
 args = argParser.parse_args()
 
 if args.user_directory is not None: plot_directory = os.path.join('/groups/hephy/cms',args.user_directory,'www/tttt/plots')
@@ -19,8 +21,9 @@ out_directory = args.plot_directory if args.out_directory is None else args.out_
 jetSelection = args.selection.split("-")[6]+"_"+args.selection.split("-")[7]
 outFile = ROOT.TFile(os.path.join(plot_directory, 'analysisPlots', out_directory, args.era, args.plot_directory+"_"+jetSelection+".root"), "RECREATE")
 #make a list of possible discriminating variables
-theYounglings = ["2l_4t","2l_4t_coarse","ht","nJetGood","nBTag"]
 
+theYounglings = ["2l_4t","2l_4t_coarse","ht","nJetGood","nBTag"]
+#theYounglings = ["2l_4t"]
 # Possible Syst variations
 variations = ['LeptonSFUp',
               'LeptonSFDown',
@@ -55,15 +58,18 @@ variations = ['LeptonSFUp',
 	          'HDampDown',
 	          'central'
               ]
+
+# nPDFs = 10
 nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
 scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp","TTscaleShapeDown","TTscaleShapeUp","DYrenormalizationShapeUp","DYrenormalizationShapeDown", "DYFactorizationShapeUp","DYFactorizationShapeDown","TTrenormalizationShapeUp","TTrenormalizationShapeDown","TTFactorizationShapeUp","TTFactorizationShapeDown"]
 PSWeights = ["DYISRUp", "DYISRDown", "DYFSRUp", "DYFSRDown" , "TTISRUp", "TTISRDown", "TTFSRUp", "TTFSRDown" ]
-
+# scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp","TTscaleShapeDown","TTscaleShapeUp"]
+# PSWeights = ["DYISRUp", "DYISRDown"]
 variations +=  scaleWeights + PSWeights + PDFWeights
 
 samples = [ "TTLep_bb", "TTLep_cc", "TTLep_other", "ST_tch", "ST_twch", "TTW", "TTH", "TTZ", "TTTT", "DY", "DiBoson", "data"]
-
+# samples = [ "TTLep_bb" ]
 
 centralfile = ROOT.TFile(os.path.join(directory,"tttt_central.root"), "READ")
 
@@ -82,7 +88,6 @@ for look in scales:
     # Output files
     modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
     modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+scales[look]+".root"), "RECREATE")
-    print(modified_scale_tt)
     #input files
     scalefile = ROOT.TFile(os.path.join(directory,"tttt_"+look+".root"), "READ")
 
@@ -111,7 +116,7 @@ for look in scales:
     modified_scale_tt.Close()
     modified_scale_DY.Close()
 ratio.close()
-print(ratio)
+
 
 
 #separate PS weights in ttbar and DY
@@ -130,10 +135,11 @@ for PS in ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]:
         DY_PS.cd()
         if not "DY" in hKey.GetName(): h = SMh
         h.Write(hKey.GetName())
-        print "finished the {} decorrellation".format(PS)
-        jointPS.Close()
-        TT_PS.Close()
-        DY_PS.Close()
+
+    print "finished the {} decorrelation".format(PS)
+    jointPS.Close()
+    TT_PS.Close()
+    DY_PS.Close()
 
 centralfile.Close()
 
@@ -156,17 +162,16 @@ def getQuadratic(hist_sm, hist_plus, hist_minus):
    hist_quad.Scale(0.5)
    return hist_quad
 
-
+sample_histograms = {}
 
 #Create the root file combine desires
 for theChosenOne in theYounglings :
     category = outFile.mkdir("tttt__"+theChosenOne)
+    tmp_histograms = {}
     for sample in samples :
         objName = theChosenOne+"__"+sample
-        # print(objName)
     	for variation in variations:
     	    inFile = ROOT.TFile(os.path.join(directory,"tttt_"+variation+".root"), "READ")
-            # print "found syst file in dir %s" %os.path.join(directory, "tttt_"+variation+".root")
             for key in inFile.GetListOfKeys():
                 if key.GetName().startswith(objName):
                     obj = key.ReadObj()
@@ -177,49 +182,47 @@ for theChosenOne in theYounglings :
                         clonedHist.Write("data_obs")
                         print "found data", theChosenOne,clonedHist.GetTitle()
                     else:
-                        # if not args.era == "RunII":
-                        #     sample = sample +"_"+args.era
-                        if not args.era == "RunII": sample = sample +"_"+args.era
+                        #if not args.era == "RunII": sample = sample +"_"+args.era
                         if variation == "central":
                             clonedHist.Write(sample)
                             clonedHist.Write(sample+"__noTopPtReweightDown")
+                            tmp_histograms['noTopPtReweightDown'] = clonedHist
                             for i in range(1,nPDFs):
                                 clonedHist.Write(sample+"__PDF_%sDown"%i)
+                                tmp_histograms['PDF_%sDown'%i] = clonedHist
                         elif variation == "noTopPtReweight" :
                             clonedHist.Write(sample+"__noTopPtReweightUp")
+                            tmp_histograms['noTopPtReweightUp'] = clonedHist
                         elif "PDF" in variation :
                             clonedHist.Write(sample+"__"+variation+"Up")
+                            tmp_histograms[variation+'Up'] = clonedHist
                         else:
                             clonedHist.Write(sample+"__"+variation)
-                            # if sample != "ST_tch" and variation == "TTFactorizationShapeUp":
-                            #     print(sample+"__"+variation)
-                            # elif sample == "ST_tch" and variation == "TTFactorizationShapeUp":
-                            #     print "OILLOC"
-                            # if variation == "TTFactorizationShapeUp" and sample == "ST_tch":
-                                # print "OTA (Oh tappost?)"
+                            tmp_histograms[variation] = clonedHist
 
             inFile.Close()
+        # print(tmp_histograms)
+        # print(len(tmp_histograms))
         if not args.noEFT:
             eftFile = ROOT.TFile(os.path.join(directory,"tttt_EFTs.root"), "READ")
-            # print "found eft file in dir %s" %os.path.join(directory, "tttt_EFTs.root")
             histos = {}
+            ratios_sm = {}
             for wc in wcList:
                 SMhistName = theChosenOne+"__TTbb_EFT_2018_central"
                 plushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000"
                 minushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_-1.000"
                 for key in eftFile.GetListOfKeys():
                     obj = key.ReadObj()
-                    # print(obj)
                     clonedHist = obj.Clone()
                     if key.GetName() == SMhistName:
                         histos["SM"] = clonedHist
-                        # print "found the sm hist"
+                        print "found the sm hist"
                     elif key.GetName() == plushistName :
                         histos["plus"] = clonedHist
-                        # print "found the plus hist"
+                        print "found the plus hist"
                     elif key.GetName() == minushistName :
                         histos["minus"] = clonedHist
-                        # print "found the minus hist"
+                        print "found the minus hist"
                 # insert here the new histograms
                 quadHist = getQuadratic(histos["SM"], histos["plus"], histos["minus"])
                 category.cd()
@@ -227,62 +230,42 @@ for theChosenOne in theYounglings :
                 histos["plus"].Write("sm_lin_quad_"+wc)
                 quadHist.Write("quad_"+wc)
                 quad_direct_hist = quadHist.Clone()
-                # print(quadHist)
-                # sm_hist, sm_lin_quad_hist, quad_hist = None, None, None
-                # multipliedhistos = {}
-                for variation in variations:
-                    # Open the file for the current variation
-                    inFile = ROOT.TFile(os.path.join(directory, "tttt_" + variation + ".root"), "READ")
-                    objName = theChosenOne+"__"+sample
-                    # Loop over keys in inFile
-                    if sample == "TTLep_bb":
-                        for key in inFile.GetListOfKeys():
-                            # print("KEYS", key)
-                            if key.GetName().startswith(objName):
-                                obj = key.ReadObj()
-                                clonedHist = obj.Clone()
-                                category.cd()
-                                for hist_type, hist in histos.items():
-                                    multipliedHist = hist.Clone()
-                                    if hist_type == "SM":
-                                        multipliedHist.Multiply(clonedHist)
-                                        # multipliedHist.Write("sm_"+variation)
-                                        if variation == "central":
-                                            multipliedHist.Write("sm__noTopPtReweightDown")
-                                            for i in range(1,nPDFs):
-                                                clonedHist.Write("sm__PDF_%sDown"%i)
-                                        elif variation == "noTopPtReweight" :
-                                            clonedHist.Write("sm__noTopPtReweightUp")
-                                        elif "PDF" in variation :
-                                            clonedHist.Write("sm__"+variation+"Up")
-                                        else:
-                                            clonedHist.Write("sm__"+variation)
-                                    elif hist_type == "plus":
-                                        multipliedHist.Multiply(clonedHist)
-                                        if variation == "central":
-                                            multipliedHist.Write("sm_lin_quad_"+wc+"__noTopPtReweightDown")
-                                            for i in range(1,nPDFs):
-                                                multipliedHist.Write("sm_lin_quad_"+wc+"__PDF_%sDown"%i)
-                                        elif variation == "noTopPtReweight" :
-                                            multipliedHist.Write("sm_lin_quad_"+wc+"__noTopPtReweightUp")
-                                        elif "PDF" in variation :
-                                            multipliedHist.Write("sm_lin_quad_"+wc+"__"+variation+"Up")
-                                        else:
-                                            multipliedHist.Write("sm_lin_quad_"+wc+"__"+variation)
-                                        # multipliedHist.Write("sm_lin_quad_"+wc+"_"+variation)
+                # compute the ratios and integrals here
+                ratios_integrals = {}
+                for key, histogram_info in tmp_histograms.items():
+                    histName = histogram_info.GetName()
+                    # print(histName)
+                    ttLep = 'TTLep_bb'
+                    match = re.search(ttLep, histName, re.IGNORECASE)
+                    if "SM" in histos:
+                        if match:
+                            sm_histogram = histos["SM"]
+                            histogram = histogram_info
+                            # Avoid division by zero
+                            if sm_histogram.Integral() != 0:
+                                ratio_histogram = histogram.Clone()
+                                ratio_histogram.Divide(sm_histogram)
 
-                                quad_direct_hist.Multiply(clonedHist)
-                                if variation == "central":
-                                    quad_direct_hist.Write("quad_"+wc+"__noTopPtReweightDown")
-                                    for i in range(1,nPDFs):
-                                        quad_direct_hist.Write("quad_"+wc+"__PDF_%sDown"%i)
-                                elif variation == "noTopPtReweight" :
-                                    quad_direct_hist.Write("quad_"+wc+"__noTopPtReweightUp")
-                                elif "PDF" in variation :
-                                    quad_direct_hist.Write("quad_"+wc+"__"+variation+"Up")
-                                else:
-                                    quad_direct_hist.Write("quad_"+wc+"__"+variation)
-                                # quad_direct_hist.Write("quad_"+wc+"_"+variation)
+                                integral_value = ratio_histogram.Integral()
+                                ratios_integrals[key] = {"histogram": ratio_histogram, "integral": integral_value}
+                        else:
+                            pass
+                for key in ratios_integrals:
+                    category.cd()
+                    integral_factor = ratios_integrals[key]["integral"]
+                    # print(integral_factor)
+                    sm_integral = histos['SM']
+
+                    sm_new = sm_integral.Clone()
+                    sm_new.Scale(integral_factor)
+                    sm_new.Write('sm_'+key)
+                    lin_integral = histos['plus']
+                    lin_new = lin_integral.Clone()
+                    lin_new.Scale(integral_factor)
+                    lin_new.Write('sm_lin_quad_'+wc+'_'+key)
+                    quad_integral = quad_direct_hist
+                    quad_integral.Scale(integral_factor)
+                    quad_integral.Write('quad_'+wc+'_'+key)
 
                 if len(wcList)>=2 :
                     for wc2 in wcList:
