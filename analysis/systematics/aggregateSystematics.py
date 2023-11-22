@@ -201,12 +201,13 @@ for theChosenOne in theYounglings :
 
         if not args.noEFT:
             eftFile = ROOT.TFile(os.path.join(directory,"tttt_EFTs.root"), "READ")
+            #print(eftFile)
             histos = {}
             ratios_sm = {}
             for wc in wcList:
-                SMhistName = theChosenOne+"__TTbb_EFT_central"
-                plushistName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000"
-                minushistName = theChosenOne+"__TTbb_EFT_"+wc+"_-1.000"
+                SMhistName = theChosenOne+"__TTbb_EFT_2018_central"
+                plushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000"
+                minushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_-1.000"
                 for key in eftFile.GetListOfKeys():
                     obj = key.ReadObj()
                     clonedHist = obj.Clone()
