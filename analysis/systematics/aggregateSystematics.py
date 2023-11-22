@@ -88,6 +88,10 @@ for look in scales:
     # Output files
     modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
     modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+scales[look]+".root"), "RECREATE")
+<<<<<<< HEAD
+=======
+    #print(modified_scale_tt)
+>>>>>>> d1dd374f4af22337c3110991c860e6292ef11122
     #input files
     scalefile = ROOT.TFile(os.path.join(directory,"tttt_"+look+".root"), "READ")
 
@@ -116,7 +120,11 @@ for look in scales:
     modified_scale_tt.Close()
     modified_scale_DY.Close()
 ratio.close()
+<<<<<<< HEAD
 
+=======
+#print(ratio)
+>>>>>>> d1dd374f4af22337c3110991c860e6292ef11122
 
 
 #separate PS weights in ttbar and DY
@@ -135,8 +143,12 @@ for PS in ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]:
         DY_PS.cd()
         if not "DY" in hKey.GetName(): h = SMh
         h.Write(hKey.GetName())
+<<<<<<< HEAD
 
     print "finished the {} decorrelation".format(PS)
+=======
+    print "finished the {} decorrellation".format(PS)
+>>>>>>> d1dd374f4af22337c3110991c860e6292ef11122
     jointPS.Close()
     TT_PS.Close()
     DY_PS.Close()
@@ -182,7 +194,11 @@ for theChosenOne in theYounglings :
                         clonedHist.Write("data_obs")
                         print "found data", theChosenOne,clonedHist.GetTitle()
                     else:
+<<<<<<< HEAD
                         #if not args.era == "RunII": sample = sample +"_"+args.era
+=======
+                        if not args.era == "RunII": sample = sample +"_"+args.era
+>>>>>>> d1dd374f4af22337c3110991c860e6292ef11122
                         if variation == "central":
                             clonedHist.Write(sample)
                             clonedHist.Write(sample+"__noTopPtReweightDown")
@@ -198,7 +214,12 @@ for theChosenOne in theYounglings :
                             tmp_histograms[variation+'Up'] = clonedHist
                         else:
                             clonedHist.Write(sample+"__"+variation)
+<<<<<<< HEAD
                             tmp_histograms[variation] = clonedHist
+=======
+                            #if variation == "TTISRUp" : print "Working on : ", sample,variation, histname
+
+>>>>>>> d1dd374f4af22337c3110991c860e6292ef11122
 
             inFile.Close()
         # print(tmp_histograms)
@@ -208,9 +229,9 @@ for theChosenOne in theYounglings :
             histos = {}
             ratios_sm = {}
             for wc in wcList:
-                SMhistName = theChosenOne+"__TTbb_EFT_2018_central"
-                plushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000"
-                minushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_-1.000"
+                SMhistName = theChosenOne+"__TTbb_EFT_central"
+                plushistName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000"
+                minushistName = theChosenOne+"__TTbb_EFT_"+wc+"_-1.000"
                 for key in eftFile.GetListOfKeys():
                     obj = key.ReadObj()
                     clonedHist = obj.Clone()
