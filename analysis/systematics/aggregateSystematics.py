@@ -22,7 +22,7 @@ outFile = ROOT.TFile(os.path.join(plot_directory, 'analysisPlots', out_directory
 theYounglings = ["2l_4t","2l_4t_coarse","ht","nJetGood","nBTag"]
 
 # Possible Syst variations
-variations = ['LeptonSFUp', 
+variations = ['LeptonSFUp',
         'LeptonSFDown',
         'PUUp',
         'PUDown',
@@ -73,14 +73,16 @@ scales = {"ScaleDownDown" : "scaleShapeDown",
         "ScaleUpNone" : "renormalizationShapeUp",
         "ScaleNoneUp" : "FactorizationShapeUp",
         "ScaleDownNone" : "renormalizationShapeDown",
-        "ScaleNoneDown" : "FactorizationShapeDown"} 
+        "ScaleNoneDown" : "FactorizationShapeDown"}
 ratio = open(os.path.join(directory, "scale_ratios.txt"), "w")
 for look in scales:
     print "Currently rescaling "+ look
     ratio.write("normalization factor for "+scales[look]+":\n")
 
     # Output files
-    modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
+    modified_scale_ttbb = ROOT.TFile(os.path.join(directory, "tttt_TTLep_bb"+scales[look]+".root"), "RECREATE")
+    modified_scale_ttcc = ROOT.TFile(os.path.join(directory, "tttt_TTLep_cc"+scales[look]+".root"), "RECREATE")
+    modified_scale_ttother = ROOT.TFile(os.path.join(directory, "tttt_TTLep_other"+scales[look]+".root"), "RECREATE")
     modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+scales[look]+".root"), "RECREATE")
 
     #input files
@@ -92,11 +94,21 @@ for look in scales:
         h = hKey.ReadObj()
         SMh = SMhKey.ReadObj()
         if not h.Integral()==0:
-            scale_factor = SMh.Integral()/h.Integral() 
+            scale_factor = SMh.Integral()/h.Integral()
             if hKey.GetName().startswith("ht_"):
                 ratio.write("\t"+h.GetName()+": "+str(scale_factor)+"\n")
-            #ttbar
-            modified_scale_tt.cd() 
+            #ttcc
+            modified_scale_ttcc.cd()
+            if "DY" in hKey.GetName(): h = SMh
+            else:	h.Scale(scale_factor)
+            h.Write(hKey.GetName())
+            #ttbb
+            modified_scale_ttbb.cd()
+            if "DY" in hKey.GetName(): h = SMh
+            else:	h.Scale(scale_factor)
+            h.Write(hKey.GetName())
+            #ttother
+            modified_scale_ttother.cd()
             if "DY" in hKey.GetName(): h = SMh
             else:	h.Scale(scale_factor)
             h.Write(hKey.GetName())
@@ -108,7 +120,9 @@ for look in scales:
             h.Write(hKey.GetName())
 
     scalefile.Close()
-    modified_scale_tt.Close()
+    modified_scale_ttcc.Close()
+    modified_scale_ttbb.Close()
+    modified_scale_ttother.Close()
     modified_scale_DY.Close()
 ratio.close()
 
@@ -116,13 +130,13 @@ ratio.close()
 #separate PS weights in ttbar and DY
 for PS in ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]:
     jointPS = ROOT.TFile(os.path.join(directory,"tttt_"+PS+".root"), "READ")
-    TT_PS = ROOT.TFile(os.path.join(directory, "tttt_TT"+PS+".root"), "RECREATE") 
-    DY_PS = ROOT.TFile(os.path.join(directory, "tttt_DY"+PS+".root"), "RECREATE") 
+    TT_PS = ROOT.TFile(os.path.join(directory, "tttt_TT"+PS+".root"), "RECREATE")
+    DY_PS = ROOT.TFile(os.path.join(directory, "tttt_DY"+PS+".root"), "RECREATE")
     for hKey in jointPS.GetListOfKeys():
         SMhKey = centralfile.GetKey(hKey.GetName())
         SMh = SMhKey.ReadObj()
         h = hKey.ReadObj()
-        TT_PS.cd() 
+        TT_PS.cd()
         if "DY" in hKey.GetName(): h = SMh
         h.Write(hKey.GetName())
         h = hKey.ReadObj()
@@ -139,7 +153,7 @@ centralfile.Close()
 isEFT = True
 wcList = ["cQQ1"]
 def getQuadratic(hist_sm, hist_plus, hist_minus):
-    #create quad term for EFT 
+    #create quad term for EFT
 # Since the quadratic term does not change sign, we can get it from the
 # histograms where c = +1, c = 0, and c = -1
 # (1) c = +1 is SM + LIN + QUAD
@@ -168,7 +182,7 @@ for theChosenOne in theYounglings :
 						category.cd()
 						clonedHist = obj.Clone()
 						histname = clonedHist.GetName()
-						if "data" in histname: 
+						if "data" in histname:
 						    clonedHist.Write("data_obs")
 						    print "found data", theChosenOne,clonedHist.GetTitle()
 						else:
@@ -199,13 +213,13 @@ for theChosenOne in theYounglings :
                         clonedHist = obj.Clone()
                         if key.GetName() == SMhistName:
                             histos["SM"] = clonedHist
-                            #print "found the sm hist" 
-                        elif key.GetName() == plushistName : 
+                            #print "found the sm hist"
+                        elif key.GetName() == plushistName :
                             histos["plus"] = clonedHist
                             #print "found the plus hist"
                         elif key.GetName() == minushistName : histos["minus"] = clonedHist
                     histos["quad"] = getQuadratic(histos["SM"], histos["plus"], histos["minus"])
-                    
+
                     #scale the histos to Pow/MG
                     for key in inFile.GetListOfKeys():
                         if key.GetName().startswith(objName):
@@ -222,11 +236,9 @@ for theChosenOne in theYounglings :
                             histos["SM"].Multiply(histos["ratio"])
                             histos["plus"].Multiply(histos["ratio"])
                             histos["quad"].Multiply(histos["ratio"])
-                            for bin in range(1, histos["SM"].GetNbinsX() + 1):
-                                #print "Aftre reweight"
-                                #print "TTLep_bb bin:",histos["SM"].GetBinContent(bin),"EFT at sm bin:",histos["SM"].GetBinContent(bin),"EFT lin bin:",histos["plus"].GetBinContent(bin), "EFT quad bin:"    ,histos["quad"].GetBinContent(bin)
-                    
-                    #Write all variations to file now
+                            # for bin in range(1, histos["SM"].GetNbinsX() + 1):
+
+
                     category.cd()
                     if variation == "central":
                         histos["SM"].Write("sm")
