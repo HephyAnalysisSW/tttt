@@ -12,6 +12,8 @@ argParser.add_argument('--era',		   action='store', default='RunII', choices=['R
 args = argParser.parse_args()
 
 if args.user_directory is not None: plot_directory = os.path.join('/groups/hephy/cms',args.user_directory,'www/tttt/plots')
+
+# cristina.giordano/www/tttt/plots/analysisPlots/
 directory = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, args.era, "all", args.selection)
 out_directory = args.plot_directory if args.out_directory is None else args.out_directory
 
@@ -20,7 +22,6 @@ jetSelection = args.selection.split("-")[6]+"_"+args.selection.split("-")[7]
 outFile = ROOT.TFile(os.path.join(plot_directory, 'analysisPlots', out_directory, args.era, args.plot_directory+"_"+jetSelection+".root"), "RECREATE")
 #make a list of possible discriminating variables
 theYounglings = ["2l_4t","2l_4t_coarse","ht","nJetGood","nBTag"]
-
 # Possible Syst variations
 variations = ['LeptonSFUp',
         'LeptonSFDown',
@@ -80,6 +81,7 @@ for look in scales:
     ratio.write("normalization factor for "+scales[look]+":\n")
 
     # Output files
+    # modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
     modified_scale_ttbb = ROOT.TFile(os.path.join(directory, "tttt_TTLep_bb"+scales[look]+".root"), "RECREATE")
     modified_scale_ttcc = ROOT.TFile(os.path.join(directory, "tttt_TTLep_cc"+scales[look]+".root"), "RECREATE")
     modified_scale_ttother = ROOT.TFile(os.path.join(directory, "tttt_TTLep_other"+scales[look]+".root"), "RECREATE")
@@ -97,22 +99,27 @@ for look in scales:
             scale_factor = SMh.Integral()/h.Integral()
             if hKey.GetName().startswith("ht_"):
                 ratio.write("\t"+h.GetName()+": "+str(scale_factor)+"\n")
-            #ttcc
-            modified_scale_ttcc.cd()
+            #tt
+            modified_scale_tt.cd()
             if "DY" in hKey.GetName(): h = SMh
-            else:	h.Scale(scale_factor)
+            else: h.Scale(scale_factor)
             h.Write(hKey.GetName())
             #ttbb
             modified_scale_ttbb.cd()
-            if "DY" in hKey.GetName(): h = SMh
+            if not "TTLep_bb" in hKey.GetName(): h = SMh
             else:	h.Scale(scale_factor)
             h.Write(hKey.GetName())
-            #ttother
+            # #ttother
+            modified_scale_ttcc.cd()
+            if not "TTLep_cc" in hKey.GetName(): h = SMh
+            else:	h.Scale(scale_factor)
+            h.Write(hKey.GetName())
+            # ttother
             modified_scale_ttother.cd()
-            if "DY" in hKey.GetName(): h = SMh
+            if not "TTLep_other" in hKey.GetName(): h = SMh
             else:	h.Scale(scale_factor)
             h.Write(hKey.GetName())
-            #DY
+            # DY
             modified_scale_DY.cd()
             h = hKey.ReadObj()
             if not "DY" in hKey.GetName(): h = SMh
@@ -120,8 +127,9 @@ for look in scales:
             h.Write(hKey.GetName())
 
     scalefile.Close()
-    modified_scale_ttcc.Close()
+    modified_scale_tt.Close()
     modified_scale_ttbb.Close()
+    modified_scale_ttcc.Close()
     modified_scale_ttother.Close()
     modified_scale_DY.Close()
 ratio.close()
@@ -186,7 +194,7 @@ for theChosenOne in theYounglings :
 						    clonedHist.Write("data_obs")
 						    print "found data", theChosenOne,clonedHist.GetTitle()
 						else:
-						    if not args.era == "RunII": sample = sample +"_"+args.era
+						    # if not args.era == "RunII": sample = sample +"_"+args.era
 						    if variation == "central":
 						        clonedHist.Write(sample)
 						        clonedHist.Write(sample+"__noTopPtReweightDown")
@@ -205,9 +213,9 @@ for theChosenOne in theYounglings :
                 histos = {}
                 for wc in wcList:
                     #Get the histos in the form combine wants
-                    SMhistName = theChosenOne+"__TTbb_EFT_central"
-                    plushistName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000"
-                    minushistName = theChosenOne+"__TTbb_EFT_"+wc+"_-1.000"
+                    SMhistName = theChosenOne+"__TTbb_EFT_2018_central"
+                    plushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000"
+                    minushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_-1.000"
                     for key in eftFile.GetListOfKeys():
                         obj = key.ReadObj()
                         clonedHist = obj.Clone()
