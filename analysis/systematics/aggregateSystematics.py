@@ -1,5 +1,7 @@
 import ROOT,os
 from tttt.Tools.user    import plot_directory
+import RootTools.plot.helpers as plot_helpers
+from shutil import copyfile
 
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
@@ -16,12 +18,21 @@ if args.user_directory is not None: plot_directory = os.path.join('/groups/hephy
 # cristina.giordano/www/tttt/plots/analysisPlots/
 directory = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, args.era, "all", args.selection)
 out_directory = args.plot_directory if args.out_directory is None else args.out_directory
+outFile_dir = os.path.join(plot_directory, 'analysisPlots', out_directory, args.era)
+if not os.path.exists(os.path.join(outFile_dir, "all", args.selection)):
+    try:
+        os.makedirs(os.path.join(outFile_dir, "all", args.selection))
+        print "making a new directory"
+    except:
+        # different jobs may start at the same time creating race conditions.
+        pass 
+#plot_helpers.copyIndexPHP(out_Filedir)
 
 # Open the output file and create a TDirectoryFile
 jetSelection = args.selection.split("-")[6]+"_"+args.selection.split("-")[7]
-outFile = ROOT.TFile(os.path.join(plot_directory, 'analysisPlots', out_directory, args.era, args.plot_directory+"_"+jetSelection+".root"), "RECREATE")
+outFile = ROOT.TFile(os.path.join(outFile_dir, args.plot_directory+"_"+jetSelection+".root"), "RECREATE")
 #make a list of possible discriminating variables
-theYounglings = ["2l_4t","2l_4t_coarse","ht","nJetGood","nBTag"]
+theYounglings = ["2l_4t","ht","nJetGood","nBTag"]
 # Possible Syst variations
 variations = ['LeptonSFUp',
         'LeptonSFDown',
@@ -58,7 +69,15 @@ variations = ['LeptonSFUp',
         ]
 nPDFs = 101
 PDFWeights = ["PDF_%s"%i for i in range(1,nPDFs)]
-scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp","TTscaleShapeDown","TTscaleShapeUp","DYrenormalizationShapeUp","DYrenormalizationShapeDown", "DYFactorizationShapeUp","DYFactorizationShapeDown","TTrenormalizationShapeUp","TTrenormalizationShapeDown","TTFactorizationShapeUp","TTFactorizationShapeDown"]
+scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp",
+                "TTscaleShapeDown","TTscaleShapeUp",
+                "DYrenormalizationShapeUp","DYrenormalizationShapeDown", "DYFactorizationShapeUp","DYFactorizationShapeDown",
+                #"TTrenormalizationShapeUp","TTrenormalizationShapeDown","TTFactorizationShapeUp","TTFactorizationShapeDown", 
+                "TTbbrenormalizationShapeUp","TTbbrenormalizationShapeDown","TTbbFactorizationShapeUp","TTbbFactorizationShapeDown",
+                "TTccrenormalizationShapeUp","TTccrenormalizationShapeDown","TTccFactorizationShapeUp","TTccFactorizationShapeDown",
+                "TTlightrenormalizationShapeUp","TTlightrenormalizationShapeDown","TTlightFactorizationShapeUp","TTlightFactorizationShapeDown",
+                "TTTTrenormalizationShapeUp","TTTTrenormalizationShapeDown","TTTTFactorizationShapeUp","TTTTFactorizationShapeDown",
+                ]
 PSWeights = ["DYISRUp", "DYISRDown", "DYFSRUp", "DYFSRDown" , "TTISRUp", "TTISRDown", "TTFSRUp", "TTFSRDown" ]
 
 variations +=  scaleWeights + PSWeights + PDFWeights
@@ -77,14 +96,15 @@ scales = {"ScaleDownDown" : "scaleShapeDown",
         "ScaleNoneDown" : "FactorizationShapeDown"}
 ratio = open(os.path.join(directory, "scale_ratios.txt"), "w")
 for look in scales:
-    print "Currently rescaling "+ look
+    print "\n Currently rescaling "+ look
     ratio.write("normalization factor for "+scales[look]+":\n")
 
     # Output files
-    # modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
-    modified_scale_ttbb = ROOT.TFile(os.path.join(directory, "tttt_TTLep_bb"+scales[look]+".root"), "RECREATE")
-    modified_scale_ttcc = ROOT.TFile(os.path.join(directory, "tttt_TTLep_cc"+scales[look]+".root"), "RECREATE")
-    modified_scale_ttother = ROOT.TFile(os.path.join(directory, "tttt_TTLep_other"+scales[look]+".root"), "RECREATE")
+    modified_scale_tt = ROOT.TFile(os.path.join(directory, "tttt_TT"+scales[look]+".root"), "RECREATE")
+    modified_scale_ttbb = ROOT.TFile(os.path.join(directory, "tttt_TTbb"+scales[look]+".root"), "RECREATE")
+    modified_scale_ttcc = ROOT.TFile(os.path.join(directory, "tttt_TTcc"+scales[look]+".root"), "RECREATE")
+    modified_scale_ttother = ROOT.TFile(os.path.join(directory, "tttt_TTlight"+scales[look]+".root"), "RECREATE")
+    modified_scale_tttt = ROOT.TFile(os.path.join(directory, "tttt_TTTT"+scales[look]+".root"), "RECREATE")
     modified_scale_DY = ROOT.TFile(os.path.join(directory, "tttt_DY"+scales[look]+".root"), "RECREATE")
 
     #input files
@@ -101,29 +121,56 @@ for look in scales:
                 ratio.write("\t"+h.GetName()+": "+str(scale_factor)+"\n")
             #tt
             modified_scale_tt.cd()
-            if "DY" in hKey.GetName(): h = SMh
-            else: h.Scale(scale_factor)
+            h = hKey.ReadObj()
+            #if "DY" in hKey.GetName(): h = SMh
+            if not (("TTLep_bb" in hKey.GetName()) or ("TTLep_cc" in hKey.GetName()) or ("TTLep_other" in hKey.GetName())): h = SMh
+            else: 
+                h.Scale(scale_factor)
+                #print "\n in ttbar: ", hKey.GetName(), "8th bin: ", h.GetBinContent(8), "SM value: ", SMh.GetBinContent(8)
             h.Write(hKey.GetName())
+            
             #ttbb
             modified_scale_ttbb.cd()
+            h = hKey.ReadObj()
             if not "TTLep_bb" in hKey.GetName(): h = SMh
-            else:	h.Scale(scale_factor)
+            else:	
+                h.Scale(scale_factor)
+                #print "found ttbb scale",hKey.GetName(), "8th bin: ", h.GetBinContent(8)
             h.Write(hKey.GetName())
-            # #ttother
+            
+            #ttother
             modified_scale_ttcc.cd()
+            h = hKey.ReadObj()
             if not "TTLep_cc" in hKey.GetName(): h = SMh
-            else:	h.Scale(scale_factor)
+            else:	
+                h.Scale(scale_factor)
+                #print "found ttcc scale",hKey.GetName(), "8th bin: ", h.GetBinContent(8)
             h.Write(hKey.GetName())
+            
             # ttother
             modified_scale_ttother.cd()
+            h = hKey.ReadObj()
             if not "TTLep_other" in hKey.GetName(): h = SMh
-            else:	h.Scale(scale_factor)
+            else:	
+                h.Scale(scale_factor)
+                #print "found ttlight scale", hKey.GetName(), "8th bin: ", h.GetBinContent(8)
+            h.Write(hKey.GetName())
+            
+            # tttt
+            modified_scale_tttt.cd()
+            h = hKey.ReadObj()
+            if not "TTTT" in hKey.GetName(): h = SMh
+            else:	
+                h.Scale(scale_factor)
+                #print "found tttt scale", hKey.GetName(), "8th bin: ", h.GetBinContent(8)
             h.Write(hKey.GetName())
             # DY
             modified_scale_DY.cd()
             h = hKey.ReadObj()
             if not "DY" in hKey.GetName(): h = SMh
-            else: h.Scale(scale_factor)
+            else: 
+                h.Scale(scale_factor)
+                #print "found DY scale", hKey.GetName(), "8th bin: ", h.GetBinContent(8)
             h.Write(hKey.GetName())
 
     scalefile.Close()
@@ -213,9 +260,9 @@ for theChosenOne in theYounglings :
                 histos = {}
                 for wc in wcList:
                     #Get the histos in the form combine wants
-                    SMhistName = theChosenOne+"__TTbb_EFT_2018_central"
-                    plushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000"
-                    minushistName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_-1.000"
+                    SMhistName = theChosenOne+"__TTbb_EFT_central"
+                    plushistName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000"
+                    minushistName = theChosenOne+"__TTbb_EFT_"+wc+"_-1.000"
                     for key in eftFile.GetListOfKeys():
                         obj = key.ReadObj()
                         clonedHist = obj.Clone()
@@ -277,7 +324,7 @@ for theChosenOne in theYounglings :
                     #TBC
                     if len(wcList)>=2 :
                         for wc2 in wcList:
-                            mixedName = theChosenOne+"__TTbb_EFT_2018_"+wc+"_+1.000_"+wc2+"_+1.000_"
+                            mixedName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000_"+wc2+"_+1.000_"
                             for key in eftFile.GetListOfKeys():
                                 if key.GetName() == mixedName:
                                     obj = key.ReadObj()
@@ -287,6 +334,7 @@ for theChosenOne in theYounglings :
                     eftFile.Close()
                     #print "done creating EFT histos"
             inFile.Close()
+#            copyfile(os.path.join(directory,"tttt_"+variation+".root"),os.path.join(outFile_dir, "all", args.selection,"tttt_"+variation+".root"))
 
 
 print("Written to output file: %s"%outFile)

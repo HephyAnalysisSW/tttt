@@ -46,7 +46,8 @@ if args.backgroundOnly:
 else :  fit = "shapes_fit_s"
 
 
-mc = [ 	{"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}", "color" : ROOT.kRed + 2},
+mc = [ 
+    {"name": "sm", "legendText" : "t#bar{t}b#bar{b}", "color" : ROOT.kRed + 2}, #TTLep_bb
 	{"name": "TTLep_cc", "legendText" : "t#bar{t}c#bar{c}", "color" : ROOT.kRed - 3},
 	{"name": "TTLep_other", "legendText" : "t#bar{t} + light j.", "color" : color.TT},
 #       {"name": "ST", "legendText" : "t/tW", "color" : color.T},
@@ -59,11 +60,11 @@ mc = [ 	{"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}", "color" : ROOT.k
 	{"name": "DiBoson", "legendText" : "DiBoson", "color" : color.W},
 	{"name": "TTTT", "legendText" : "t#bar{t}t#bar{t}", "color" : color.TTTT} ]
 
-selections =["njet4to5_btag2","njet6to7_btag2","njet4to5_btag1","njet6to7_btag1"]#,"njet8p_btag2","njet8p_btag1","njet4to5_btag3p"]#,"njet6to7_btag3p","njet8p_btag3p"]
+selections =["njet4to5_btag2","njet6to7_btag2","njet4to5_btag1","njet6to7_btag1","njet8p_btag2","njet8p_btag1","mvaCut2p_njet4to5_btag3p","mvaCut2m_njet4to5_btag3p","mvaCut1p_njet6to7_btag3p","mvaCut1m_njet6to7_btag3p","njet8p_btag3p"]
 plots =[	
-		{"name":"mva",		"texX":"2l_4t",		"binLabels":["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1"], "nbins": [0,10]},
-		{"name":"nJetGood",	"texX":"N_{Jet}",       "binLabels":["4","5","6","7","8","9","10","11"], "nbins": [0,8]},
-		{"name":"nBTag",	"texX":"N_{BJet}",      "binLabels":["0","1","2","3","4","5","6"], "nbins": [0,7]},
+#		{"name":"mva",		"texX":"2l_4t",		"binLabels":["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1"], "nbins": [0,10]},
+#		{"name":"nJetGood",	"texX":"N_{Jet}",       "binLabels":["4","5","6","7","8","9","10","11"], "nbins": [0,8]},
+#		{"name":"nBTag",	"texX":"N_{BJet}",      "binLabels":["0","1","2","3","4","5","6"], "nbins": [0,7]},
 		{"name":"ht",       	"texX":"ht",     	"binLabels":["500","","1000","","1500","","1500","","2000","","2500"] , "nbins": [0,10]},
        ]
 for plot in plots:
@@ -77,7 +78,12 @@ for plot in plots:
       #get the histos
       for process in mc:
       	process["hist"] = getPostFit(process["name"],args.inputFile,plotName,fit)
-   	plotter.addSample(process["name"], process["hist"], process["legendText"], process["color"])
+        if process["hist"]: 
+            print process["name"], process["hist"].GetMaximum()
+       	    plotter.addSample(process["name"], process["hist"], process["legendText"], process["color"])
+        else:
+            pass 
+            #some selections don't have ST_tch. to be investigated
    	  
       #get uncertainty
       
@@ -86,8 +92,8 @@ for plot in plots:
      
       #get data
       if not args.noData:
-   	Data = getData(args.inputFile,plotName,fit)
-   	plotter.addData(Data)
+    	Data = getData(args.inputFile,plotName,fit)
+    	plotter.addData(Data)
 
       #draw the plot
       for log in [False,True]:
