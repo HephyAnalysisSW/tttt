@@ -35,7 +35,7 @@ dbFile = dbDir+'/nano_mc_private_UL20.sql'
 
 logger.info("Using db file: %s", dbFile)
 
-from Samples.nanoAOD.UL18_nanoAODv9 import *
+from Samples.nanoAOD.UL16_nanoAODv9 import *
 ################################################################################
 #Rare processes
 
