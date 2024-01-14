@@ -37,6 +37,14 @@ logger.info("Using db file: %s", dbFile)
 
 from Samples.nanoAOD.UL18_nanoAODv9 import *
 ################################################################################
+# MadGraph samples
+TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/cristina.giordano/tttt/nanoAOD/Run2SIM_UL2016NANOAOD/TTTT_13TeV_madgraph_pythia8_Run2SIM_UL2016MiniAOD", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/")
+TTTT_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
+TTTT_MS_EFT.normalization = 403200.0
+TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/cristina.giordano/tttt/nanoAOD/Run2SIM_UL2016NANOAOD/TTbb_13TeV_madgraph_pythia8_Run2SIM_UL2016MiniAOD", xSection=4.59, redirector = "root://eos.grid.vbc.ac.at/")
+TTbb_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
+TTbb_MS_EFT.normalization = 149400.0
+################################################################################
 #Rare processes
 
 TTTT.xSection = 0.01197
@@ -108,6 +116,8 @@ TTLep_pow_CP5_hUp = Sample.nanoAODfromDAS("TTLep_pow_CP5_hUp","/TTTo2L2Nu_hdampU
 # TTSingleLep_pow_CP5 = Sample.nanoAODfromDAS("TTSingleLep_pow_CP5",      "/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8/RunIISummer20UL16NanoAODv9-106X_mcRun2_asymptotic_v17-v1/NANOAODSIM",      dbFile=dbFile, redirector=redirector, instance="global", overwrite=ov, xSection=365.34)
 ################################################################################
 
+EFTSamples = [TTTT_MS_EFT, TTbb_MS_EFT]
+
 allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
               TTLep_pow_CP5, TTLep_pow_CP5_hDown, TTLep_pow_CP5_hUp,
               TTSingleLep_pow_CP5, TTHad_pow_CP5, TTbb,
@@ -122,6 +132,8 @@ allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
               DYJetsToLL_M4to50_HT600toInf, DYJetsToLL_M10to50, DYJetsToLL_M50,
               WZTo3LNu, ZZTo4L, WWW_4F, WWZ_4F, WZZ, ZZZ, SSWW
     ]
+
+allSamples += EFTSamples
 
 for s in allSamples:
     s.isData = False

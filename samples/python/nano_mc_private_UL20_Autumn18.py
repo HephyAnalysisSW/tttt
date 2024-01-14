@@ -36,6 +36,14 @@ logger.info("Using db file: %s", dbFile)
 
 from Samples.nanoAOD.UL18_nanoAODv9 import *
 ################################################################################
+# MadGraph samples
+TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/cristina.giordano/tttt/nanoAOD/Run2SIM_UL2018NANOAOD/TTTT_13TeV_madgraph_pythia8_Run2SIM_UL2018MiniAOD", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/")
+TTTT_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
+TTTT_MS_EFT.normalization = 452100.0
+TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/cristina.giordano/tttt/nanoAOD/Run2SIM_UL2018NANOAOD/TTbb_13TeV_madgraph_pythia8_Run2SIM_UL2018MiniAOD", xSection=4.59, redirector = "root://eos.grid.vbc.ac.at/")
+TTbb_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
+TTbb_MS_EFT.normalization = 149700.0
+################################################################################
 # Rare processes
 
 TTTT.xSection = 0.01197
@@ -104,17 +112,15 @@ ZZZ.xSection = 0.01476
 ################################################################################
 
 
-TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTTT_MS_EFT-22-05-12/", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/")
-TTTT_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
-TTTT_MS_EFT.normalization = 4080634.0
+# TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTTT_MS_EFT-22-05-12/", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/")
+# TTTT_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
+# TTTT_MS_EFT.normalization = 4080634.0
+#
+# TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTbb_MS_EFT-22-05-12/", xSection=4.59, redirector = "root://eos.grid.vbc.ac.at/")
+# TTbb_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
+# TTbb_MS_EFT.normalization = 4657390.0
 
-TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/robert.schoefbeck/tttt/nanoAOD/TTbb_MS_EFT-22-05-12/", xSection=4.59, redirector = "root://eos.grid.vbc.ac.at/")
-TTbb_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
-TTbb_MS_EFT.normalization = 4657390.0
-
-EFT_samples = [TTTT_MS_EFT, TTbb_MS_EFT]
-
-allSamples += EFT_samples
+EFTSamples = [TTTT_MS_EFT, TTbb_MS_EFT]
 
 allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
               TTLep_pow_CP5, TTLep_pow_CP5_hDown, TTLep_pow_CP5_hUp,
@@ -130,6 +136,8 @@ allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
               DYJetsToLL_M4to50_HT600toInf, DYJetsToLL_M10to50, DYJetsToLL_M50,
               WZTo3LNu, ZZTo4L, WWW_4F, WWZ_4F, WZZ, ZZZ, SSWW
     ]
+
+allSamples += EFTSamples
 
 for s in allSamples:
     s.isData = False
