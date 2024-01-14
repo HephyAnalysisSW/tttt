@@ -35,7 +35,7 @@ dbFile = dbDir+'/nano_mc_private_UL20.sql'
 
 logger.info("Using db file: %s", dbFile)
 
-from Samples.nanoAOD.UL16_nanoAODv9 import *
+from Samples.nanoAOD.UL18_nanoAODv9 import *
 ################################################################################
 # MadGraph samples
 TTTT_MS_EFT = Sample.fromDirectory( "TTTT_MS_EFT", "/eos/vbc/group/cms/cristina.giordano/tttt/nanoAOD/Run2SIM_UL2016NANOAOD/TTTT_13TeV_madgraph_pythia8_Run2SIM_UL2016MiniAOD", xSection=0.01197, redirector = "root://eos.grid.vbc.ac.at/")

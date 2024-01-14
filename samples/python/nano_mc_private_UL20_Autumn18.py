@@ -122,6 +122,8 @@ ZZZ.xSection = 0.01476
 
 EFTSamples = [TTTT_MS_EFT, TTbb_MS_EFT]
 
+allSamples += EFT_samples
+
 allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
               TTLep_pow_CP5, TTLep_pow_CP5_hDown, TTLep_pow_CP5_hUp,
               TTSingleLep_pow_CP5, TTHad_pow_CP5, TTbb,
@@ -136,9 +138,6 @@ allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
               DYJetsToLL_M4to50_HT600toInf, DYJetsToLL_M10to50, DYJetsToLL_M50,
               WZTo3LNu, ZZTo4L, WWW_4F, WWZ_4F, WZZ, ZZZ, SSWW
     ]
-
-allSamples += EFTSamples
-
 
 for s in allSamples:
     s.isData = False
