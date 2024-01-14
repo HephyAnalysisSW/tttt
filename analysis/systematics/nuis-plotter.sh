@@ -1,0 +1,13 @@
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag1-ht500  --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag2-ht500  --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag3p-ht500  --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag2-ht500   --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag1-ht500  --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag3p-ht500   --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag2-ht500  --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag1-ht500  --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag3p-ht500   --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst_mvaCut0.2m-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag3p-ht500  --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst_mvaCut0.2p-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag3p-ht500  --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst_mvaCut0.1m-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag3p-ht500   --input_directory 4t-v14-syst
+python nuis-plotter.py --plot_directory 4t-v14-syst_mvaCut0.1p-shapes  --selection trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag3p-ht500   --input_directory 4t-v14-syst

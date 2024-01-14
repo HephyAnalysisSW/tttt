@@ -139,6 +139,7 @@ allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
 
 allSamples += EFTSamples
 
+
 for s in allSamples:
     s.isData = False
 

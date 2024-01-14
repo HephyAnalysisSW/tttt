@@ -331,7 +331,7 @@ class Plotter:
         ratio.SetTitle('')
         ratio.GetYaxis().SetTitle(self.ratioTitle)
 	if self.hasPostFitUnc:
-        	ratio.GetYaxis().SetRangeUser(0.5,1.5)
+        	ratio.GetYaxis().SetRangeUser(0.1,1.9)
 	else:   ratio.GetYaxis().SetRangeUser(0.5,1.5)
         ratio.GetYaxis().SetNdivisions(505)
         ratio.GetYaxis().CenterTitle()
@@ -376,30 +376,33 @@ class Plotter:
 
     def buildComparisonPlots(self):
 
-	for sys in self.systNames:
-	    firstHist = True
-            for sampleName, sysName, deltaUp, deltaDown in self.systDeltas:
-                 if sys["name"] == sysName:
-			if firstHist:
-				sys["totalUpHist"] = deltaUp.Clone()
-				sys["totalDownHist"] = deltaDown.Clone()
-				firstHist = False
-			else:
-			 	sys["totalUpHist"].Add(deltaUp)
-				sys["totalDownHist"].Add(deltaDown)
-
-	    sys["totalUpHist"].Add(self.totalHist)
-	    sys["totalUpHist"].Divide(self.totalHist)
-	    sys["totalDownHist"].Add(self.totalHist)
-	    sys["totalDownHist"].Divide(self.totalHist)
-	    if sys["type"] == "theoretical":
-	    	self.theoLegend.AddEntry(sys["totalUpHist"], sys["name"])
-		if sys["totalUpHist"].GetMaximum() > self.yT:
-			self.yT = sys["totalUpHist"].GetMaximum()
-	    elif sys["type"] == "experimental":
-		self.expLegend.AddEntry(sys["totalUpHist"], sys["name"])
-	    	if sys["totalUpHist"].GetMaximum() > self.yE:
-            		self.yE = sys["totalUpHist"].GetMaximum()
+		for sys in self.systNames:
+			firstHist = True
+			for sampleName, sysName, deltaUp, deltaDown in self.systDeltas:
+			    if sys["name"] == sysName:
+					if firstHist:
+						sys["totalUpHist"] = deltaUp.Clone()
+						sys["totalDownHist"] = deltaDown.Clone()
+						firstHist = False
+					else:
+					 	sys["totalUpHist"].Add(deltaUp)
+						sys["totalDownHist"].Add(deltaDown)
+		
+			sys["AbsoluteUp"] = sys["totalUpHist"].Clone()
+			sys["AbsoluteDown"] = sys["totalDownHist"].Clone()
+			sys["totalUpHist"].Add(self.totalHist)
+			sys["totalUpHist"].Divide(self.totalHist)
+			sys["totalDownHist"].Add(self.totalHist)
+			sys["totalDownHist"].Divide(self.totalHist)
+			if sys["type"] == "theoretical":
+				self.theoLegend.AddEntry(sys["totalUpHist"], sys["name"])
+				if sys["totalUpHist"].GetMaximum() > self.yT:
+					self.yT = sys["totalUpHist"].GetMaximum()
+			elif sys["type"] == "experimental":
+				self.expLegend.AddEntry(sys["totalUpHist"], sys["name"])
+				if sys["totalUpHist"].GetMaximum() > self.yE: self.yE = sys["totalUpHist"].GetMaximum()
+				if sys["totalDownHist"].GetMaximum() > self.yE: self.yE = sys["totalDownHist"].GetMaximum()
+    
 
     def setComparisonDrawOptions(self):
 
@@ -438,8 +441,80 @@ class Plotter:
         	sys["totalDownHist"].GetXaxis().SetLabelSize(20)
         	sys["totalDownHist"].GetYaxis().SetLabelSize(20)
             	sys["totalDownHist"].GetYaxis().SetTitleOffset( 1.3 )
+		
+		sys["AbsoluteUp"].SetFillColor(0)
+		sys["AbsoluteUp"].SetLineColor(sys["color"])
+		sys["AbsoluteUp"].GetXaxis().SetTitle(self.xTitle)
+		sys["AbsoluteUp"].GetYaxis().SetTitle("#Delta Events")
+		sys["AbsoluteUp"].SetStats(False)
+		sys["AbsoluteUp"].SetTitle(self.name+"_syst")
+		# precision 3 fonts. see https://root.cern.ch/root/htmldoc//TAttText.html#T5
+		sys["AbsoluteUp"].GetXaxis().SetTitleFont(43)
+		sys["AbsoluteUp"].GetYaxis().SetTitleFont(43)
+		sys["AbsoluteUp"].GetXaxis().SetLabelFont(43)
+		sys["AbsoluteUp"].GetYaxis().SetLabelFont(43)
+		sys["AbsoluteUp"].GetXaxis().SetTitleSize(24)
+		sys["AbsoluteUp"].GetYaxis().SetTitleSize(24)
+		sys["AbsoluteUp"].GetXaxis().SetLabelSize(20)
+		sys["AbsoluteUp"].GetYaxis().SetLabelSize(20)
+		sys["AbsoluteUp"].GetYaxis().SetTitleOffset( 1.3 )
+		
+		sys["AbsoluteDown"].SetFillColor(0)
+		sys["AbsoluteDown"].SetLineColor(sys["color"])
+		sys["AbsoluteDown"].SetLineStyle(4)
+		sys["AbsoluteDown"].GetXaxis().SetTitle(self.xTitle)
+		sys["AbsoluteDown"].GetYaxis().SetTitle("#Delta Events")
+		sys["AbsoluteDown"].SetStats(False)
+		sys["AbsoluteDown"].SetTitle(self.name+"_syst")
+		# precision 3 fonts. see https://root.cern.ch/root/htmldoc//TAttText.html#T5
+		sys["AbsoluteDown"].GetXaxis().SetTitleFont(43)
+		sys["AbsoluteDown"].GetYaxis().SetTitleFont(43)
+		sys["AbsoluteDown"].GetXaxis().SetLabelFont(43)
+		sys["AbsoluteDown"].GetYaxis().SetLabelFont(43)
+		sys["AbsoluteDown"].GetXaxis().SetTitleSize(24)
+		sys["AbsoluteDown"].GetYaxis().SetTitleSize(24)
+		sys["AbsoluteDown"].GetXaxis().SetLabelSize(20)
+		sys["AbsoluteDown"].GetYaxis().SetLabelSize(20)
+		sys["AbsoluteDown"].GetYaxis().SetTitleOffset( 1.3 )
 
 
+    def setAbsolutComparisonDrawOptions(self):
+
+        for sampleName, sysName, deltaUp, deltaDown in self.systDeltas:
+			deltaUp.SetFillColor(0)
+			deltaUp.SetLineColor(ROOT.kBlue)
+			deltaUp.GetXaxis().SetTitle(self.xTitle)
+			deltaUp.GetYaxis().SetTitle("#Delta Events")
+			deltaUp.SetStats(False)
+			deltaUp.SetTitle(self.name+"_deltaUp")
+			# precision 3 fonts. see https://root.cern.ch/root/htmldoc//TAttText.html#T5
+			deltaUp.GetXaxis().SetTitleFont(43)
+			deltaUp.GetYaxis().SetTitleFont(43)
+			deltaUp.GetXaxis().SetLabelFont(43)
+			deltaUp.GetYaxis().SetLabelFont(43)
+			deltaUp.GetXaxis().SetTitleSize(24)
+			deltaUp.GetYaxis().SetTitleSize(24)
+			deltaUp.GetXaxis().SetLabelSize(20)
+			deltaUp.GetYaxis().SetLabelSize(20)
+			deltaUp.GetYaxis().SetTitleOffset( 1.3 )
+			
+			deltaDown.SetFillColor(0)
+			deltaDown.SetLineColor(ROOT.kBlue)
+			deltaDown.SetLineStyle(4)
+			deltaDown.GetXaxis().SetTitle(self.xTitle)
+			deltaDown.GetYaxis().SetTitle("#Delta Events")
+			deltaDown.SetStats(False)
+			deltaDown.SetTitle(self.name+"_deltaDown")
+			# precision 3 fonts. see https://root.cern.ch/root/htmldoc//TAttText.html#T5
+			deltaDown.GetXaxis().SetTitleFont(43)
+			deltaDown.GetYaxis().SetTitleFont(43)
+			deltaDown.GetXaxis().SetLabelFont(43)
+			deltaDown.GetYaxis().SetLabelFont(43)
+			deltaDown.GetXaxis().SetTitleSize(24)
+			deltaDown.GetYaxis().SetTitleSize(24)
+			deltaDown.GetXaxis().SetLabelSize(20)
+			deltaDown.GetYaxis().SetLabelSize(20)
+			deltaDown.GetYaxis().SetTitleOffset( 1.3 )
 
 
 #---Public function ------------------------------------------------------------
@@ -558,77 +633,79 @@ class Plotter:
 
 	#Draw Comparison Plots
 	if self.comparisonPlots and not log:
-	    self.buildComparisonPlots()
-	    self.setComparisonDrawOptions()
-	    c2 = ROOT.TCanvas("c2","c2",200,10, 500, 500)
-            c3 = ROOT.TCanvas("c3","c3",200,10, 500, 500)
-	    pad1 = c2
-	    pad2 = c3
-            pad1.SetBottomMargin(0.13)
-            pad1.SetLeftMargin(0.15)
-            pad1.SetTopMargin(0.07)
-            pad1.SetRightMargin(0.05)
-            pad2.SetBottomMargin(0.13)
-            pad2.SetLeftMargin(0.15)
-            pad2.SetTopMargin(0.07)
-            pad2.SetRightMargin(0.05)
+		self.buildComparisonPlots()
+		self.setComparisonDrawOptions()
+		c2 = ROOT.TCanvas("c2","c2",200,10, 500, 500)
+		c3 = ROOT.TCanvas("c3","c3",200,10, 500, 500)
+		pad1 = c2
+		pad2 = c3
+		pad1.SetLogy(log)
+		pad2.SetLogy(log)
+		pad1.SetBottomMargin(0.13)
+		pad1.SetLeftMargin(0.15)
+		pad1.SetTopMargin(0.07)
+		pad1.SetRightMargin(0.05)
+		pad2.SetBottomMargin(0.13)
+		pad2.SetLeftMargin(0.15)
+		pad2.SetTopMargin(0.07)
+		pad2.SetRightMargin(0.05)
+		
+		line = self.getRatioLine(self.totalHist)
+		self.setRatioDrawOptions(line)
+		line.SetFillColor(0)
+		line.SetLineColor(13)
+		line.SetLineWidth(2)
+		
+		pad1.cd()
+		pad1.SetTitle(self.name+"_syst_theoretical")
 
-            line = self.getRatioLine(self.totalHist)
-            self.setRatioDrawOptions(line)
-            line.SetFillColor(0)
-            line.SetLineColor(13)
-            line.SetLineWidth(2)
-
-	    pad1.cd()
-            pad1.SetTitle(self.name+"_syst_theoretical")
-
-	    line.Draw("hist")
- 
-	    isFirstHere = True
-	    for sys in self.systNames:
-		if sys["type"] == "theoretical":
-		    if isFirstHere:
-			    sys["totalUpHist"].GetYaxis().SetRangeUser(0.8, self.yT*1.3)
-			    sys["totalUpHist"].Draw("hist")
-			    sys["totalDownHist"].Draw("hist same")
-			    isFirstHere = False
-		    else:
-			    sys["totalUpHist"].Draw("hist same")
-			    sys["totalDownHist"].Draw("hist same")
-
-	    self.theoLegend.SetFillStyle(0)
-            self.theoLegend.SetShadowColor(ROOT.kWhite)
-            self.theoLegend.SetBorderSize(0)
-            self.theoLegend.SetNColumns(2)
-	    self.theoLegend.Draw()
-	    cmsText, subLabel = self.setLabel()
-	    pad1.RedrawAxis()
-
-	    pad2.cd()
-            pad2.SetTitle(self.name+"_syst_experimental")
-
-	    line.Draw("hist")
- 
-	    isFirstHere = True
-	    for sys in self.systNames:
-		if sys["type"] == "experimental":
-		    if isFirstHere:
-			    sys["totalUpHist"].GetYaxis().SetRangeUser(0.8, self.yE*1.3)
-			    sys["totalUpHist"].Draw("hist")
-			    sys["totalDownHist"].Draw("hist same")
-			    isFirstHere = False
-		    else:
-			    sys["totalUpHist"].Draw("hist same")
-			    sys["totalDownHist"].Draw("hist same")
-
-
-	    self.expLegend.SetFillStyle(0)
-            self.expLegend.SetShadowColor(ROOT.kWhite)
-            self.expLegend.SetBorderSize(0)
-            self.expLegend.SetNColumns(2)
-	    self.expLegend.Draw()
-	    cmsText, subLabel = self.setLabel()
-            pad2.RedrawAxis()
+		line.Draw("hist")
+		
+		isFirstHere = True
+		for sys in self.systNames:
+			if sys["type"] == "theoretical":
+			    if isFirstHere:
+					sys["totalUpHist"].GetYaxis().SetRangeUser(0.8, self.yT*1.3)
+					sys["totalUpHist"].Draw("hist")
+					sys["totalDownHist"].Draw("hist same")
+					isFirstHere = False
+			    else:
+				    sys["totalUpHist"].Draw("hist same")
+				    sys["totalDownHist"].Draw("hist same")
+		
+		self.theoLegend.SetFillStyle(0)
+		self.theoLegend.SetShadowColor(ROOT.kWhite)
+		self.theoLegend.SetBorderSize(0)
+		self.theoLegend.SetNColumns(2)
+		self.theoLegend.Draw()
+		cmsText, subLabel = self.setLabel()
+		pad1.RedrawAxis()
+		
+		pad2.cd()
+		pad2.SetTitle(self.name+"_syst_experimental")
+		
+		line.Draw("hist")
+		
+		isFirstHere = True
+		for sys in self.systNames:
+			if sys["type"] == "experimental":
+			    if isFirstHere:
+				    sys["totalUpHist"].GetYaxis().SetRangeUser(0.8, self.yE*1.3)
+				    sys["totalUpHist"].Draw("hist")
+				    sys["totalDownHist"].Draw("hist same")
+				    isFirstHere = False
+			    else:
+				    sys["totalUpHist"].Draw("hist same")
+				    sys["totalDownHist"].Draw("hist same")
+		
+		
+		self.expLegend.SetFillStyle(0)
+		self.expLegend.SetShadowColor(ROOT.kWhite)
+		self.expLegend.SetBorderSize(0)
+		self.expLegend.SetNColumns(2)
+		self.expLegend.Draw()
+		cmsText, subLabel = self.setLabel()
+		pad2.RedrawAxis()
 
 
 
@@ -645,7 +722,148 @@ class Plotter:
             plotname = os.path.join(plot_directory, self.name+".%s"%extension)
             c1.Print(plotname)
 	    if self.comparisonPlots and not log:
-	    	compraisonPlotnameTheo= os.path.join(plot_directory, self.name+"_syst_theoretical.%s"%extension)
-		compraisonPlotnameExp = os.path.join(plot_directory, self.name+"_syst_experimental.%s"%extension)
-	    	c2.Print(compraisonPlotnameTheo)
-		c3.Print(compraisonPlotnameExp)
+			compraisonPlotnameTheo= os.path.join(plot_directory, self.name+"_syst_theoretical.%s"%extension)
+			compraisonPlotnameExp = os.path.join(plot_directory, self.name+"_syst_experimental.%s"%extension)
+			c2.Print(compraisonPlotnameTheo)
+			c3.Print(compraisonPlotnameExp)
+
+    def drawNuisances(self,plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False, comparisonPlots = False, binLabels = None, nbins = None):
+        
+        ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
+        ROOT.setTDRStyle()
+        if plot_directory is None : plot_directory = self.plot_dir
+        self.xTitle = texX
+        self.yTitle = texY
+
+        if plot_directory is None : plot_directory = self.plot_dir
+		#Draw Comparison Plots
+        for sampleName, sysName, deltaUp, deltaDown in self.systDeltas: 
+			if not deltaUp.Integral() == 0:
+				
+				self.setAbsolutComparisonDrawOptions()
+				c4 = ROOT.TCanvas("c4","c4",200,10, 500, 500)
+				c5 = ROOT.TCanvas("c5","c5",200,10, 500, 500)
+				pad1 = c4
+				pad1.SetLogy(log)
+				pad1.SetBottomMargin(0.13)
+				pad1.SetLeftMargin(0.15)
+				pad1.SetTopMargin(0.07)
+				pad1.SetRightMargin(0.05)
+				pad2 = c5
+				pad2.SetLogy(log)
+				pad2.SetBottomMargin(0.13)
+				pad2.SetLeftMargin(0.15)
+				pad2.SetTopMargin(0.07)
+				pad2.SetRightMargin(0.05)
+				
+				line = self.getRatioLine(self.totalHist)
+				self.setRatioDrawOptions(line)
+				line.SetFillColor(0)
+				line.SetLineColor(13)
+				line.SetLineWidth(2)
+				
+				pad1.cd()
+				pad1.SetTitle(self.name+"_"+sampleName+"_"+sysName)
+				
+				line.Draw("hist")
+				if not log :
+				    deltaUp.GetYaxis().SetRangeUser(self.yT*-1.5, self.yT*1.5)
+				else :
+				    deltaUp.GetYaxis().SetRangeUser(0.1, self.yT*1.5)
+				
+				deltaUp.Draw("hist") 
+				deltaDown.Draw("hist same")
+				cmsText, subLabel = self.setLabel()
+				pad1.RedrawAxis()
+				
+				pad2.cd()
+				pad2.SetTitle(self.name+"_"+sampleName+"_"+sysName+"_normalized")
+				normUp = deltaUp.Clone()
+				normDown = deltaDown.Clone()
+				for sample in self.samples :
+				    if sample["name"]==sampleName: 
+				        normUp.Divide(sample["hist"])
+				        normDown.Divide(sample["hist"])
+				if not log :
+				    normUp.GetYaxis().SetRangeUser(-0.6,0.6)
+				else :
+				    normUp.GetYaxis().SetRangeUser(0.1,2)
+				normUp.GetYaxis().SetTitle("#Delta Events/ Number of Events")
+				normUp.Draw("hist")
+				normDown.Draw("hist same")
+				cmsText, subLabel = self.setLabel()
+				pad2.RedrawAxis()
+	
+				#save the plot
+				if not os.path.exists(plot_directory):
+				    try:
+				        os.makedirs(plot_directory)
+				    except OSError: # Resolve rare race condition
+				        pass
+				
+				plot_helpers.copyIndexPHP(plot_directory)
+			
+				for extension in extensions:
+					plotname = os.path.join(plot_directory, self.name+"_"+sampleName+"_"+sysName)
+					c4.Print(plotname+".%s"%extension)
+					c5.Print(plotname+"_norm"+".%s"%extension)
+	
+    def drawComparison(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"]):
+	
+    #Draw Comparison Plots
+		ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
+		ROOT.setTDRStyle()
+		
+		if plot_directory is None : plot_directory = self.plot_dir
+		self.xTitle = texX
+		self.yTitle = texY
+		self.buildStack()
+		self.buildUncertainty()
+		self.buildComparisonPlots()
+		self.setComparisonDrawOptions()
+		c2 = ROOT.TCanvas("c2","c2",200,10, 500, 500)
+		pad1 = c2
+		pad1.SetLogy(log)
+		pad1.SetBottomMargin(0.13)
+		pad1.SetLeftMargin(0.15)
+		pad1.SetTopMargin(0.07)
+		pad1.SetRightMargin(0.05)
+		
+		line = self.getRatioLine(self.totalHist)
+		self.setRatioDrawOptions(line)
+		line.SetFillColor(0)
+		line.SetLineColor(13)
+		line.SetLineWidth(2)
+		
+		pad1.cd()
+		pad1.SetTitle(self.name+"_syst_theoretical")
+
+		line.Draw("hist")
+		
+		isFirstHere = True
+		for sys in self.systNames:
+			if sys["type"] == "theoretical":
+			    if isFirstHere:
+					if not log: sys["AbsoluteUp"].GetYaxis().SetRangeUser(-80,150)
+					else: sys["AbsoluteUp"].GetYaxis().SetRangeUser(0.1, 100)
+					sys["AbsoluteUp"].Draw("hist")
+					sys["AbsoluteDown"].Draw("hist same")
+					isFirstHere = False
+			    else:
+				    sys["AbsoluteUp"].Draw("hist same")
+				    sys["AbsoluteDown"].Draw("hist same")
+		
+		self.theoLegend.SetFillStyle(0)
+		self.theoLegend.SetShadowColor(ROOT.kWhite)
+		self.theoLegend.SetBorderSize(0)
+		self.theoLegend.SetNColumns(2)
+		self.theoLegend.Draw()
+		cmsText, subLabel = self.setLabel()
+		pad1.RedrawAxis()
+		
+			
+		plot_helpers.copyIndexPHP(plot_directory)
+		for extension in extensions:
+			compraisonPlotnameTheo= os.path.join(plot_directory, self.name+"_syst_theoretical.%s"%extension)
+			c2.Print(compraisonPlotnameTheo)
+
