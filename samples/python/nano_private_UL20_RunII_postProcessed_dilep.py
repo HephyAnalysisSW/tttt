@@ -32,3 +32,8 @@ TTbbHUp     = Sample.combine( "TTbbHUp", [Summer16_preVFP.TTbbHUp, Summer16.TTbb
 TTbbHDown   = Sample.combine( "TTbbHDown", [Summer16_preVFP.TTbbHDown, Summer16.TTbbHDown, Fall17.TTbbHDown, Autumn18.TTbbHDown], texName = "t#bar{t}b#bar{b}")
 TTLepHUp    = Sample.combine( "TTLepHUp", [Summer16_preVFP.TTLepHUp, Summer16.TTLepHUp, Fall17.TTLepHUp, Autumn18.TTLepHUp], texName = "t#bar{t}")
 TTLepHDown  = Sample.combine( "TTLepHDown", [Summer16_preVFP.TTLepHDown, Summer16.TTLepHDown, Fall17.TTLepHDown, Autumn18.TTLepHDown], texName = "t#bar{t}")
+
+TTTT_EFT    = Sample.combine( "TTTT_EFT", [Summer16_preVFP.TTTT_EFT, Summer16.TTTT_EFT, Fall17.TTTT_EFT, Autumn18.TTTT_EFT], texName = "t#bar{t}t#bar{t}")
+TTTT_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
+TTbb_EFT    = Sample.combine( "TTbb_EFT", [Summer16_preVFP.TTbb_EFT, Summer16.TTbb_EFT, Fall17.TTbb_EFT, Autumn18.TTbb_EFT], texName = "t#bar{t}b#bar{b}")
+TTbb_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
