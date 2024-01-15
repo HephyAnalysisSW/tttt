@@ -131,8 +131,7 @@ allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
               DYJetsToLL_M50_HT2500toInf, DYJetsToLL_M4to50_HT100to200,
               DYJetsToLL_M4to50_HT200to400, DYJetsToLL_M4to50_HT400to600,
               DYJetsToLL_M4to50_HT600toInf, DYJetsToLL_M10to50, DYJetsToLL_M50,
-              WZTo3LNu, ZZTo4L, WWW_4F, WWZ_4F, WZZ, ZZZ, SSWW,
-              TTTT_MS_EFT, TTbb_MS_EFT
+              WZTo3LNu, ZZTo4L, WWW_4F, WWZ_4F, WZZ, ZZZ, SSWW
     ]
 
 allSamples += EFTSamples
