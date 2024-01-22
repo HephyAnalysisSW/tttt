@@ -21,7 +21,7 @@ import tttt.Tools.user as user
 
 # tttt
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
-from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, getGenZs, isAnalysisJet
+from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, getGenZs, isAnalysisJet, getGenFirstCopy, getGenPartons, getTopMother
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
 
 # Analysis
@@ -34,6 +34,7 @@ from Analysis.Tools.helpers                  import checkRootFile, deepCheckRoot
 from Analysis.Tools.leptonJetArbitration     import cleanJetsAndLeptons
 from Analysis.Tools.BTagEfficiencyUL         import BTagEfficiency
 from Analysis.Tools.BTagReshapingUL          import BTagReshaping, flavourSys
+from Analysis.Tools.mcTools                  import *
 
 def get_parser():
     ''' Argument parser for post-processing module.
@@ -509,6 +510,12 @@ genLepVarNames  = [x.split('/')[0] for x in genLepVars]
 lepVars         = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTTH/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I','ptCone/F','mvaTOP/F','mvaTOPWP/I','mvaTOPv2/F','mvaTOPv2WP/I','jetRelIso/F','jetBTag/F','jetPtRatio/F','jetNDauCharged/I','isFO/O','isTight/O','mvaFall17V2noIso_WPL/O','jetIdx/I']
 lepVarNames     = [x.split('/')[0] for x in lepVars]
 
+genTopVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'TopIdx/I']
+genTopVarNames  = [x.split('/')[0] for i in genTopVars]
+
+genPartonVars       = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'index/I', 'TopIdx/I', 'pdgIdMother/I', 'genPartIdxMother/I', 'isFromTop/O']
+genPartonNames   = [x.split('/')[0] for i in genPartonVars]
+
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
 if options.era == "2017":
     read_variables += map(TreeVariable.fromString, [ 'METFixEE2017_pt/F', 'METFixEE2017_phi/F', 'METFixEE2017_pt_nom/F', 'METFixEE2017_phi_nom/F'])
@@ -564,6 +571,7 @@ new_variables += [\
 new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F' if sample.isMC else '' )))
 #else:
 #    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if sample.isMC else '' )))
+new_variables.append('GenParton[%s]'%( ','.join(genPartonVars)))
 
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['ht/F', 'nBTag/I', 'm3/F', 'minDLmass/F'] )
@@ -598,7 +606,7 @@ if addReweights:
 if sample.isMC:
     new_variables.append( TreeVariable.fromString("scale[Weight/F]") )
     new_variables.append( VectorTreeVariable.fromString("PDF[Weight/F]", nMax=150) ) # There are more than 100 PDF weights
-    new_variables.append( VectorTreeVariable.fromString("PS[Weight/F]") ) 
+    new_variables.append( VectorTreeVariable.fromString("PS[Weight/F]") )
 ## ttZ related variables
 new_variables.extend( ['Z1_l1_index/I', 'Z1_l2_index/I', 'Z2_l1_index/I', 'Z2_l2_index/I', 'nonZ1_l1_index/I', 'nonZ1_l2_index/I'] )
 for i in [1,2]:
@@ -785,8 +793,18 @@ def filler( event ):
 
         # GEN Particles
         gPart = getGenPartsAll(r)
+        # lists of GenParticles
+        GenFirstCopies = getGenFirstCopy(gPart)
+        GenPartons = getGenPartons(GenFirstCopies)
+        GenPartons.sort(key = lambda g:-g['pt'])
+
+        TopMothers = getTopMother(GenPartons, gPart)
+
+        #TBC select jets
+
         # GEN Jets
         gJets = getJets( r, jetVars=['pt','eta','phi','mass','partonFlavour','hadronFlavour','index'], jetColl="GenJet" )
+
 
         genLepsFromZ    = genLepFromZ(gPart)
         genZs           = getSortedZCandidates(genLepsFromZ)
@@ -834,7 +852,7 @@ def filler( event ):
     if sample.isMC:
 
     	scale_weights = [reader.sample.chain.GetLeaf("LHEScaleWeight").GetValue(i_weight) for i_weight in range(r.nLHEScaleWeight)]
-    	for i,w in enumerate(scale_weights): 
+    	for i,w in enumerate(scale_weights):
 	    if options.normalizeSys:
 	    	event.scale_Weight[i] = w/scale_norm_histo.GetBinContent( i+1 )
 		#print len(scale_norm_histo)
@@ -861,9 +879,9 @@ def filler( event ):
             	event.PS_Weight[i] = w/ps_norm_histo[i+1]
 	    else:
 		event.PS_Weight[i] = 1.0
-	    #print "PS thing:",event.PS_Weight[i] 
+	    #print "PS thing:",event.PS_Weight[i]
         event.nPS = r.nPSWeight
-   
+
     ################################################################################
     # reweights
     if addReweights:
@@ -981,7 +999,7 @@ def filler( event ):
     nominal_bJets       = []
     nominal_nonBJets    = []
     for jet in jets:
-        if not jet['isNominal']: continue 
+        if not jet['isNominal']: continue
         if isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4: #b-tagging abs eta
             nominal_bJets.append(jet)
         else:
@@ -1387,5 +1405,3 @@ if os.path.exists(tmp_output_directory) and not options.keepNanoAOD:
 # Thus the job is resubmitted on condor even if the output is ok
 # Current idea is that the problem is with xrootd having a non-closed root file
 sample.clear()
-
-
