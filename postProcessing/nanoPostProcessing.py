@@ -510,10 +510,10 @@ genLepVarNames  = [x.split('/')[0] for x in genLepVars]
 lepVars         = ['pt/F','eta/F','phi/F','pdgId/I','cutBased/I','miniPFRelIso_all/F','pfRelIso03_all/F','mvaFall17V2Iso_WP90/O', 'mvaTTH/F', 'sip3d/F','lostHits/I','convVeto/I','dxy/F','dz/F','charge/I','deltaEtaSC/F','mediumId/I','eleIndex/I','muIndex/I','ptCone/F','mvaTOP/F','mvaTOPWP/I','mvaTOPv2/F','mvaTOPv2WP/I','jetRelIso/F','jetBTag/F','jetPtRatio/F','jetNDauCharged/I','isFO/O','isTight/O','mvaFall17V2noIso_WPL/O','jetIdx/I']
 lepVarNames     = [x.split('/')[0] for x in lepVars]
 
-genTopVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'TopIdx/I']
-genTopVarNames  = [x.split('/')[0] for i in genTopVars]
+# genTopVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'TopIdx/I']
+# genTopVarNames  = [x.split('/')[0] for i in genTopVars]
 
-genPartonVars       = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'index/I', 'TopIdx/I', 'pdgIdMother/I', 'genPartIdxMother/I', 'isFromTop/O']
+genPartonVars       = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'index/I', 'TopIdx/I', 'motherPdgId/I', 'genPartIdxMother/I', 'isFromTop/O', 'isFromW/O', 'WisFromTop/O']
 genPartonNames   = [x.split('/')[0] for i in genPartonVars]
 
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
@@ -793,18 +793,24 @@ def filler( event ):
 
         # GEN Particles
         gPart = getGenPartsAll(r)
+
         # lists of GenParticles
         GenFirstCopies = getGenFirstCopy(gPart)
         GenPartons = getGenPartons(GenFirstCopies)
         GenPartons.sort(key = lambda g:-g['pt'])
-
-        TopMothers = getTopMother(GenPartons, gPart)
-
-        #TBC select jets
+        store_partonFromTop = getTopMother(GenPartons, gPart)
+        setattr(event, 'nGenParton', len(store_partonFromTop))
+        for index, g in enumerate(store_partonFromTop):
+            event.GenParton_index[index] = g['index']
+            event.GenParton_pt[index] = g['pt']
+            event.GenParton_eta[index] = g['eta']
+            event.GenParton_phi[index] = g['phi']
+            event.GenParton_isFromTop[index] = g['isFromTop']
+            event.GenParton_pdgId[index] = g['pdgId']
+            event.GenParton_motherPdgId[index] = g['motherPdgId']
 
         # GEN Jets
         gJets = getJets( r, jetVars=['pt','eta','phi','mass','partonFlavour','hadronFlavour','index'], jetColl="GenJet" )
-
 
         genLepsFromZ    = genLepFromZ(gPart)
         genZs           = getSortedZCandidates(genLepsFromZ)
@@ -941,6 +947,8 @@ def filler( event ):
     for j in analysis_jets:
         j['isNominal'] = j['pt']>minJetPt
 
+
+
     # Calculate variables for mvaTOP and get mvaTOP score
     for iLep, lep in enumerate(leptons):
         # closest jet
@@ -1049,6 +1057,21 @@ def filler( event ):
                 else:
                     event.JetGood_genPt[iJet] = -1
         getattr(event, "JetGood_pt")[iJet] = jet['pt']
+
+    lightParton_jets = filter(lambda j: abs(j['partonFlavour']) in [1,2,3,4], store_jets)
+    bHadron_jets = filter(lambda b:abs(b['hadronFlavour'])==5, store_jets)
+
+    dR_min = 0.4
+    dRmatch = []
+
+    for b in bHadron_jets:
+        b['dRMatch'] = False
+        for g in store_partonFromTop:
+            dR = deltaR(b, g)
+            if dR<dR_min:
+                b['dRMatch'] = True
+            dRmatch.append(b)
+
 
     event.ht = sum([jet['pt'] for jet in store_jets])
     if sample.isMC and options.doCRReweighting:

@@ -130,7 +130,7 @@ def getGenPartsAll(c, genVars=genVars):
 def getGenFirstCopy(genparts):
     copies=[]
     for g in genparts:
-        if ((g['statusFlags']&(1<<12))!=0):
+        if ((g['statusFlags']&(1<<12))!=0) and g['genPartIdxMother']>0:
             g['isFirstCopy'] = True
         else: continue
         copies.append(g)
@@ -146,12 +146,14 @@ def getGenPartons(copies, flavours=[1,2,3,4,5]):
 
 def getTopMother(partons, gPart):
     withparents = []
-    for index, g in enumerate(partons[:10]):
+    for index, g in enumerate(partons):
         if g['genPartIdxMother'] < 0: continue
-        if g['pdgId']!= gPart[g['genPartIdxMother']]['pdgId']:
-            if abs(gPart[g['genPartIdxMother']]['pdgId'])==6:
+        mother = gPart[g['genPartIdxMother']]
+        if g['pdgId']!= mother['pdgId']:
+            if abs(gPart[g['genPartIdxMother']]['pdgId']) in [6, 24]:
+                #check for Ws!!!
                 g['isFromTop'] = True
-                g['motherPdgId'] = gPart[g['genPartIdxMother']]['pdgId']
+                g['motherPdgId'] = mother['pdgId']
             else: continue
         withparents.append(g)
     return withparents
