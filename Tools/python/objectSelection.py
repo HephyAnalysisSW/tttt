@@ -144,16 +144,27 @@ def getGenPartons(copies, flavours=[1,2,3,4,5]):
         partons.append(g)
     return partons
 
+# def getToOGParton():
+#   loop from mother to grandmother to grandgrandmother until OG parton has abs(pdgId)==6
+
 def getTopMother(partons, gPart):
     withparents = []
     for index, g in enumerate(partons):
         if g['genPartIdxMother'] < 0: continue
         mother = gPart[g['genPartIdxMother']]
+        grandmother = gPart[mother['genPartIdxMother']]
         if g['pdgId']!= mother['pdgId']:
-            if abs(gPart[g['genPartIdxMother']]['pdgId']) in [6, 24]:
-                #check for Ws!!!
-                g['isFromTop'] = True
-                g['motherPdgId'] = mother['pdgId']
+            if abs(mother['pdgId']) in [6, 24]:
+                if abs(mother['pdgId'])==6:
+                    #check for Ws!!!
+                    g['isFromTop'] = True
+                    g['motherPdgId'] = mother['pdgId']
+                    g['motherIdx'] = mother['genPartIdxMother']
+                elif abs(mother['pdgId'])==24 and abs(grandmother['pdgId'])==6:
+                    g['isFromTop'] = True
+                    g['motherPdgId'] = grandmother['pdgId']
+                    g['motherIdx'] = grandmother['genPartIdxMother']
+                else: continue
             else: continue
         withparents.append(g)
     return withparents
