@@ -513,7 +513,7 @@ lepVarNames     = [x.split('/')[0] for x in lepVars]
 # genTopVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'TopIdx/I']
 # genTopVarNames  = [x.split('/')[0] for i in genTopVars]
 
-genPartonVars       = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'index/I', 'TopIdx/I', 'motherPdgId/I', 'genPartIdxMother/I', 'isFromTop/O', 'isFromW/O', 'WisFromTop/O']
+genPartonVars       = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'index/I', 'TopIdx/I', 'motherPdgId/I', 'genPartIdxMother/I', 'isFromTop/O', 'isFromW/O', 'WisFromTop/O', 'motherIdx/I']
 genPartonNames   = [x.split('/')[0] for i in genPartonVars]
 
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
@@ -808,6 +808,7 @@ def filler( event ):
             event.GenParton_isFromTop[index] = g['isFromTop']
             event.GenParton_pdgId[index] = g['pdgId']
             event.GenParton_motherPdgId[index] = g['motherPdgId']
+            event.GenParton_motherIdx[index] = g['motherIdx']
 
         # GEN Jets
         gJets = getJets( r, jetVars=['pt','eta','phi','mass','partonFlavour','hadronFlavour','index'], jetColl="GenJet" )
@@ -1059,18 +1060,51 @@ def filler( event ):
         getattr(event, "JetGood_pt")[iJet] = jet['pt']
 
     lightParton_jets = filter(lambda j: abs(j['partonFlavour']) in [1,2,3,4], store_jets)
-    bHadron_jets = filter(lambda b:abs(b['hadronFlavour'])==5, store_jets)
+    bHadron_jets = filter(lambda b: isBJet(b, tagger=b_tagger, WP='medium', year=options.era) and abs(b['hadronFlavour'])==5, store_jets)
 
     dR_min = 0.4
-    dRmatch = []
-
-    for b in bHadron_jets:
-        b['dRMatch'] = False
-        for g in store_partonFromTop:
+    dRmatch_b = []
+    dRmatch_l = []
+    trijet = []
+    for g in store_partonFromTop:
+        for b in bHadron_jets:
             dR = deltaR(b, g)
-            if dR<dR_min:
+            if dR>dR_min: continue
+            else:
                 b['dRMatch'] = True
-            dRmatch.append(b)
+                b['genPartonIdx'] = g['index']
+                b['genMotherIdx'] = g['motherIdx']
+                b['genMotherPdgId'] = g['motherPdgId']
+            dRmatch_b.append(b)
+        for l in lightParton_jets:
+            dR = deltaR(l, g)
+            if dR>dR_min:continue
+            else:
+                l['dRMatch'] = True
+                l['genPartonIdx'] = g['index']
+                l['genMotherIdx'] = g['motherIdx']
+                l['genMotherPdgId'] = g['motherPdgId']
+            dRmatch_l.append(l)
+
+        # Is there a better way to do it?
+        # for i, bmatch in enumerate(dRmatch_b):
+        #     for j, l1match in enumerate(dRmatch_l):
+        #         for k, l2match in enumerate(dRmatch_l):
+        #             if      bmatch['genMotherIdx']!=l1match['genMotherIdx'] and bmatch['genMotherIdx']!=l2match['genMotherIdx'] and l1match['genMotherIdx']!=l2match['genMotherIdx']:
+        #                 print('all diff Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
+        #             elif    bmatch['genMotherIdx']!=l1match['genMotherIdx'] and bmatch['genMotherIdx']!=l2match['genMotherIdx'] and l1match['genMotherIdx']==l2match['genMotherIdx']:
+        #                 print('1 diff Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
+        #             elif    bmatch['genMotherIdx']!=l1match['genMotherIdx'] and bmatch['genMotherIdx']==l2match['genMotherIdx'] and l1match['genMotherIdx']!=l2match['genMotherIdx']:
+        #                 print('1 diff Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
+        #             elif    bmatch['genMotherIdx']==l1match['genMotherIdx'] and bmatch['genMotherIdx']!=l2match['genMotherIdx'] and l1match['genMotherIdx']!=l2match['genMotherIdx']:
+        #                 print('2 diff Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
+        #             elif    bmatch['genMotherIdx']==l1match['genMotherIdx'] and bmatch['genMotherIdx']==l2match['genMotherIdx'] and l1match['genMotherIdx']==l2match['genMotherIdx']:
+        #                 print('all equal Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
+        #
+        #                 trijet.append([bmatch, l1match, l2match])
+        # for t in trijet:
+        #     event.bjjMass, _, _, _ = m3(t)
+        #     print(event.bjjMass)
 
 
     event.ht = sum([jet['pt'] for jet in store_jets])
