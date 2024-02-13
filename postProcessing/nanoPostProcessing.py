@@ -21,7 +21,8 @@ import tttt.Tools.user as user
 
 # tttt
 from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaPhi, bestDRMatchInCollection, nonEmptyFile, getSortedZCandidates, cosThetaStar, m3, getMinDLMass
-from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, getGenZs, isAnalysisJet, getGenFirstCopy, getGenPartons, getTopMother
+from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, getGenZs, isAnalysisJet
+from tttt.Tools.genPartSelectionTools import getGenFirstCopy, getGenLastCopy, getParents, getTopMother
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
 
 # Analysis
@@ -503,6 +504,7 @@ else:
 #if not options.central:
 #    jetVars     += ['btagDeepFlavb/F', 'btagDeepFlavbb/F', 'btagDeepFlavlepb/F', 'btagDeepb/F', 'btagDeepbb/F']
 
+jetVars += ['mass/F']
 jetVarNames     = [x.split('/')[0] for x in jetVars]
 genLepVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'genPartIdxMother/I', 'status/I', 'statusFlags/I'] # some might have different types
 genLepVarNames  = [x.split('/')[0] for x in genLepVars]
@@ -513,8 +515,11 @@ lepVarNames     = [x.split('/')[0] for x in lepVars]
 # genTopVars      = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'TopIdx/I']
 # genTopVarNames  = [x.split('/')[0] for i in genTopVars]
 
-genPartonVars       = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'index/I', 'TopIdx/I', 'motherPdgId/I', 'genPartIdxMother/I', 'isFromTop/O', 'isFromW/O', 'WisFromTop/O', 'motherIdx/I']
-genPartonNames   = [x.split('/')[0] for i in genPartonVars]
+genPartonVars       = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'index/I', 'TopIdx/I', 'motherPdgId/I', 'motherIdx/I']
+genPartonNames   = [x.split('/')[0] for x in genPartonVars]
+
+hadTopVars       = ['pt/F','phi/F','eta/F','mass/F','TopTruth/I','genMass/F']
+hadTopNames   = [x.split('/')[0] for x in hadTopVars]
 
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
 if options.era == "2017":
@@ -572,9 +577,9 @@ new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', '
 #else:
 #    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if sample.isMC else '' )))
 new_variables.append('GenParton[%s]'%( ','.join(genPartonVars)))
-
+new_variables.append('HadronicTop[%s]'%( ','.join(hadTopVars)))
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
-new_variables.extend( ['ht/F', 'nBTag/I', 'm3/F', 'minDLmass/F'] )
+new_variables.extend( ['ht/F', 'nBTag/I', 'm3/F', 'minDLmass/F', 'bjjMass/F'] )
 
 new_variables.append( 'lep[%s]'% ( ','.join(lepVars )) )
 
@@ -793,19 +798,17 @@ def filler( event ):
 
         # GEN Particles
         gPart = getGenPartsAll(r)
-
         # lists of GenParticles
-        GenFirstCopies = getGenFirstCopy(gPart)
-        GenPartons = getGenPartons(GenFirstCopies)
+        GenPartons = filter(lambda g: abs(g['pdgId']) in [1,2,3,4,5], getGenFirstCopy(gPart))
         GenPartons.sort(key = lambda g:-g['pt'])
-        store_partonFromTop = getTopMother(GenPartons, gPart)
+        store_partonFromTop = filter( lambda g : getTopMother(g, gPart), GenPartons)
         setattr(event, 'nGenParton', len(store_partonFromTop))
         for index, g in enumerate(store_partonFromTop):
             event.GenParton_index[index] = g['index']
             event.GenParton_pt[index] = g['pt']
             event.GenParton_eta[index] = g['eta']
             event.GenParton_phi[index] = g['phi']
-            event.GenParton_isFromTop[index] = g['isFromTop']
+            event.GenParton_mass[index] = g['mass']
             event.GenParton_pdgId[index] = g['pdgId']
             event.GenParton_motherPdgId[index] = g['motherPdgId']
             event.GenParton_motherIdx[index] = g['motherIdx']
@@ -1062,49 +1065,87 @@ def filler( event ):
     lightParton_jets = filter(lambda j: abs(j['partonFlavour']) in [1,2,3,4], store_jets)
     bHadron_jets = filter(lambda b: isBJet(b, tagger=b_tagger, WP='medium', year=options.era) and abs(b['hadronFlavour'])==5, store_jets)
 
-    dR_min = 0.4
+    # TOP RECONSTRUCTION
     dRmatch_b = []
     dRmatch_l = []
     trijet = []
-    for g in store_partonFromTop:
-        for b in bHadron_jets:
-            dR = deltaR(b, g)
-            if dR>dR_min: continue
-            else:
-                b['dRMatch'] = True
-                b['genPartonIdx'] = g['index']
-                b['genMotherIdx'] = g['motherIdx']
-                b['genMotherPdgId'] = g['motherPdgId']
-            dRmatch_b.append(b)
-        for l in lightParton_jets:
-            dR = deltaR(l, g)
-            if dR>dR_min:continue
-            else:
-                l['dRMatch'] = True
-                l['genPartonIdx'] = g['index']
-                l['genMotherIdx'] = g['motherIdx']
-                l['genMotherPdgId'] = g['motherPdgId']
-            dRmatch_l.append(l)
+    for idxg, g in enumerate(store_partonFromTop):
+        lst_b = []
+        lst_l = []
+        dR_min = 0.4
+        for idxb, b in enumerate(bHadron_jets):
+            dr = deltaR(g, b)
+            if dr<dR_min:
+                lst_b.append([dr, g, b])
+        if len(lst_b)>0:
+            min_element = min(lst_b, key=lambda x: x[0])
+            min_element[2]['index'] = min_element[1]['index']
+            min_element[2]['genMotherIdx'] = min_element[1]['motherIdx']
+            min_element[2]['genMass'] = min_element[1]['mass']
+            min_element[2]['genPt'] = min_element[1]['pt']
+            min_element[2]['genEta'] = min_element[1]['eta']
+            min_element[2]['genPhi'] = min_element[1]['phi']
+            # min_element[2]['genMotherPdgId'] = min_element[1]['motherPdgId']
+            dRmatch_b.append(min_element[2])
+        for idxl, l in enumerate(lightParton_jets):
+            dr = deltaR(g, l)
+            if dr<dR_min:
+                lst_l.append([dr, g, l])
+        if len(lst_l)>0:
+            min_element = min(lst_l, key=lambda x: x[0])
+            min_element[2]['index'] = min_element[1]['index']
+            min_element[2]['genMotherIdx'] = min_element[1]['motherIdx']
+            min_element[2]['genMass'] = min_element[1]['mass']
+            min_element[2]['genPt'] = min_element[1]['pt']
+            min_element[2]['genEta'] = min_element[1]['eta']
+            min_element[2]['genPhi'] = min_element[1]['phi']
+            dRmatch_l.append(min_element[2])
 
-        # Is there a better way to do it?
-        # for i, bmatch in enumerate(dRmatch_b):
-        #     for j, l1match in enumerate(dRmatch_l):
-        #         for k, l2match in enumerate(dRmatch_l):
-        #             if      bmatch['genMotherIdx']!=l1match['genMotherIdx'] and bmatch['genMotherIdx']!=l2match['genMotherIdx'] and l1match['genMotherIdx']!=l2match['genMotherIdx']:
-        #                 print('all diff Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
-        #             elif    bmatch['genMotherIdx']!=l1match['genMotherIdx'] and bmatch['genMotherIdx']!=l2match['genMotherIdx'] and l1match['genMotherIdx']==l2match['genMotherIdx']:
-        #                 print('1 diff Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
-        #             elif    bmatch['genMotherIdx']!=l1match['genMotherIdx'] and bmatch['genMotherIdx']==l2match['genMotherIdx'] and l1match['genMotherIdx']!=l2match['genMotherIdx']:
-        #                 print('1 diff Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
-        #             elif    bmatch['genMotherIdx']==l1match['genMotherIdx'] and bmatch['genMotherIdx']!=l2match['genMotherIdx'] and l1match['genMotherIdx']!=l2match['genMotherIdx']:
-        #                 print('2 diff Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
-        #             elif    bmatch['genMotherIdx']==l1match['genMotherIdx'] and bmatch['genMotherIdx']==l2match['genMotherIdx'] and l1match['genMotherIdx']==l2match['genMotherIdx']:
-        #                 print('all equal Idx {}, {}, {}'.format(bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']))
-        #
-        #                 trijet.append([bmatch, l1match, l2match])
-        # for t in trijet:
-        #     event.bjjMass, _, _, _ = m3(t)
-        #     print(event.bjjMass)
+    topTruth_value = -1
+    for i, bmatch in enumerate(dRmatch_b):
+        for j, l1match in enumerate(dRmatch_l):
+            for k, l2match in enumerate(dRmatch_l):
+                if j != k and k > j:
+                    indices_list = [bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']]
+                    if indices_list[0] == indices_list[1] == indices_list[2]:
+                        topTruth_value = 0  # All equal
+                    elif indices_list[0] == indices_list[1] and indices_list[0] != indices_list[2]:
+                        topTruth_value = 1  # bmatch and l1match are equal, l2match is different
+                    elif indices_list[0] == indices_list[2] and indices_list[0] != indices_list[1]:
+                        topTruth_value = 1  # bmatch and l2match are equal, l1match is different
+                    elif indices_list[1] == indices_list[2] and indices_list[0] != indices_list[1]:
+                        topTruth_value = 2  # l1match and l2match are equal, bmatch is different
+                    else:
+                        topTruth_value = 3  # All different
+                    trijet.append([
+                    dict({'TopTruth': topTruth_value}.items() + bmatch.items()),
+                    dict({'TopTruth': topTruth_value}.items() + l1match.items()),
+                    dict({'TopTruth': topTruth_value}.items() + l2match.items())
+                    ])
+
+    tlorentz_vectors = []
+
+    for i, triplet in enumerate(trijet):
+        if len(triplet)<3 : continue
+
+        tlv1, tlv2, tlv3 = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
+        tlv1.SetPtEtaPhiM(triplet[0]['pt'], triplet[0]['eta'], triplet[0]['phi'], triplet[0]['mass'])
+        tlv2.SetPtEtaPhiM(triplet[1]['pt'], triplet[1]['eta'], triplet[1]['phi'], triplet[1]['mass'])
+        tlv3.SetPtEtaPhiM(triplet[2]['pt'], triplet[2]['eta'], triplet[2]['phi'], triplet[2]['mass'])
+
+        genv1, genv2, genv3 = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
+        genv1.SetPtEtaPhiM(triplet[0]['genPt'], triplet[0]['genEta'], triplet[0]['genPhi'], triplet[0]['genMass'])
+        genv2.SetPtEtaPhiM(triplet[1]['genPt'], triplet[1]['genEta'], triplet[1]['genPhi'], triplet[1]['genMass'])
+        genv3.SetPtEtaPhiM(triplet[2]['genPt'], triplet[2]['genEta'], triplet[2]['genPhi'], triplet[2]['genMass'])
+
+        total_tlv = tlv1 + tlv2 + tlv3
+        genTotal = genv1 + genv2 + genv3
+        tlorentz_vectors.append({'pt': total_tlv.Pt(), 'eta': total_tlv.Eta(), 'phi': total_tlv.Phi(), 'mass': total_tlv.M(), 'TopTruth': triplet[0]['TopTruth'], 'genMass': genTotal.M()})
+
+    fill_vector_collection( event, "HadronicTop", hadTopNames, tlorentz_vectors, 100)
+
+
+
 
 
     event.ht = sum([jet['pt'] for jet in store_jets])
