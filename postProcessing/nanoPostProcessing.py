@@ -242,6 +242,7 @@ if options.LHEHTCut>0:
 ################################################################################
 # Final output directory
 storage_directory = os.path.join( options.targetDir, options.processingEra, options.era, options.skim, sample.name )
+print("this is where the magic happens {}".format(storage_directory))
 try:    #Avoid trouble with race conditions in multithreading
     os.makedirs(storage_directory)
     logger.info( "Created output directory %s.", storage_directory )
@@ -1143,9 +1144,6 @@ def filler( event ):
         tlorentz_vectors.append({'pt': total_tlv.Pt(), 'eta': total_tlv.Eta(), 'phi': total_tlv.Phi(), 'mass': total_tlv.M(), 'TopTruth': triplet[0]['TopTruth'], 'genMass': genTotal.M()})
 
     fill_vector_collection( event, "HadronicTop", hadTopNames, tlorentz_vectors, 100)
-
-
-
 
 
     event.ht = sum([jet['pt'] for jet in store_jets])
