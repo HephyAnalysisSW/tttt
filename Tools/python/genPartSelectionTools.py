@@ -43,12 +43,9 @@ def getTopMother(g, gPart):
               g['isFromTop'] = True
               g['motherPdgId'] = p['pdgId']
               g['motherIdx'] = p['index']
-          elif abs(p['pdgId'])==6 and abs(g['pdgId'])==5:
-              g['isFromTop'] = True
-              g['motherPdgId'] = p['pdgId']
-              g['motherIdx'] = p['index']
+              withparents.append(g)
               break
-          withparents.append(g)
+          # withparents.append(g)
       return withparents
 
 # THIS below is the funct that gives the correct peak plot (for reference)
