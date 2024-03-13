@@ -127,6 +127,48 @@ genVars = ['eta','pt','phi','mass','charge', 'status', 'pdgId', 'genPartIdxMothe
 def getGenPartsAll(c, genVars=genVars):
     return [getObjDict(c, 'GenPart_', genVars, i) for i in range(int(getVarValue(c, 'nGenPart')))]
 
+def getGenFirstCopy(genparts):
+    copies=[]
+    for g in genparts:
+        if ((g['statusFlags']&(1<<12))!=0) and g['genPartIdxMother']>0:
+            g['isFirstCopy'] = True
+        else: continue
+        copies.append(g)
+    return copies
+
+def getGenPartons(copies, flavours=[1,2,3,4,5]):
+    partons = []
+    for g in copies:
+        if g['isFirstCopy']!=True: continue
+        if abs(g['pdgId']) not in flavours: continue
+        partons.append(g)
+    return partons
+
+# def getToOGParton():
+#   loop from mother to grandmother to grandgrandmother until OG parton has abs(pdgId)==6
+
+def getTopMother(partons, gPart):
+    withparents = []
+    for index, g in enumerate(partons):
+        if g['genPartIdxMother'] < 0: continue
+        mother = gPart[g['genPartIdxMother']]
+        grandmother = gPart[mother['genPartIdxMother']]
+        if g['pdgId']!= mother['pdgId']:
+            if abs(mother['pdgId']) in [6, 24]:
+                if abs(mother['pdgId'])==6:
+                    #check for Ws!!!
+                    g['isFromTop'] = True
+                    g['motherPdgId'] = mother['pdgId']
+                    g['motherIdx'] = mother['genPartIdxMother']
+                elif abs(mother['pdgId'])==24 and abs(grandmother['pdgId'])==6:
+                    g['isFromTop'] = True
+                    g['motherPdgId'] = grandmother['pdgId']
+                    g['motherIdx'] = grandmother['genPartIdxMother']
+                else: continue
+            else: continue
+        withparents.append(g)
+    return withparents
+
 def filterGenPhotons( genParts, status=None ):
     photons = list( filter( lambda l: abs(l['pdgId']) == 22 and l['status'] > 0, genParts ) )
     return photons
