@@ -11,6 +11,7 @@ argParser.add_argument('--noData',         action='store_true', help='Do not plo
 argParser.add_argument('--plot_directory', action='store', default='4t-syst')
 argParser.add_argument('--selection',      action='store', default='trg-dilepL-minDLmass20-offZ1-njet4p-btag2p-ht500')
 argParser.add_argument('--small',         action='store_true', default=False,      help='Run only on a small subset of the data?')
+argParser.add_argument('--level',       action='store',     default='SM',       help='Plot at SM or EFT point')
 args = argParser.parse_args()
 
 import tttt.Tools.logger as logger
@@ -23,8 +24,11 @@ hist_dir = os.path.join(plot_directory, 'analysisPlots', args.plot_directory, 'R
 if args.small: 
   #hist_dir += "_small"
   args.plot_directory += "_small"
+if args.level == "EFT":
+  args.plot_directory += "_EFTpoint"
 
 nominalSample = ROOT.TFile.Open(os.path.join(hist_dir, "tttt_central.root"))
+#EFTSample = ROOT.TFile.Open(os.path.join(hist_dir, "tttt_EFTs.root"))
 
 systematics = [ 
         {"name" : "LeptonSF", "color" : ROOT.kTeal-9, "type":"experimental",
@@ -93,36 +97,36 @@ systematics = [
 #		{"name" : "TTFactorization", "color" : ROOT.kGreen-7,  "type":"theoretical",
 #				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTFactorizationShapeUp.root")),
 #				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTFactorizationShapeDown.root"))},
-		{"name" : "TTbbrenormalization", "color" : ROOT.kRed,  "type":"theoretical",
-				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTbbrenormalizationShapeUp.root")),
-				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTbbrenormalizationShapeDown.root"))},
-		{"name" : "TTbbFactorization", "color" : ROOT.kPink-9,  "type":"theoretical",
-				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTbbFactorizationShapeUp.root")),
-				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTbbFactorizationShapeDown.root"))},
-		{"name" : "TTccrenormalization", "color" : ROOT.kViolet,  "type":"theoretical",
-				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTccrenormalizationShapeUp.root")),
-				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTccrenormalizationShapeDown.root"))},
-		{"name" : "TTccFactorization", "color" : ROOT.kViolet-6,  "type":"theoretical",
-				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTccFactorizationShapeUp.root")),
-				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTccFactorizationShapeDown.root"))},
-		{"name" : "TTlightrenormalization", "color" : ROOT.kOrange,  "type":"theoretical",
-				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTlightrenormalizationShapeUp.root")),
-				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTlightrenormalizationShapeDown.root"))},
-		{"name" : "TTlightFactorization", "color" : ROOT.kOrange-3,  "type":"theoretical",
-				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTlightFactorizationShapeUp.root")),
-				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTlightFactorizationShapeDown.root"))},
-		{"name" : "TTTTrenormalization", "color" : ROOT.kBlue+2,  "type":"theoretical",
-				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTTTrenormalizationShapeUp.root")),
-				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTTTrenormalizationShapeDown.root"))},
-		{"name" : "TTTTFactorization", "color" : ROOT.kBlue,  "type":"theoretical",
-				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTTTFactorizationShapeUp.root")),
-				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTTTFactorizationShapeDown.root"))},
+#		{"name" : "TTbbrenormalization", "color" : ROOT.kRed,  "type":"theoretical",
+#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTbbrenormalizationShapeUp.root")),
+#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTbbrenormalizationShapeDown.root"))},
+#		{"name" : "TTbbFactorization", "color" : ROOT.kPink-9,  "type":"theoretical",
+#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTbbFactorizationShapeUp.root")),
+#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTbbFactorizationShapeDown.root"))},
+#		{"name" : "TTccrenormalization", "color" : ROOT.kViolet,  "type":"theoretical",
+#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTccrenormalizationShapeUp.root")),
+#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTccrenormalizationShapeDown.root"))},
+#		{"name" : "TTccFactorization", "color" : ROOT.kViolet-6,  "type":"theoretical",
+#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTccFactorizationShapeUp.root")),
+#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTccFactorizationShapeDown.root"))},
+#		{"name" : "TTlightrenormalization", "color" : ROOT.kOrange,  "type":"theoretical",
+#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTlightrenormalizationShapeUp.root")),
+#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTlightrenormalizationShapeDown.root"))},
+#		{"name" : "TTlightFactorization", "color" : ROOT.kOrange-3,  "type":"theoretical",
+#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTlightFactorizationShapeUp.root")),
+#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTlightFactorizationShapeDown.root"))},
+#		{"name" : "TTTTrenormalization", "color" : ROOT.kBlue+2,  "type":"theoretical",
+#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTTTrenormalizationShapeUp.root")),
+#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTTTrenormalizationShapeDown.root"))},
+#		{"name" : "TTTTFactorization", "color" : ROOT.kBlue,  "type":"theoretical",
+#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTTTFactorizationShapeUp.root")),
+#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_TTTTFactorizationShapeDown.root"))},
 		{"name" : "HDamp", "color" : ROOT.kCyan+3,  "type":"theoretical",
 				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_HDampUp.root")),
 				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_HDampDown.root"))},
-#		{"name" : "scale", "color" : ROOT.kGreen-1,  "type":"theoretical",
-#				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleUpUp.root")),
-#				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleDownDown.root"))},
+		{"name" : "scale", "color" : ROOT.kGreen-1,  "type":"theoretical",
+				"up" :  ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleUpUp.root")),
+				"down": ROOT.TFile.Open(os.path.join(hist_dir, "tttt_ScaleDownDown.root"))},
               ]
 
 PDFs = []
@@ -145,6 +149,11 @@ mc = [ {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}"},
        {"name": "DiBoson", "legendText" : "DiBoson"},
 
 	]
+
+#if args.level == "SM":
+#  mc+= {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}"}
+#elif args.level == "EFT":
+#  mc+= {"name": "sm_lin_quad", "legendText" : "t#bar{t}b#bar{b} at c_{#alpha}=1"}
 
 plots = [{"name" : "nJetGood" ,     "texX": "N_{Jet}", "texY" : 'Number of Events'},
          {"name" : "nBTag",         "texX": "N_{BJet}", "texY" : 'Number of Events'},
@@ -174,8 +183,8 @@ plots = [{"name" : "nJetGood" ,     "texX": "N_{Jet}", "texY" : 'Number of Event
          {"name" : "minDLmass",     "texX" : 'min mass of all DL pairs', "texY" : 'Number of Events / 2 GeV'},
 #         {"name" : "Z1_lldPhi",     "texX" : '#Delta#phi(Z_{1}(ll))', "texY" : 'Number of Events'},
 #         {"name" : "Z1_lldR",       "texX" : '#Delta R(Z_{1}(ll))', "texY" : 'Number of Events'},
-         {"name" : "ht",            "texX" : 'H_{T} (GeV)', "texY" : 'Number of Events / 30 GeV'},
-	 {"name" : "htb",            "texX" : 'H_{T}b (GeV)', "texY" : 'Number of Events / 30 GeV'},
+         {"name" : "ht",            "texX" : 'H_{T} (GeV)', "texY" : 'Number of Events'},
+    	 {"name" : "htb",            "texX" : 'H_{T}b (GeV)', "texY" : 'Number of Events'},
          {"name" : 'jet0_pt',       "texX" : 'p_{T}(leading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
          {"name" : 'jet1_pt',       "texX" : 'p_{T}(subleading jet) (GeV)', "texY" : 'Number of Events / 30 GeV'},
 #         {"name" : 'jet2_pt',       "texX" : 'p_{T}(jet2) (GeV)', "texY" : 'Number of Events / 30 GeV'},

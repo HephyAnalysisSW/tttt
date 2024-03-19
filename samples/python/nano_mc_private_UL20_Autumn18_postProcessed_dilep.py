@@ -39,9 +39,16 @@ TTbb_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb
 TTTT_EFT    = Sample.fromDirectory(name="TTTT_EFT", treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}", directory=['/scratch-cbe/users/cristina.giordano/tttt/nanoTuples/tttt_v9/UL2018/dilep/TTTT_MS_EFT'])
 TTTT_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
 
-# Old directory
-# TTbb_EFT	= Sample.fromDirectory(name="TTbb_EFT", treeName="Events", isData=False, color=color.TTbb, texName="t#bar{t}b#bar{b}", directory=make_dirs( ['TTbb_MS_EFT']))
-# TTbb_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
-# TTTT_EFT        = Sample.fromDirectory(name="TTTT_EFT", treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}", directory=make_dirs( ['TTTT_MS_EFT']))
-# TTTT_EFT.reweight_pkl = '/eos/vbc/group/cms/robert.schoefbeck/gridpacks/4top/TTTT_MS_reweight_card.pkl'
-#TTTT_sync = Sample.fromDirectory(name="TTTT_sync",  treeName="Events", isData=False, color=color.TTTT, texName="t#bar{t}t#bar{t}_sync", directory=["/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v5/UL2018/dilep/TTTT_sync"] )
+TTbb_cQQ1_quad = Sample.fromDirectory(name="TTbb_cQQ1_quad", treeName="Events", isData=False, color=ROOT.kBlue, texName="t#bar{t}b#bar{b}_cQQ1_quad", directory=['/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v10/UL2018/dilep-nlepFO2p-ht500/TTbb_cQQ1_quad'])
+TTbb_cQQ1_lin = Sample.fromDirectory(name="TTbb_cQQ1_lin", treeName="Events", isData=False, color=ROOT.kCyan, texName="t#bar{t}b#bar{b}_cQQ1_lin", directory=['/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v10/UL2018/dilep-nlepFO2p-ht500/TTbb_cQQ1_lin'])
+
+TTbb_SMonly = Sample.fromDirectory(name="TTbb_SMonly", treeName="Events", isData=False, color=ROOT.kCyan+3, texName="t#bar{t}b#bar{b}_LO", directory=['/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v10/UL2018/dilep-nlepFO2p-ht500/TTbb_SMonly'])
+
+##samples w/ extra jets
+
+TTbb01j_cQQ1_quad = Sample.fromDirectory(name="TTbb01j_cQQ1_quad", treeName="Events", isData=False, color=ROOT.kBlue, texName="t#bar{t}b#bar{b}_cQQ1_quad", directory=['/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v10/UL2018/dilep-nlepFO2p-ht500/TTbb01j_cQQ1_quad'])
+
+TTbb01j_cQQ1_lin = Sample.fromDirectory(name="TTbb01j_cQQ1_lin", treeName="Events", isData=False, color=ROOT.kCyan, texName="t#bar{t}b#bar{b}_cQQ1_lin", directory=['/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v10/UL2018/dilep-nlepFO2p-ht500/TTbb01j_cQQ1_lin'])
+
+TTbb01j_SMonly = Sample.fromDirectory(name="TTbb01j_SMonly", treeName="Events", isData=False, color=ROOT.kCyan+3, texName="t#bar{t}b#bar{b}_LO", directory=['/scratch-cbe/users/maryam.shooshtari/tttt/nanoTuples/tttt_v10/UL2018/dilep-nlepFO2p-ht500/TTbb01j_SMonly'])
+TTbb01j_SMonly.scale = 8.55 

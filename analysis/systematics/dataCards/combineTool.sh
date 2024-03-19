@@ -8,17 +8,18 @@
 
 #How to run Combine commands without going crazy :)
 declare -A regions=(
-		    ['mvaCut0.2p_njet4to5_btag3p']='mvaCut0.2p_njet4to5_btag3p' 
-		    ['mvaCut0.2m_njet4to5_btag3p']='mvaCut0.2m_njet4to5_btag3p' 
-		    ['njet4to5_btag2']='njet4to5_btag2' ['njet4to5_btag1']='njet4to5_btag1'
-                    ['njet6to7_btag2']='njet6to7_btag2' ['njet6to7_btag1']='njet6to7_btag1'
-                    ['njet8p_btag2']='njet8p_btag2' ['njet8p_btag1']='njet8p_btag1'
-		    ['njet8p_btag3p']='njet8p_btag3p' 
-		    ['mvaCut0.1p_njet6to7_btag3p']='mvaCut0.1p_njet6to7_btag3p'
-		    ['mvaCut0.1m_njet6to7_btag3p']='mvaCut0.1m_njet6to7_btag3p'
+		   ['njet4to5_btag3p']='njet4to5_btag3p' ['njet4to5_btag2']='njet4to5_btag2' ['njet4to5_btag1']='njet4to5_btag1'
+           ['njet6p_btag3p']='njet6p_btag3p'     ['njet6p_btag2']='njet6p_btag2'     ['njet6p_btag1']='njet6p_btag1'
+#            ['njet6to7_btag2']='njet6to7_btag2' ['njet6to7_btag1']='njet6to7_btag1'
+#            ['njet8p_btag2']='njet8p_btag2' ['njet8p_btag1']='njet8p_btag1'
+#		    ['njet8p_btag3p']='njet8p_btag3p' 
+#		    ['mvaCut1p_njet6to7_btag3p']='mvaCut0.1p_njet6to7_btag3p'
+#		    ['mvaCut1m_njet6to7_btag3p']='mvaCut0.1m_njet6to7_btag3p'
+#		    ['mvaCut2p_njet4to5_btag3p']='mvaCut0.2p_njet4to5_btag3p' 
+#		    ['mvaCut2m_njet4to5_btag3p']='mvaCut0.2m_njet4to5_btag3p' 
 		    )
 
-declare -A variables=(['mva']='2l_4t' ['nJetGood']='nJetGood' ['nBTag']='nBTag' ['ht']='ht')
+declare -A variables=(['ht']='ht') #(['mva']='2l_4t' ['nJetGood']='nJetGood' ['nBTag']='nBTag' ['ht']='ht')
 declare -A masking=(['nJetGood']='nJetGood' ['nBTag']='nBTag' ['mva']='2l_4t')
 
 for mask in "${!masking[@]}";do
@@ -66,6 +67,7 @@ if $unite;then
       theEndlessScroll+="$variable""_$region=ttbbEFT_${variables[$variable]}""_1_13TeV_${regions[$region]}"".txt "
     done
   done
+  echo $theEndlessScroll
   theEndlessScroll+=">& combined.txt"
   eval "$theEndlessScroll"
   echo "* autoMCStats 0 1" >> combined.txt

@@ -13,34 +13,36 @@ for i in {1..100};do
   pdf="PDF_${i}"
   pdfs+=("$pdf")
 done
-declare -a cuts=('trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag1-ht500'
-                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag1-ht500'
-                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag2-ht500'
-                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag3p-ht500'
-                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag1-ht500'
-                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag2-ht500'
-                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag3p-ht500'
-                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag3p-ht500'
-                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag2-ht500')
+declare -a cuts=(
+                #'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet8p-btag1-ht500'
+                #'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag1-ht500'
+                #'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag2-ht500'
+                #'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet4to5-btag3p-ht500'
+                #'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag1-ht500'
+                #'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6to7-btag2-ht500'
+                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6p-btag1-ht500'
+                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6p-btag2-ht500'
+                'trg-dilep-OS-minDLmass20-offZ1-lepVeto2-njet6p-btag3p-ht500'
+                )
 # All systematics files
-for e in "2018" "2017" "2016" "2016_preVFP", "RunII";do
+for e in "RunII";do
   for c in ${cuts[@]};do
     for s in ${sys[@]};do
-      echo submit "python systematics.py --plot_directory 4t-v13-syst --selection $c --era $e --sys $s"
-      submit "python systematics.py --plot_directory 4t-v13-syst --selection $c --era $e --sys $s"
+      echo submit "python systematics.py --plot_directory 4t-v18-syst --selection $c --era $e --sys $s"
+      submit "python systematics.py --plot_directory 4t-v18-syst --selection $c --era $e --sys $s"
     done
     for pdf in "${pdfs[@]}";do
-      echo submit "python systematics.py --plot_directory 4t-v13-syst --selection $c --era $e --sys $pdf"
-      submit "python systematics.py --plot_directory 4t-v13-syst --selection $c --era $e --sys $pdf"
+      echo submit "python systematics.py --plot_directory 4t-v18-syst --selection $c --era $e --sys $pdf"
+      submit "python systematics.py --plot_directory 4t-v18-syst --selection $c --era $e --sys $pdf"
     done
   done
 done
 
-# EFT files
+ EFT files
 declare -a WC=("cQQ1")
 for c in ${cuts[@]};do
   for coeff in ${WC[@]};do
-    echo submit "python systematics.py --plot_directory 4t-v13-syst --selection $c --era 2018 --wc $coeff"
-    submit "python systematics.py --plot_directory 4t-v13-syst --selection $c --era 2018 --wc $coeff"
+    echo submit "python systematics.py --plot_directory 4t-v18-syst --selection $c --era RunII --wc $coeff"
+    submit "python systematics.py --plot_directory 4t-v18-syst --selection $c --era RunII --wc $coeff"
   done
 done
