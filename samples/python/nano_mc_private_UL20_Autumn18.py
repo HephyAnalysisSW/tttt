@@ -43,6 +43,30 @@ TTTT_MS_EFT.normalization = 452100.0
 TTbb_MS_EFT = Sample.fromDirectory( "TTbb_MS_EFT", "/eos/vbc/group/cms/cristina.giordano/tttt/nanoAOD/Run2SIM_UL2018NANOAOD/TTbb_13TeV_madgraph_pythia8_Run2SIM_UL2018MiniAOD", xSection=4.59, redirector = "root://eos.grid.vbc.ac.at/")
 TTbb_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
 TTbb_MS_EFT.normalization = 149700.0
+
+
+TTbb_cQQ1_quad = Sample.fromDirectory( "TTbb_cQQ1_quad","/eos/vbc/group/cms/maryam.shooshtari/tttt/nanoAOD/TTbb_cQQ1_quad/TTbb_cQQ1_quad_13TeV_madgraph_pythia8_Run2SIM_UL2018NanoAOD_240214_162511/files", xSection = 0.1009 ,  redirector = "root://eos.grid.vbc.ac.at/")
+TTbb_cQQ1_quad.normalization = 97600
+
+TTbb_cQQ1_lin = Sample.fromDirectory( "TTbb_cQQ1_lin","/eos/vbc/group/cms/maryam.shooshtari/tttt/nanoAOD/TTbb_cQQ1_lin/TTbb_cQQ1_lin_13TeV_madgraph_pythia8_Run2SIM_UL2018NanoAOD_240216_143629/files", xSection = -0.02977 ,  redirector = "root://eos.grid.vbc.ac.at/")
+TTbb_cQQ1_lin.normalization = 20000
+
+TTbb_SMonly = Sample.fromDirectory( "TTbb_SMonly","/eos/vbc/group/cms/maryam.shooshtari/tttt/nanoAOD/TTbb_SMonly/TTbb_SMonly_13TeV_madgraph_pythia8_Run2SIM_UL2018NanoAOD_240219_172303/files", xSection = 9 ,  redirector = "root://eos.grid.vbc.ac.at/")
+TTbb_SMonly.normalization = 2976200
+
+### w/ extra jet
+TTbb01j_cQQ1_quad = Sample.fromDirectory( "TTbb01j_cQQ1_quad","/eos/vbc/group/cms/maryam.shooshtari/tttt/nanoAOD/TTbb01j_cQQ1_quad/TTbb01j_cQQ1_quad_13TeV_madgraph_pythia8_Run2SIM_UL2018NanoAOD_240311_114018/files", xSection = 0.03576 ,  redirector = "root://eos.grid.vbc.ac.at/")
+TTbb01j_cQQ1_quad.normalization = 134995
+
+TTbb01j_cQQ1_lin = Sample.fromDirectory( "TTbb01j_cQQ1_lin","/eos/vbc/group/cms/maryam.shooshtari/tttt/nanoAOD/TTbb01j_cQQ1_lin/TTbb01j_cQQ1_lin_13TeV_madgraph_pythia8_Run2SIM_UL2018NanoAOD_240311_120149/files", xSection = -0.01113 ,  redirector = "root://eos.grid.vbc.ac.at/")
+TTbb01j_cQQ1_lin.normalization = 75040
+
+TTbb01j_SMonly = Sample.fromDirectory( "TTbb01j_SMonly","/eos/vbc/group/cms/maryam.shooshtari/tttt/nanoAOD/TTbb01j_SMonly/TTbb01j_SMonly_13TeV_madgraph_pythia8_Run2SIM_UL2018NanoAOD_240308_142535/files", xSection = 1.59112 ,  redirector = "root://eos.grid.vbc.ac.at/")
+TTbb01j_SMonly.normalization = 2458856
+
+TTbb01j_SMonly_q70 = Sample.fromDirectory( "TTbb01j_SMonly_q70","/eos/vbc/group/cms/maryam.shooshtari/tttt/nanoAOD/TTbb01j_SMonly_qcut70/TTbb01j_SMonly_qcut70_13TeV_madgraph_pythia8_Run2SIM_UL2018NanoAOD_240313_185725/files", xSection = 0.7385 ,  redirector = "root://eos.grid.vbc.ac.at/")
+TTbb01j_SMonly.normalization = 730275
+
 ################################################################################
 # Rare processes
 
@@ -120,7 +144,7 @@ ZZZ.xSection = 0.01476
 # TTbb_MS_EFT.reweight_pkl = '/groups/hephy/cms/robert.schoefbeck/gridpacks/4top/TTbb_MS_reweight_card.pkl'
 # TTbb_MS_EFT.normalization = 4657390.0
 
-EFTSamples = [TTTT_MS_EFT, TTbb_MS_EFT]
+EFTSamples = [TTTT_MS_EFT, TTbb_MS_EFT, TTbb_cQQ1_quad, TTbb_cQQ1_lin, TTbb_SMonly, TTbb01j_cQQ1_quad, TTbb01j_cQQ1_lin, TTbb01j_SMonly]
 
 allSamples = [TTTT, TTWW, TTWZ, TTZZ, TTHH, TTWH, TTZH, TTTJ, TTTW,
               TTLep_pow_CP5, TTLep_pow_CP5_hDown, TTLep_pow_CP5_hUp,

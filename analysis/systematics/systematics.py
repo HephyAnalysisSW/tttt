@@ -50,7 +50,7 @@ args = argParser.parse_args()
 if args.small: args.plot_directory += "_small"
 isEFT = len(args.wc)>0
 if isEFT:
-    args.sys='central'
+    #args.sys='central'
     print "Will produce templates for EFT coefficients:", args.wc
 #Logger
 
@@ -138,7 +138,7 @@ variations += jetVariations + scaleWeights + PSWeights + PDFWeights
 if args.sys not in variations:
     if args.sys == "central":
         logger.info( "Running central samples (no sys variation)")
-        noData = isEFT
+        noData = False
     else:
         raise RuntimeError( "Variation %s not among the known: %s", args.sys, ",".join( variations ) )
 else:
@@ -167,7 +167,9 @@ elif args.era == '2018':
         from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import *
         from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
 elif args.era == 'RunII':
-	if isEFT: from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import * 
+	if isEFT: 
+				from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import * 
+				from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
 	else :  
 		from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
         	data_sample = RunII
@@ -183,7 +185,7 @@ elif args.sys == "HDampUp":
     print "switching to HDampUp samples" 
 elif args.sys == "HDampDown":
     sample_TTLep = TTLepHDown
-    TTLep_bb     = TTbbHDown 
+    TTLep_bb     = TTbbHDown
     print "switching to HDampDown samples"
 
 # genTtbarId classification: https://github.com/cms-top/cmssw/blob/topNanoV6_from-CMSSW_10_2_18/TopQuarkAnalysis/TopTools/plugins/GenTtbarCategorizer.cc
@@ -206,6 +208,9 @@ TTLep_other.setSelectionString( "genTtbarId%100<40" )
 mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DiBoson]
 if args.DY == 'ht': mc += [DY]
 elif args.DY == 'inclusive': mc += [DY_inclusive]
+if isEFT : 
+  mc +=[TTbb01j_SMonly, TTbb01j_cQQ1_quad , TTbb01j_cQQ1_lin]
+  #noData = True
 
 #Add the data
 if not noData:
@@ -213,57 +218,57 @@ if not noData:
     all_samples = mc +  [data_sample]
 else:
     all_samples = mc
-
-if isEFT:
-    noData      = True
-    sample      = TTbb_EFT
-    from Analysis.Tools.WeightInfo import WeightInfo
-    sample.weightInfo  = WeightInfo( sample.reweight_pkl )
-    sample.weightInfo.set_order(2)
-
-    mc          = [ sample for _ in range(sample.weightInfo.get_ndof(len(args.wc), 2)) ]
-
-    coefficient = np.zeros( len(sample.weightInfo.combinations) )
-    coefficient[0]=1
-    eft_w_points= [coefficient]
-    eft_w_names = ["central"]
-    for wc in args.wc:
-        index_lin  = sample.weightInfo.combinations.index((wc,))
-        index_quad = sample.weightInfo.combinations.index((wc,wc))
-       
-        # +/-1 values 
-        for val in [+1, -1]:
-            coefficient = np.zeros( len(sample.weightInfo.combinations) )
-            coefficient[0] = 1
-            coefficient[index_lin] =val
-            coefficient[index_quad]=val**2
-            eft_w_names.append(wc+"_%+3.3f"%val)
-            eft_w_points.append( coefficient )
-
-    # mixed terms
-    for wc in args.wc:
-        index_lin  = sample.weightInfo.combinations.index((wc,))
-        index_quad = sample.weightInfo.combinations.index((wc,wc))
-        for wc2 in args.wc:
-            index_lin2  = sample.weightInfo.combinations.index((wc2,))
-            index_quad2 = sample.weightInfo.combinations.index((wc2,wc2))
-            if not index_lin2>index_lin: continue
-            index_mixed = sample.weightInfo.combinations.index((wc,wc2))
-            coefficient = np.zeros( len(sample.weightInfo.combinations) )
-            coefficient[0] = 1
-            coefficient[index_lin] =1 
-            coefficient[index_quad]=1
-            coefficient[index_lin2] =1 
-            coefficient[index_quad2]=1
-            coefficient[index_mixed]=1
-            eft_w_names.append(wc+"_%+3.3f"%1+"_"+wc2+"_%+3.3f"%1)
-            eft_w_points.append( coefficient )
-
-    # Multiply this matrix with p_C to get a vector of weights according to what is in base_points_names
-    sample.eft_base_point_matrix = np.vstack( eft_w_points)
-    #print sample.base_point_matrix.shape, sample.base_point_matrix
-    #print sample.eft_w_names
-
+#
+#if isEFT:
+#    noData      = True
+#    sample      = TTbb_EFT
+#    from Analysis.Tools.WeightInfo import WeightInfo
+#    sample.weightInfo  = WeightInfo( sample.reweight_pkl )
+#    sample.weightInfo.set_order(2)
+#
+#    mc          = [ sample for _ in range(sample.weightInfo.get_ndof(len(args.wc), 2)) ]
+#
+#    coefficient = np.zeros( len(sample.weightInfo.combinations) )
+#    coefficient[0]=1
+#    eft_w_points= [coefficient]
+#    eft_w_names = ["central"]
+#    for wc in args.wc:
+#        index_lin  = sample.weightInfo.combinations.index((wc,))
+#        index_quad = sample.weightInfo.combinations.index((wc,wc))
+#       
+#        # +/-1 values 
+#        for val in [+1, -1]:
+#            coefficient = np.zeros( len(sample.weightInfo.combinations) )
+#            coefficient[0] = 1
+#            coefficient[index_lin] =val
+#            coefficient[index_quad]=val**2
+#            eft_w_names.append(wc+"_%+3.3f"%val)
+#            eft_w_points.append( coefficient )
+#
+#    # mixed terms
+#    for wc in args.wc:
+#        index_lin  = sample.weightInfo.combinations.index((wc,))
+#        index_quad = sample.weightInfo.combinations.index((wc,wc))
+#        for wc2 in args.wc:
+#            index_lin2  = sample.weightInfo.combinations.index((wc2,))
+#            index_quad2 = sample.weightInfo.combinations.index((wc2,wc2))
+#            if not index_lin2>index_lin: continue
+#            index_mixed = sample.weightInfo.combinations.index((wc,wc2))
+#            coefficient = np.zeros( len(sample.weightInfo.combinations) )
+#            coefficient[0] = 1
+#            coefficient[index_lin] =1 
+#            coefficient[index_quad]=1
+#            coefficient[index_lin2] =1 
+#            coefficient[index_quad2]=1
+#            coefficient[index_mixed]=1
+#            eft_w_names.append(wc+"_%+3.3f"%1+"_"+wc2+"_%+3.3f"%1)
+#            eft_w_points.append( coefficient )
+#
+#    # Multiply this matrix with p_C to get a vector of weights according to what is in base_points_names
+#    sample.eft_base_point_matrix = np.vstack( eft_w_points)
+#    #print sample.base_point_matrix.shape, sample.base_point_matrix
+#    #print sample.eft_w_names
+#
 if args.small:
     if not noData:
         data_sample.reduceFiles( factor = 100 )
@@ -656,8 +661,11 @@ for i_mode, mode in enumerate(allModes):
             weights = [g(event) for g in map( operator.attrgetter, weightnames)]
             # Check if any weight is nan
             if any(not isinstance(w, (int, float)) or isnan(w) for w in weights):
+                for w in weights : 
+                  if not isinstance(w, (int, float)) or isnan(w):
+                      print "We really should not have NANs. There is something to fix for:", w , "of type",type(w)
                 weights = [1 if (not isinstance(w, (int, float)) or isnan(w) )else w for w in weights]
-                for w in weights : print "We really should not have NANs. There is something to fix for:", w
+
             w = reduce(operator.mul, weights, 1)
             return w
     #    return weight_function
@@ -675,12 +683,12 @@ for i_mode, mode in enumerate(allModes):
           sample.read_variables += [VectorTreeVariable.fromString("p[C/F]", nMax=200)]
         
     #Stack : Define what we want to see.
-    weight_ = lambda event, sample: event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
+    weight_ = lambda event, sample: lumifact*event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
     if not noData:
         stack = Stack(mc, [data_sample])
-    elif isEFT:
-        stack = Stack(*list([s] for s in mc))
-        weight_ = [ [lambda event, sample, eft_w=eft_w: lumifact*event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)*getattr( event, eft_w)] for eft_w in eft_w_names]
+    #elif isEFT:
+        #stack = Stack(*list([s] for s in mc))
+        #weight_ = [ [lambda event, sample, eft_w=eft_w: lumifact*event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)*getattr( event, eft_w)] for eft_w in eft_w_names]
     else:
         stack = Stack(mc)
 
@@ -1344,14 +1352,14 @@ if not os.path.exists(plot_dir):
         pass 
 
 outfilename = plot_dir+'/tttt_'+args.sys+'.root'
-if isEFT: outfilename = plot_dir+'/tttt_EFTs.root'
+#if isEFT: outfilename = plot_dir+'/tttt_EFTs.root'
 logger.info( "Saving in %s", outfilename )
 outfile = ROOT.TFile(outfilename, 'recreate')#'update'
 outfile.cd()
 for plot in allPlots[allModes[0]]:
     for idx, histo_list in enumerate(plot.histos):
         for j, h in enumerate(histo_list):
-            h.Write( plot.name + "__" + stack[idx][j].name + ('_'+args.era if args.era != 'RunII' else '') + (('_'+eft_w_names[idx]) if isEFT else '') )
+            h.Write( plot.name + "__" + stack[idx][j].name + ('_'+args.era if args.era != 'RunII' else '')) #+ (('_'+eft_w_names[idx]) if isEFT else '') )
 outfile.Close()
 
 logger.info( "Done with prefix %s and selectionString %s", args.selection, cutInterpreter.cutString(args.selection) )

@@ -30,7 +30,7 @@ if not os.path.exists(os.path.join(outFile_dir, "all", args.selection)):
 
 # Open the output file and create a TDirectoryFile
 jetSelection = args.selection.split("-")[6]+"_"+args.selection.split("-")[7]
-outFile = ROOT.TFile(os.path.join(outFile_dir, args.plot_directory+"_"+jetSelection+".root"), "RECREATE")
+outFile = ROOT.TFile(os.path.join(outFile_dir, out_directory+"_"+jetSelection+".root"), "RECREATE")
 #make a list of possible discriminating variables
 theYounglings = ["2l_4t","ht","nJetGood","nBTag"]
 # Possible Syst variations
@@ -255,25 +255,28 @@ for theChosenOne in theYounglings :
 						        clonedHist.Write(sample+"__"+variation)
 
             if not args.noEFT and sample== "TTLep_bb":
-                eftFile = ROOT.TFile(os.path.join(directory,"tttt_EFTs.root"), "READ")
-                #print "found eft file"
+                eftFile = ROOT.TFile(os.path.join(outFile_dir, "all", args.selection,"tttt_EFTs.root"), "READ")
+                print "found eft file"
                 histos = {}
                 for wc in wcList:
                     #Get the histos in the form combine wants
-                    SMhistName = theChosenOne+"__TTbb_EFT_central"
-                    plushistName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000"
-                    minushistName = theChosenOne+"__TTbb_EFT_"+wc+"_-1.000"
+                    SMhistName = theChosenOne+"__TTbb01j_SMonly"
+                    linhistName = theChosenOne+"__TTbb01j_"+wc+"_lin"
+                    quadhistName = theChosenOne+"__TTbb01j_"+wc+"_quad"
                     for key in eftFile.GetListOfKeys():
                         obj = key.ReadObj()
                         clonedHist = obj.Clone()
                         if key.GetName() == SMhistName:
                             histos["SM"] = clonedHist
-                            #print "found the sm hist"
-                        elif key.GetName() == plushistName :
-                            histos["plus"] = clonedHist
+                            #print "found the sm hist wit max:",histos["SM"].GetMaximum()
+                        elif key.GetName() == linhistName :
+                            histos["lin"] = clonedHist
                             #print "found the plus hist"
-                        elif key.GetName() == minushistName : histos["minus"] = clonedHist
-                    histos["quad"] = getQuadratic(histos["SM"], histos["plus"], histos["minus"])
+                        elif key.GetName() == quadhistName : 
+                          histos["quad"] = clonedHist
+                          #print "found the quad hist"
+                    histos["plus"] = histos["SM"]+histos["lin"]+histos["quad"]
+                    print "plus term max:", histos["plus"].GetMaximum()
 
                     #scale the histos to Pow/MG
                     for key in inFile.GetListOfKeys():

@@ -87,7 +87,7 @@ lumiweight1fb = xsec * 1000. / nEvents
 
     
 # output directory
-output_directory = os.path.join(postprocessing_output_directory, 'gen', args.targetDir, sample.name) 
+output_directory = os.path.join(postprocessing_output_directory, 'gen', args.targetDir, args.sample) 
 
 if not os.path.exists( output_directory ): 
     try:
@@ -161,9 +161,60 @@ def varnames( vec_vars ):
 def vecSumPt(*args):
     return sqrt( sum([o['pt']*cos(o['phi']) for o in args],0.)**2 + sum([o['pt']*sin(o['phi']) for o in args],0.)**2 )
 
+
 def addIndex( collection ):
     for i  in range(len(collection)):
         collection[i]['index'] = i
+
+def minDeltaR(partList):
+  deltaRs=[]
+  pairs = list(itertools.combinations(range(len(partList)),2))
+  for i_j1 , i_j2 in pairs:
+		dR = 0.0
+		#print partList[i_j1]['eta'], partList[i_j2]['phi']
+		dR = deltaR(partList[i_j1],partList[i_j2])
+		deltaRs.append(dR)
+		#print "this pair : ", dR
+  theCulprit = min(deltaRs)
+  OS = partList[pairs[deltaRs.index(theCulprit)][0]]['pdgId']/partList[pairs[deltaRs.index(theCulprit)][1]]['pdgId']
+  if OS != -1:
+    sortedDeltaRs = deltaRs
+    sortedDeltaRs.sort()
+    for s in range(len(sortedDeltaRs)):
+      sortedOS = partList[pairs[deltaRs.index(sortedDeltaRs[s])][0]]['pdgId']/partList[pairs[deltaRs.index(sortedDeltaRs[s])][1]]['pdgId']
+      if sortedOS ==-1 :
+        theCulprit = sortedDeltaRs[s]
+        break
+  minPairPt = partList[pairs[deltaRs.index(theCulprit)][0]]['pt']+partList[pairs[deltaRs.index(theCulprit)][1]]['pt']
+  vecs = [ ROOT.TLorentzVector() for i in range(len(partList)) ]
+  for i, v in enumerate(vecs):
+        v.SetPtEtaPhiM(partList[i]['pt'], partList[i]['eta'], partList[i]['phi'], 0.)
+  minPairMass = (vecs[pairs[deltaRs.index(theCulprit)][0]] + vecs[pairs[deltaRs.index(theCulprit)][1]]).M()
+  #print "Aaaaaaand the convicted : ", theCulprit, "plus the mass : ", minPairMass
+#  if OS != -1 : print "It is not OS !!!!", partList[pairs[deltaRs.index(theCulprit)][0]]['pdgId'], partList[pairs[deltaRs.index(theCulprit)][1]]['pdgId']
+  return theCulprit, minPairPt, minPairMass
+
+
+def minbbMass(partList):
+    inds = range(len(partList))
+    pairs = list(itertools.combinations(inds,2))
+    vecs = [ ROOT.TLorentzVector() for i in range(len(partList)) ]
+    for i, v in enumerate(vecs):
+        v.SetPtEtaPhiM(partList[i]['pt'], partList[i]['eta'], partList[i]['phi'], 0.)
+    masses = [((vecs[comb[0]] + vecs[comb[1]]).M(), comb[0], comb[1])  for comb in pairs ]
+    theCulprit = min(masses)
+    OS = partList[pairs[masses.index(theCulprit)][0]]['pdgId']/partList[pairs[masses.index(theCulprit)][1]]['pdgId']
+    if OS!= -1:
+      sortedMasses = masses
+      sortedMasses.sort()
+      for s in range(len(sortedMasses)):
+        sortedOS = partList[pairs[masses.index(sortedMasses[s])][0]]['pdgId']/partList[pairs[masses.index(sortedMasses[s])][1]]['pdgId']
+        if sortedOS ==-1 :
+          theCulprit = sortedMasses[s]
+          break
+    #print "the min bb mass : ", theCulprit[0]
+    return theCulprit[0]
+
 
 # upgrade JEC
 # upgradeJECUncertainty = UpgradeJECUncertainty()
@@ -171,6 +222,7 @@ def addIndex( collection ):
 # variables
 variables = []
 
+variables += ["JetHt/F", "minDeltaRbb/F","minPtbb/F","minDRbbMass/F","minbbMass/F"]
 # Lumi weight 1fb
 variables += ["lumiweight1fb/F"]
 
@@ -220,6 +272,16 @@ variables     += ["genZ[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter
 variables     += ["genW[pt/F,phi/F,eta/F,mass/F,status/I,cosThetaStar/F,daughter_pdgId/I,mother_pdgId/I,grandmother_pdgId/I,l1_index/I,l2_index/I]"]
 variables     += ["LHE_genZ_pt/F", "LHE_genZ_eta/F", "LHE_genZ_phi/F", "LHE_genZ_mass/F"]
 variables     += ["LHE_genH_pt/F", "LHE_genH_eta/F", "LHE_genH_phi/F", "LHE_genH_mass/F"]
+
+#Save all LHE info
+
+#LHE_vars = "AlphaS/F,HT/F,HTIncoming/F,Nb/I,Nc/I,nglu/I,Njets/I,NpLO/I,NpNLO/I,Nuds/I,Vpt/F"
+LHEPart_vars = "eta/F,mass/F,pdgId/I,phi/F,pt/F"
+LHEPart_vars_names = varnames(LHEPart_vars)
+#variables += ["LHE[%s]"%LHE_vars]
+variables += ["LHEPart[%s]"%LHEPart_vars]
+#variables     += ["LHEPart_pt/F","LHEPart_pdgId/F", "LHEPart_eta/F", "LHEPart_phi/F", "LHEPart_mass/F"]
+
 variables     += ["x1/F", "x2/F"]
 # Z vector from genleps
 # gamma vector
@@ -360,7 +422,7 @@ def addTLorentzVector( p_dict ):
 
 tmp_dir     = ROOT.gDirectory
 #post_fix = '_%i'%args.job if args.nJobs > 1 else ''
-output_filename =  os.path.join(output_directory, sample.name + '.root')
+output_filename =  os.path.join(output_directory, sample.name +'_'+args.sample+ '.root')
 
 _logger.   add_fileHandler( output_filename.replace('.root', '.log'), args.logLevel )
 _logger_rt.add_fileHandler( output_filename.replace('.root', '_rt.log'), args.logLevel )
@@ -410,7 +472,9 @@ def filler( event ):
             #for var in weightInfo.variables:
             #    getattr( event, "rw_"+var )[pos] = interpreted_weight[var]
             # weight data for interpolation
-            if not hyperPoly.initialized: param_points.append( tuple(interpreted_weight[var.lower()] for var in weightInfo.variables) )
+            if not hyperPoly.initialized: 
+              param_points.append( tuple(interpreted_weight[var.lower()] for var in weightInfo.variables) )
+              #print "appending param points"
 
         # get list of values of ref point in specific order
         ref_point_coordinates = [weightInfo.ref_point_coordinates[var] for var in weightInfo.variables]
@@ -481,6 +545,10 @@ def filler( event ):
         else:
             genBs_dict[i_genB]['fromTop'] = 0 
     fill_vector_collection( event, "genB", b_all_varnames, genBs_dict )
+    last_genBs = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId())==5  and search.isLast(p), gp)]
+    last_genBs_dict = [ {var: getattr(last, var)() for var in b_varnames} for first, last in last_genBs ]
+    event.minDeltaRbb, event.minPtbb, event.minDRbbMass = minDeltaR(last_genBs_dict)
+    event.minbbMass = minbbMass(last_genBs_dict)
     
     # generated leptons from SM bosons
     genLeps    = [ (search.ascend(l), l) for l in filter( lambda p:abs(p.pdgId()) in [11, 12, 13, 14, 15, 16]  and abs(p.mother(0).pdgId()) in [22, 23, 24, 25], gp)]
@@ -522,6 +590,24 @@ def filler( event ):
         event.LHE_genH_mass = p4.M()
         break
         #print "LHE Z", i_p, hepup.IDUP[i_p], p4.Pt(), "status", hepup.ISTUP[i_p]
+
+    #write lhe particles info
+    LHEPart_dict = []
+    for i_p,p in enumerate(lhe_particles):
+      p4 = ROOT.TLorentzVector(lhe_particles[i_p][0], lhe_particles[i_p][1], lhe_particles[i_p][2], lhe_particles[i_p][3])
+      LHEPart={}
+      LHEPart['pt'] = p4.Pt()
+      LHEPart['eta'] = p4.Eta()
+      LHEPart['phi']  = p4.Phi()
+      LHEPart['mass'] = p4.M()
+      LHEPart['pdgId'] = hepup.IDUP[i_p]
+      LHEPart_dict.append(LHEPart)
+      #print "LHEPart", i_p, event.LHEPart_pdgId, event.LHEPart_pt, "status", hepup.ISTUP[i_p]
+    fill_vector_collection( event, "LHEPart", LHEPart_vars_names, LHEPart_dict )
+    #write event lhe info
+#    LHE = fwliteReader.products["lhe"].ht()
+#    event.LHE_HT = LHE["HT"] 
+#    print "HT : ",LHE
 
     # generated Zs decaying to leptons
     genZs = [ (search.ascend(genZ), genZ) for genZ in filter( lambda p:abs(p.pdgId())==23 and search.isLast(p) and abs(p.daughter(0).pdgId()) in [11, 13, 15], gp) ]
@@ -696,6 +782,8 @@ def filler( event ):
 
     # make dict
     allGenJets = map( lambda t:{var: getattr(t, var)() for var in jet_read_varnames}, filter( lambda j:j.pt()>30, fwlite_genJets) )
+    absolutelyALLgenjetsmap = map( lambda t:{var: getattr(t, var)() for var in jet_read_varnames}, filter( lambda j:j.pt()>0, fwlite_genJets) )
+    absolutelyALLgenjets = list (absolutelyALLgenjetsmap)
 
     #print allGenJets
     #print genLeps_dict
@@ -706,6 +794,9 @@ def filler( event ):
 
     # filter genJets
     genJets = list( filter( lambda j:isGoodGenJet( j, max_jet_abseta = max_jet_abseta), allGenJets ) )
+
+    #genJet ht
+    event.JetHt = sum([jet['pt'] for jet in absolutelyALLgenjets])
 
     ## cleaning of jets with isolated photons
     #genJets = list( filter( lambda j:min([999]+[deltaR2(j, p) for p in genPhotons_ ])>0.4**2, genJets))

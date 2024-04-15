@@ -672,55 +672,55 @@ for i_mode, mode in enumerate(allModes):
       binning=[8,3.5,11.5],
     ))
 
-    plots.append(Plot(
-      name = "nJetGood_pt30",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nJetGood_pt30, #nJetSelected_pt>30
-      binning=[8,3.5,11.5],
-    ))
-
-    plots.append(Plot(
-      name = "nJetGood_pt40",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nJetGood_pt40, #nJetSelected_pt>40
-      binning=[8,3.5,11.5],
-    ))
-
-    plots.append(Plot(
-      name = "nJetGood_pt50",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nJetGood_pt50, #nJetSelected_pt>50
-      binning=[8,3.5,11.5],
-    ))
-
-    plots.append(Plot(
-      name = "nJetGood_pt80",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nJetGood_pt80, #nJetSelected_pt>80
-      binning=[8,3.5,11.5],
-    ))
-
-    plots.append(Plot(
-      name = "nJetGood_pt100",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nJetGood_pt100, #nJetSelected_pt>100
-      binning=[8,3.5,11.5],
-    ))
-
-    plots.append(Plot(
-      name = "nJetGood_pt150",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nJetGood_pt150, #nJetSelected_pt>150
-      binning=[8,3.5,11.5],
-    ))
-
-    plots.append(Plot(
-      name = "nJetGood_pt200",
-      texX = 'N_{jets}', texY = 'Number of Events',
-      attribute = lambda event, sample:event.nJetGood_pt200, #nJetSelected_pt>200
-      binning=[8,3.5,11.5],
-    ))
-
+#    plots.append(Plot(
+#      name = "nJetGood_pt30",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nJetGood_pt30, #nJetSelected_pt>30
+#      binning=[8,3.5,11.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nJetGood_pt40",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nJetGood_pt40, #nJetSelected_pt>40
+#      binning=[8,3.5,11.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nJetGood_pt50",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nJetGood_pt50, #nJetSelected_pt>50
+#      binning=[8,3.5,11.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nJetGood_pt80",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nJetGood_pt80, #nJetSelected_pt>80
+#      binning=[8,3.5,11.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nJetGood_pt100",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nJetGood_pt100, #nJetSelected_pt>100
+#      binning=[8,3.5,11.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nJetGood_pt150",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nJetGood_pt150, #nJetSelected_pt>150
+#      binning=[8,3.5,11.5],
+#    ))
+#
+#    plots.append(Plot(
+#      name = "nJetGood_pt200",
+#      texX = 'N_{jets}', texY = 'Number of Events',
+#      attribute = lambda event, sample:event.nJetGood_pt200, #nJetSelected_pt>200
+#      binning=[8,3.5,11.5],
+#    ))
+#
 #    plots.append(Plot(
 #      name = "nBTag_loose_pt30",
 #      texX = 'N_{jets}', texY = 'Number of Events',

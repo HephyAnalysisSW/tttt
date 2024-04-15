@@ -1,10 +1,14 @@
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-nlepFO2p-ht500 --era UL2018 --processingEra tttt_v10 --flagTTbb --sample TTbb01j_cQQ1_lin #SPLIT20
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-nlepFO2p-ht500 --era UL2018 --processingEra tttt_v10 --flagTTbb --sample TTbb01j_cQQ1_quad #SPLIT50
+python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep-nlepFO2p-ht500 --era UL2018 --processingEra tttt_v10 --flagTTbb --sample TTbb01j_SMonly #SPLIT500
+
 ##dilep
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --flagTT --normalizeSys  --sample TTLep_pow_CP5  #SPLIT155
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --flagTTbb --normalizeSys --sample TTbb  #SPLIT6
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample T_tch_pow   #SPLIT149
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample TBar_tch_pow  #SPLIT130
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample T_tWch  #SPLIT15
-python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample TBar_tWch  #SPLIT100
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --flagTT --normalizeSys  --sample TTLep_pow_CP5  #SPLIT155
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --flagTTbb --normalizeSys --sample TTbb  #SPLIT6
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample T_tch_pow   #SPLIT149
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample TBar_tch_pow  #SPLIT130
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample T_tWch  #SPLIT15
+#python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample TBar_tWch  #SPLIT100
 #python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --normalizeSys --sample TTTT  #SPLIT100
 #python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample TTWToLNu #SPLIT50
 #python nanoPostProcessing.py  --overwrite --forceProxy --btag_WP loose --skim dilep --era UL2018 --processingEra tttt_v9 --sample TTWToQQ #SPLIT22

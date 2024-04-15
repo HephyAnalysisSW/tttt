@@ -13,7 +13,7 @@ from RootTools.core.standard             import *
 
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.user                     import *
-# Hello
+
 # Arguments
 import argparse
 argParser = argparse.ArgumentParser(description = "Argument parser")
