@@ -8,6 +8,7 @@ import os
 import subprocess
 import shutil
 import uuid
+from itertools import combinations
 
 import array as arr
 from operator import mul
@@ -584,7 +585,7 @@ new_variables += [\
 #if options.central:
 # matchVar  = ['matched/O','mass/F']
 # new_variables.append('Jet[%s]'% ( ','.join(matchVar)))
-new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O', 'matched/I']) + ( ',genPt/F' if sample.isMC else '' )))
+new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O', 'matched/I', 'motherIdx/I', 'genPdgId/I', 'TopTruth/I', 'TripletIndex/I']) + ( ',genPt/F' if sample.isMC else '' )))
 #else:
 #    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if sample.isMC else '' )))
 new_variables.append('GenParton[%s]'%( ','.join(genPartonVars)))
@@ -811,7 +812,7 @@ def filler( event ):
         # GEN Particles
         gPart = getGenPartsAll(r)
         # lists of GenParticles
-        # GenPartons = filter(lambda g: abs(g['pdgId']) in [1,2,3,4,5], getGenFirstCopy(gPart))
+        GenPartons = filter(lambda g: abs(g['pdgId']) in [1,2,3,4,5], getGenFirstCopy(gPart))
         # GenPartons.sort(key = lambda g:-g['pt'])
         # store_partonFromTop = filter( lambda g : getTopMother(g, gPart), GenPartons)
         # setattr(event, 'nGenParton', len(store_partonFromTop))
@@ -1054,8 +1055,7 @@ def filler( event ):
     else:
         event.met_pt    = r.MET_pt
         event.met_phi   = r.MET_phi
-        print("before %f"%event.met_pt)
-        print("after %f"%event.MET_pt_jer)
+
     # Filling jets (satisfying the nomianl pt cut)
     maxNJet = 100
     store_jets = [j for j in jets if j['isNominal']]
@@ -1192,7 +1192,7 @@ def filler( event ):
     #     jet1P4_topCM  = CMFrame(tlv2, total_tlv)
     #     jet2P4_topCM  = CMFrame(tlv3, total_tlv)
     #
-    # 
+    #
     #     trijetPtDR = total_tlv.Pt()*sqrt((W_tlv.Phi()-tlv1.Phi())**2 + (W_tlv.Eta()-tlv1.Eta())**2)
     #     dijetPtDR = total_tlv.Pt()*sqrt((tlv2.Phi()-tlv3.Phi())**2 + (tlv2.Eta()-tlv3.Eta())**2)
     #
@@ -1222,6 +1222,28 @@ def filler( event ):
     #
     # fill_vector_collection( event, "HadronicTop", hadTopNames, tlorentz_vectors, 100)
     # fill_vector_collection( event, "WBoson", WBosonVarNames, W_vectors, 100)
+
+    for g in gPart:
+        match, jet = getMatching(g, store_jets, gPart)
+        if match == True:
+            event.JetGood_matched[jet['index']] = True
+            event.JetGood_motherIdx[jet['index']] = jet['motherIdx']
+            event.JetGood_genPdgId[jet['index']] = jet['genPdgId']
+
+
+    truthKeys = ['matched', 'genPdgId', 'motherIdx']
+    triplet = combinations(store_jets, 3)
+    # for i, combo in enumerate(triplet):
+    #     if all(key in jet for key in truthKeys for jet in combo):
+            # if combo[0]['motherIdx'] == combo[1]['motherIdx'] == combo[2]['motherIdx']:
+            #     print(combo[0]['motherIdx'], combo[1]['motherIdx'], combo[2]['motherIdx'])
+            # if any(abs(jet['genPdgId']) == 5 for jet in combo):# and all(abs(jet['genPdgId']) != 5 for jet in combo):
+            #     print(combo[0]['motherIdx'], combo[1]['motherIdx'], combo[2]['motherIdx'])
+                # if combo[0]['motherIdx'] == combo[1]['motherIdx'] == combo[2]['motherIdx']:
+                #     event.JetGood_TopTruth[jet['index']]==1
+                # else:
+                #     event.JetGood_TopTruth[jet['index']]==0
+
 
     event.ht = sum([jet['pt'] for jet in store_jets])
     if sample.isMC and options.doCRReweighting:
