@@ -24,6 +24,7 @@ special_cuts = {
     "singlelepT":      "l1_pt>20&&l1_mvaTOPWP>=4",
 
     "dilep":           "Sum$({mu_string})+Sum$({ele_string})==2&&l1_pt>40&&l2_pt>20".format(mu_string=mu_string,ele_string=ele_string),
+    "dilepSS":         "Sum$({mu_string})+Sum$({ele_string})==2&&l1_pt>25&&l2_pt>20".format(mu_string=mu_string,ele_string=ele_string),
     "dilepVL":         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20",
     "dilepL" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=2&&l2_mvaTOPWP>=2",
     "dilepM" :         "(Sum$(lep_pt>15)==2)&&l1_pt>40&&l2_pt>20&&l1_mvaTOPWP>=3&&l2_mvaTOPWP>=3",

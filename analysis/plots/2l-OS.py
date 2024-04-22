@@ -744,7 +744,7 @@ for i_mode, mode in enumerate(allModes):
     plots.append(Plot(
       name = "ISRJet_pt40_course",
       texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
-      attribute = lambda event, sample: event.ISRJet_pt40,
+      attribute = lambda event, sample: event.ISRJetPt40,
       binning=Binning.fromThresholds([0,50,100,150,200,250,300,350,400,450,500,600,800,1000,2000]),
       #binning=[600/30,0,600],
     ))
@@ -760,6 +760,12 @@ for i_mode, mode in enumerate(allModes):
       texX = 'H_{T}b (GeV)', texY = 'Number of Events / 50 GeV',
       name = 'htb', attribute = lambda event, sample: sum( j['pt'] for j in event.bJets ),
       binning=[1500/50,0,1500],
+    ))
+    
+    plots.append(Plot(
+      texX = 'H_{T} (GeV)', texY = 'Number of Events',
+      name = 'ht_wide', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
+      binning=[2500/100,0,2500],
     ))
 
     plots.append(Plot(

@@ -171,16 +171,16 @@ class Plotter:
 	    if not syst in self.systNames:
 	    	self.systNames.append(syst)
 	
-    def buildUncertainty(self):
+    def buildUncertainty(self,hist):
     
 
-        nBins = self.totalHist.GetNbinsX()
+        nBins = hist.GetNbinsX()
         for i in range(nBins):
             binNumber = i+1
-            binCenter = self.totalHist.GetXaxis().GetBinCenter(binNumber)
-            binXUp = self.totalHist.GetXaxis().GetBinUpEdge(binNumber)
-            binXLow = self.totalHist.GetXaxis().GetBinLowEdge(binNumber)
-            binContent = self.totalHist.GetBinContent(binNumber)
+            binCenter = hist.GetXaxis().GetBinCenter(binNumber)
+            binXUp = hist.GetXaxis().GetBinUpEdge(binNumber)
+            binXLow = hist.GetXaxis().GetBinLowEdge(binNumber)
+            binContent = hist.GetBinContent(binNumber)
             self.totalError.SetPoint(binNumber, binCenter, binContent)
             upErr2 = pow(10, -20)
             downErr2 = pow(10, -20)
@@ -331,7 +331,7 @@ class Plotter:
         ratio.SetTitle('')
         ratio.GetYaxis().SetTitle(self.ratioTitle)
 	if self.hasPostFitUnc:
-        	ratio.GetYaxis().SetRangeUser(0.1,1.9)
+        	ratio.GetYaxis().SetRangeUser(0.5,1.5)
 	else:   ratio.GetYaxis().SetRangeUser(0.5,1.5)
         ratio.GetYaxis().SetNdivisions(505)
         ratio.GetYaxis().CenterTitle()
@@ -568,7 +568,7 @@ class Plotter:
 	    if not self.noSyst:
                 self.legend.AddEntry(self.totalError, "Systematic Uncertainty")
 		self.buildPDF()
-                self.buildUncertainty()
+                self.buildUncertainty(self.totalHist)
 
         self.setDrawOptions(self.totalHist)
 	if not nbins is None:
@@ -818,7 +818,7 @@ class Plotter:
 		self.xTitle = texX
 		self.yTitle = texY
 		self.buildStack()
-		self.buildUncertainty()
+		self.buildUncertainty(self.totalHist)
 		self.buildComparisonPlots()
 		self.setComparisonDrawOptions()
 		c2 = ROOT.TCanvas("c2","c2",200,10, 500, 500)
@@ -866,4 +866,130 @@ class Plotter:
 		for extension in extensions:
 			compraisonPlotnameTheo= os.path.join(plot_directory, self.name+"_syst_theoretical.%s"%extension)
 			c2.Print(compraisonPlotnameTheo)
+    
+    
+    #draw with boxes and not stacked
+    def drawNonstacked(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False, binLabels = None, nbins = None ):
 
+		ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
+		ROOT.setTDRStyle()
+		ROOT.gStyle.SetErrorX(0.5)
+		
+		if plot_directory is None : plot_directory = self.plot_dir
+		self.xTitle = texX
+		self.yTitle = texY
+		self.ratio = ratio
+		c1 = ROOT.TCanvas("c1","c1",200,10, 500, 500)
+		
+		if self.ratio:
+		    c1.SetCanvasSize(500,700)
+		    yRatio = 0.31
+		    c1.Divide(1,2,0,0)
+		    topPad = c1.cd(1)
+		    topPad.SetBottomMargin(0)
+		    topPad.SetLeftMargin(0.15)
+		    topPad.SetTopMargin(0.07)
+		    topPad.SetRightMargin(0.05)
+		    topPad.SetPad(topPad.GetX1(), yRatio , topPad.GetX2(), topPad.GetY2())
+		
+		    bottomPad = c1.cd(2)
+		    bottomPad.SetPad(bottomPad.GetX1(), bottomPad.GetY1(), bottomPad.GetX2(), yRatio)
+		    bottomPad.SetTopMargin(0)
+		    bottomPad.SetRightMargin(0.05)
+		    bottomPad.SetLeftMargin(0.15)
+		    bottomPad.SetBottomMargin(0.13*3.5)
+		else:
+		    topPad = c1
+		    topPad.SetBottomMargin(0.13)
+		    topPad.SetLeftMargin(0.15)
+		    topPad.SetTopMargin(0.07)
+		    topPad.SetRightMargin(0.05)
+		
+		topPad.cd()
+		if log: self.yFactor = 100*1.1
+		else: self.yFactor = 1.1
+		topPad.SetLogy(log)
+		topPad.SetTitle(self.name)
+		
+		if self.totalHist.GetMaximum()==0:
+		    self.buildStack()
+		    #self.stack = ROOT.THStack(*list([s] for s in self.samples))
+		if not self.noSyst:
+			 self.legend.AddEntry(self.totalError, "Systematic Uncertainty")
+			 self.buildPDF()
+			 #self.buildUncertainty()
+		
+		self.setDrawOptions(self.totalHist)
+		if not nbins is None:
+		    self.totalHist.GetXaxis().SetRangeUser(nbins[0], nbins[1])
+		if not binLabels is None:
+		        for i in range(len(binLabels)):
+			        self.totalHist.GetXaxis().SetBinLabel(i+1,binLabels[i])
+		    
+		self.totalHist.Reset()
+		self.totalHist.Draw("hist")
+		#self.stack.Draw("lego same")
+		#self.totalError.Draw("E2 hist same")
+		for  sample in self.samples:
+			sample["hist"].SetLineColor(sample["hist"].GetFillColor())
+			sample["hist"].SetFillStyle(0)
+			sample["hist"].Draw("hist same")
+			self.buildUncertainty(sample["hist"])
+			self.totalError.SetFillColor(sample["hist"].GetFillColor())
+			self.totalError.Draw("E2 hist same")
+
+		
+		if self.hasPostFitUnc : 
+		    self.postFitUnc.Draw("E2 same")
+		    
+#		if not self.noData :
+#		    if self.hasPostFitUnc :
+#		 	  Nbins = self.data["hist"].GetN()
+#		 	  for i in range(Nbins+1):
+#		     		bin=i
+#			self.data["hist"].SetPointEXhigh(bin,0)
+#			self.data["hist"].SetPointEXlow(bin,0)
+#		  
+#		  self.data["hist"].Draw(" E0 P same")
+#		else: self.data["hist"].Draw("X0 E0 p same")
+		
+		self.legend.SetFillStyle(0)
+		self.legend.SetShadowColor(ROOT.kWhite)
+		self.legend.SetBorderSize(0)
+		self.legend.SetNColumns(2)
+		self.legend.Draw()
+		cmsText, subLabel = self.setLabel()
+		
+		topPad.RedrawAxis()
+		
+		#Draw ratio
+		if self.ratio:
+			bottomPad.cd()
+			topPad.SetTitle(self.name+"_ratio")
+			ratioline = self.getRatioLine(self.totalHist)
+			self.setRatioDrawOptions(ratioline)
+			ratioline.SetFillColor(0)
+			ratioline.SetLineColor(13)
+			ratioline.SetLineWidth(2)
+			ratioline.Draw("hist")
+			ratio = self.getRatio(self.samples[1]["hist"], self.samples[0]["hist"])
+			ratio.Draw("hist same")
+			ROOT.gPad.RedrawAxis()
+		
+		
+		
+		
+		#save the plot
+		if not os.path.exists(plot_directory):
+		    try:
+		        os.makedirs(plot_directory)
+		    except OSError: # Resolve rare race condition
+		        pass
+		
+		plot_helpers.copyIndexPHP(plot_directory)
+		
+		for extension in extensions:
+		    plotname = os.path.join(plot_directory, self.name+".%s"%extension)
+		    c1.Print(plotname)
+		
+		

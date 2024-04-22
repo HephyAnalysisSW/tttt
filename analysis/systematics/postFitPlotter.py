@@ -49,7 +49,7 @@ else :  fit = "shapes_fit_s"
 if args.prefit: fit = "shapes_prefit"
 
 mc = [ 
-    {"name": "total_signal", "legendText" : "t#bar{t}b#bar{b}", "color" : ROOT.kRed + 2}, #TTLep_bb
+    {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}", "color" : ROOT.kRed + 2}, 
 	{"name": "TTLep_cc", "legendText" : "t#bar{t}c#bar{c}", "color" : ROOT.kRed - 3},
 	{"name": "TTLep_other", "legendText" : "t#bar{t} + light j.", "color" : color.TT},
 #       {"name": "ST", "legendText" : "t/tW", "color" : color.T},
@@ -60,11 +60,11 @@ mc = [
 	{"name": "TTZ", "legendText" : "t#bar{t}Z", "color" : color.TTZ},
 	{"name": "DY", "legendText" : "DY", "color" : color.DY},
 	{"name": "DiBoson", "legendText" : "DiBoson", "color" : color.W},
-	{"name": "TTTT", "legendText" : "t#bar{t}t#bar{t}", "color" : color.TTTT} ]
+	{"name": "total_signal", "legendText" : "t#bar{t}t#bar{t}", "color" : color.TTTT} ]
 
-selections =["njet4to5_btag3p","njet4to5_btag2","njet4to5_btag1","njet6p_btag3p","njet6p_btag2","njet6p_btag1"]#"njet6to7_btag2","njet4to5_btag1","njet6to7_btag1","njet8p_btag2","njet8p_btag1","mvaCut2p_njet4to5_btag3p","mvaCut2m_njet4to5_btag3p","mvaCut1p_njet6to7_btag3p","mvaCut1m_njet6to7_btag3p","njet8p_btag3p"]
+selections =["njet4to5_btag3p","njet4to5_btag2","njet4to5_btag1","njet6to7_btag3p","njet6to7_btag2","njet6to7_btag1","njet8p_btag3p","njet8p_btag2","njet8p_btag1"]
 plots =[	
-#		{"name":"mva",		"texX":"2l_4t",		"binLabels":["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1"], "nbins": [0,10]},
+		{"name":"mva",		"texX":"2l_4t",		"binLabels":["0.1","0.2","0.3","0.4","0.5","0.6","0.7","0.8","0.9","1"], "nbins": [0,10]},
 #		{"name":"nJetGood",	"texX":"N_{Jet}",       "binLabels":["4","5","6","7","8","9","10","11"], "nbins": [0,8]},
 #		{"name":"nBTag",	"texX":"N_{BJet}",      "binLabels":["0","1","2","3","4","5","6"], "nbins": [0,7]},
 		{"name":"ht",       	"texX":"ht",     	"binLabels":["500","","1000","","1500","","1500","","2000","","2500"] , "nbins": [0,10]},

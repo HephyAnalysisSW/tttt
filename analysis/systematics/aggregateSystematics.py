@@ -77,8 +77,9 @@ scaleWeights = ["DYscaleShapeDown","DYscaleShapeUp",
                 "TTccrenormalizationShapeUp","TTccrenormalizationShapeDown","TTccFactorizationShapeUp","TTccFactorizationShapeDown",
                 "TTlightrenormalizationShapeUp","TTlightrenormalizationShapeDown","TTlightFactorizationShapeUp","TTlightFactorizationShapeDown",
                 "TTTTrenormalizationShapeUp","TTTTrenormalizationShapeDown","TTTTFactorizationShapeUp","TTTTFactorizationShapeDown",
+                #"ScaleUpUp","ScaleDownDown"
                 ]
-PSWeights = ["DYISRUp", "DYISRDown", "DYFSRUp", "DYFSRDown" , "TTISRUp", "TTISRDown", "TTFSRUp", "TTFSRDown" ]
+PSWeights = ["DYISRUp", "DYISRDown", "TTbbISRUp", "TTbbISRDown" , "TTTTISRUp", "TTTTISRDown", "TTccISRUp", "TTccISRDown", "TTlightISRUp", "TTlightISRDown", "FSRUp", "FSRDown" ]
 
 variations +=  scaleWeights + PSWeights + PDFWeights
 
@@ -96,7 +97,7 @@ scales = {"ScaleDownDown" : "scaleShapeDown",
         "ScaleNoneDown" : "FactorizationShapeDown"}
 ratio = open(os.path.join(directory, "scale_ratios.txt"), "w")
 for look in scales:
-    print "\n Currently rescaling "+ look
+    #print "Currently rescaling "+ look
     ratio.write("normalization factor for "+scales[look]+":\n")
 
     # Output files
@@ -183,30 +184,50 @@ ratio.close()
 
 
 #separate PS weights in ttbar and DY
-for PS in ["ISRUp", "ISRDown", "FSRUp", "FSRDown"]:
+for PS in ["ISRUp", "ISRDown"]:
     jointPS = ROOT.TFile(os.path.join(directory,"tttt_"+PS+".root"), "READ")
-    TT_PS = ROOT.TFile(os.path.join(directory, "tttt_TT"+PS+".root"), "RECREATE")
+    TTTT_PS = ROOT.TFile(os.path.join(directory, "tttt_TTTT"+PS+".root"), "RECREATE")
+    TTbb_PS = ROOT.TFile(os.path.join(directory, "tttt_TTbb"+PS+".root"), "RECREATE")
+    TTcc_PS = ROOT.TFile(os.path.join(directory, "tttt_TTcc"+PS+".root"), "RECREATE")
+    TTlight_PS = ROOT.TFile(os.path.join(directory, "tttt_TTlight"+PS+".root"), "RECREATE")
     DY_PS = ROOT.TFile(os.path.join(directory, "tttt_DY"+PS+".root"), "RECREATE")
     for hKey in jointPS.GetListOfKeys():
         SMhKey = centralfile.GetKey(hKey.GetName())
         SMh = SMhKey.ReadObj()
         h = hKey.ReadObj()
-        TT_PS.cd()
-        if "DY" in hKey.GetName(): h = SMh
+        
+        TTTT_PS.cd()
+        if not "TTTT" in hKey.GetName(): h = SMh
         h.Write(hKey.GetName())
         h = hKey.ReadObj()
+        
+        TTbb_PS.cd()
+        if not "TTLep_bb" in hKey.GetName(): h = SMh
+        h.Write(hKey.GetName())
+        
+        TTcc_PS.cd()
+        if not "TTLep_cc" in hKey.GetName(): h = SMh
+        h.Write(hKey.GetName())
+        
+        TTlight_PS.cd()
+        if not "TTLep_other" in hKey.GetName(): h = SMh
+        h.Write(hKey.GetName())
+        
         DY_PS.cd()
         if not "DY" in hKey.GetName(): h = SMh
         h.Write(hKey.GetName())
     print "finished the {} decorellation".format(PS)
     jointPS.Close()
-    TT_PS.Close()
+    TTTT_PS.Close()
+    TTbb_PS.Close()
+    TTcc_PS.Close()
+    TTlight_PS.Close()
     DY_PS.Close()
 
 centralfile.Close()
 
 isEFT = True
-wcList = ["cQQ1"]
+wcList = ["cQQ1" ,"cQQ8" ,"ctt" ,"cQt1" ,"cQt8" ,"ctHRe" ,"ctHIm"]
 def getQuadratic(hist_sm, hist_plus, hist_minus):
     #create quad term for EFT
 # Since the quadratic term does not change sign, we can get it from the
@@ -227,19 +248,22 @@ def getQuadratic(hist_sm, hist_plus, hist_minus):
 #Create the root file combine desires
 for theChosenOne in theYounglings :
     category = outFile.mkdir("tttt__"+theChosenOne)
+    #print theChosenOne
     for sample in samples :
-        objName = theChosenOne+"__"+sample
-        for variation in variations:
-            inFile = ROOT.TFile(os.path.join(directory,"tttt_"+variation+".root"), "READ")
-            for key in inFile.GetListOfKeys():
-                if key.GetName().startswith(objName):
+		objName = theChosenOne+"__"+sample
+		#print sample
+		for variation in variations:
+			inFile = ROOT.TFile(os.path.join(directory,"tttt_"+variation+".root"), "READ")
+			for key in inFile.GetListOfKeys():
+					#print variation , key.GetName()
+					if key.GetName().startswith(objName):
 						obj = key.ReadObj()
 						category.cd()
 						clonedHist = obj.Clone()
 						histname = clonedHist.GetName()
 						if "data" in histname:
 						    clonedHist.Write("data_obs")
-						    print "found data", theChosenOne,clonedHist.GetTitle()
+						    #print "found data", theChosenOne,clonedHist.GetTitle()
 						else:
 						    # if not args.era == "RunII": sample = sample +"_"+args.era
 						    if variation == "central":
@@ -252,92 +276,120 @@ for theChosenOne in theYounglings :
 						    elif "PDF" in variation :
 						        clonedHist.Write(sample+"__"+variation+"Up")
 						    else:
-						        clonedHist.Write(sample+"__"+variation)
-
-            if not args.noEFT and sample== "TTLep_bb":
-                eftFile = ROOT.TFile(os.path.join(outFile_dir, "all", args.selection,"tttt_EFTs.root"), "READ")
-                print "found eft file"
-                histos = {}
-                for wc in wcList:
-                    #Get the histos in the form combine wants
-                    SMhistName = theChosenOne+"__TTbb01j_SMonly"
-                    linhistName = theChosenOne+"__TTbb01j_"+wc+"_lin"
-                    quadhistName = theChosenOne+"__TTbb01j_"+wc+"_quad"
-                    for key in eftFile.GetListOfKeys():
-                        obj = key.ReadObj()
-                        clonedHist = obj.Clone()
-                        if key.GetName() == SMhistName:
-                            histos["SM"] = clonedHist
-                            #print "found the sm hist wit max:",histos["SM"].GetMaximum()
-                        elif key.GetName() == linhistName :
-                            histos["lin"] = clonedHist
-                            #print "found the plus hist"
-                        elif key.GetName() == quadhistName : 
-                          histos["quad"] = clonedHist
-                          #print "found the quad hist"
-                    histos["plus"] = histos["SM"]+histos["lin"]+histos["quad"]
-                    print "plus term max:", histos["plus"].GetMaximum()
-
-                    #scale the histos to Pow/MG
-                    for key in inFile.GetListOfKeys():
-                        if key.GetName().startswith(objName):
-                            obj = key.ReadObj()
-                            clonedHist = obj.Clone()
-                            histos["ratio"] = clonedHist.Clone()
-                            histos["ratio"].Divide(histos["SM"])
-                            #print objName, sample, variation
-                            #check for zeros
-                            for bin in range(1, histos["SM"].GetNbinsX() + 1):
-                                if histos["SM"].GetBinContent(bin) == 0:
-                                    histos["ratio"].SetBinContent(bin, 0)
-                                #print "TTLep_bb bin:",clonedHist.GetBinContent(bin),"EFT at sm bin:",histos["SM"].GetBinContent(bin),"EFT lin bin:",histos["plus"].GetBinContent(bin), "EFT quad bin:",histos["quad"].GetBinContent(bin)
-                            histos["SM"].Multiply(histos["ratio"])
-                            histos["plus"].Multiply(histos["ratio"])
-                            histos["quad"].Multiply(histos["ratio"])
-                            # for bin in range(1, histos["SM"].GetNbinsX() + 1):
-
-
-                    category.cd()
-                    if variation == "central":
-                        histos["SM"].Write("sm")
-                        histos["plus"].Write("sm_lin_quad_"+wc)
-                        histos["quad"].Write("quad_"+wc)
-                        histos["SM"].Write("sm__noTopPtReweightDown")
-                        histos["plus"].Write("sm_lin_quad_"+wc+"__noTopPtReweightDown")
-                        histos["quad"].Write("quad_"+wc+"__noTopPtReweightDown")
-                        for i in range(1,nPDFs):
-                            histos["SM"].Write("sm__PDF_%sDown"%i)
-                            histos["plus"].Write("sm_lin_quad_"+wc+"__PDF_%sDown"%i)
-                            histos["quad"].Write("quad_"+wc+"__PDF_%sDown"%i)
-                    elif variation == "noTopPtReweight" :
-                        histos["SM"].Write("sm__noTopPtReweightUp")
-                        histos["plus"].Write("sm_lin_quad_"+wc+"__noTopPtReweightUp")
-                        histos["quad"].Write("quad_"+wc+"__noTopPtReweightUp")
-                    elif "PDF" in variation :
-                        histos["SM"].Write("sm__"+variation+"Up")
-                        histos["plus"].Write("sm_lin_quad_"+wc+"__"+variation+"Up")
-                        histos["quad"].Write("quad_"+wc+"__"+variation+"Up")
-                    else:
-                        histos["SM"].Write("sm__"+variation)
-                        histos["plus"].Write("sm_lin_quad_"+wc+"__"+variation)
-                        histos["quad"].Write("quad_"+wc+"__"+variation)
-
-
-
-                    #TBC
-                    if len(wcList)>=2 :
-                        for wc2 in wcList:
-                            mixedName = theChosenOne+"__TTbb_EFT_"+wc+"_+1.000_"+wc2+"_+1.000_"
-                            for key in eftFile.GetListOfKeys():
-                                if key.GetName() == mixedName:
-                                    obj = key.ReadObj()
-                                    clonedHist = obj.Clone()
-                                    category.cd()
-                                    clonedHist.Write("sm_lin_quad_mixed_"+wc+"_"+wc2)
-                    eftFile.Close()
-                    #print "done creating EFT histos"
-            inFile.Close()
-#            copyfile(os.path.join(directory,"tttt_"+variation+".root"),os.path.join(outFile_dir, "all", args.selection,"tttt_"+variation+".root"))
+								clonedHist.Write(sample+"__"+variation)
+			
+			if not args.noEFT and sample== "TTTT":
+			    eftFile = ROOT.TFile(os.path.join(outFile_dir, "all", args.selection,"tttt_EFTs.root"), "READ")
+			    #print "found eft file"
+			    for wc in wcList:
+					histos = {}
+					#Get the histos in the form combine wants
+					SMhistName = theChosenOne+"__TTTT_EFT_central"
+					plushistName = theChosenOne+"__TTTT_EFT_"+wc+"_+1.000"
+					minushistName = theChosenOne+"__TTTT_EFT_"+wc+"_-1.000"
+					#print "working on operator: ", wc
+					for key in eftFile.GetListOfKeys():
+					    obj = key.ReadObj()
+					    clonedHist = obj.Clone()
+					    if key.GetName() == SMhistName:
+					        histos["SM"] = clonedHist
+					        #print "found the sm hist wit max:",histos["SM"].GetMaximum()
+					    elif key.GetName() == plushistName :
+					        histos["plus"] = clonedHist
+					        #print "found the plus hist"
+					    elif key.GetName() == minushistName : 
+					      histos["minus"] = clonedHist
+					histos["quad"] = getQuadratic(histos["SM"], histos["plus"], histos["minus"])
+					#print "found the quad histi with max: ", histos["quad"].GetMaximum()
+					 #histos["plus"] = histos["SM"]+histos["lin"]+histos["quad"]
+					 #print "plus term max:", histos["plus"].GetMaximum()
+			
+					#TBC
+					mixed_names = []
+					if len(wcList)>=2 :
+					    for wc2 in wcList:
+					        mixedName = theChosenOne+"__TTTT_EFT_"+wc+"_+1.000_"+wc2+"_+1.000"
+					        for key in eftFile.GetListOfKeys():
+					            if key.GetName() == mixedName:
+					                obj = key.ReadObj()
+					                clonedHist = obj.Clone()
+					                histos[wc+"_"+wc2]=clonedHist
+					                mixed_names.append(wc+"_"+wc2)
+					            #else: print "mixedName: ", mixedName," key name: ",key.GetName()
+					                #clonedHist.Write("sm_lin_quad_mixed_"+wc+"_"+wc2)
+					#print mixed_names
+					
+					
+					#scale the histos to Pow/MG
+					for key in inFile.GetListOfKeys():
+					    if key.GetName().startswith(objName):
+					        obj = key.ReadObj()
+					        clonedHist = obj.Clone()
+					        histos_ratio = clonedHist.Clone()
+					        histos_ratio.Divide(histos["SM"])
+					        #print objName, sample, variation
+					        #check for zeros
+					        for bin in range(1, histos["SM"].GetNbinsX() + 1):
+					            if histos["SM"].GetBinContent(bin) == 0:
+					                histos_ratio.SetBinContent(bin, 0)
+					            #print "TTLep_bb bin:",clonedHist.GetBinContent(bin),"EFT at sm bin:",histos["SM"].GetBinContent(bin),"EFT lin bin:",histos["plus"].GetBinContent(bin), "EFT quad bin:",histos["quad"].GetBinContent(bin)
+					        for name, value in histos.items():
+					          value.Multiply(histos_ratio)
+					          #print name, "w/ max: ",value.GetMaximum()
+					         #histos["SM"].Multiply(histos["ratio"])
+					         #histos["plus"].Multiply(histos["ratio"])
+					         #histos["quad"].Multiply(histos["ratio"])
+					        # for bin in range(1, histos["SM"].GetNbinsX() + 1):
+					
+					
+					category.cd()
+					if variation == "central":
+					    histos["SM"].Write("sm")
+					    histos["plus"].Write("sm_lin_quad_"+wc)
+					    histos["quad"].Write("quad_"+wc)
+					    histos["SM"].Write("sm__noTopPtReweightDown")
+					    histos["plus"].Write("sm_lin_quad_"+wc+"__noTopPtReweightDown")
+					    histos["quad"].Write("quad_"+wc+"__noTopPtReweightDown")
+					    for i in range(1,nPDFs):
+					        histos["SM"].Write("sm__PDF_%sDown"%i)
+					        histos["plus"].Write("sm_lin_quad_"+wc+"__PDF_%sDown"%i)
+					        histos["quad"].Write("quad_"+wc+"__PDF_%sDown"%i)
+					    if len(wcList)>=2 :
+					        for mix in mixed_names:
+								histos[mix].Write("sm_lin_quad_mixed_"+mix.split("_")[0]+"_"+mix.split("_")[1])
+								histos[mix].Write("sm_lin_quad_mixed_"+mix.split("_")[0]+"_"+mix.split("_")[1]+"__noTopPtReweightDown")
+								for i in range(1,nPDFs):
+								    histos[mix].Write("sm_lin_quad_mixed_"+mix.split("_")[0]+"_"+mix.split("_")[1]+"__PDF_%sDown"%i)
+					
+					elif variation == "noTopPtReweight" :
+						histos["SM"].Write("sm__noTopPtReweightUp")
+						histos["plus"].Write("sm_lin_quad_"+wc+"__noTopPtReweightUp")
+						histos["quad"].Write("quad_"+wc+"__noTopPtReweightUp")
+						if len(wcList)>=2 :
+						    for mix in mixed_names: 
+								histos[mix].Write("sm_lin_quad_mixed_"+mix.split("_")[0]+"_"+mix.split("_")[1]+"__noTopPtReweightUp")
+						
+					elif "PDF" in variation :
+						histos["SM"].Write("sm__"+variation+"Up")
+						histos["plus"].Write("sm_lin_quad_"+wc+"__"+variation+"Up")
+						histos["quad"].Write("quad_"+wc+"__"+variation+"Up")
+						if len(wcList)>=2 :
+						    for mix in mixed_names:
+								histos[mix].Write("sm_lin_quad_mixed_"+mix.split("_")[0]+"_"+mix.split("_")[1]+"__"+variation+"Up")
+						
+					else:
+						histos["SM"].Write("sm__"+variation)
+						histos["plus"].Write("sm_lin_quad_"+wc+"__"+variation)
+						histos["quad"].Write("quad_"+wc+"__"+variation)
+						if len(wcList)>=2 :
+						    for mix in mixed_names:
+								histos[mix].Write("sm_lin_quad_mixed_"+mix.split("_")[0]+"_"+mix.split("_")[1]+"__"+variation)
+	
+			
+			    eftFile.Close()
+			    #print "done creating EFT histos"
+			inFile.Close()
+			#copyfile(os.path.join(directory,"tttt_"+variation+".root"),os.path.join(outFile_dir, "all", args.selection,"tttt_"+variation+".root"))
 
 
 print("Written to output file: %s"%outFile)

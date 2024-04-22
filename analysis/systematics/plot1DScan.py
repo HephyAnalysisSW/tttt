@@ -276,7 +276,7 @@ if args.breakdown is not None:
 
 pt.SetTextAlign(11)
 pt.SetTextFont(42)
-#pt.Draw()
+pt.Draw()
 
 #plot.DrawCMSLogo(pads[0], args.logo, args.logo_sub, 11, 0.045, 0.035, 1.2,  cmsTextSize = 1.)
 
