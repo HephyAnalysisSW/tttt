@@ -25,6 +25,7 @@ from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList, isBJet
 from tttt.Tools.helpers                  import getObjDict
+from tttt.samples.color                  import color
 
 #Analysis Tools imports
 
@@ -99,16 +100,17 @@ sample_TTLep = TTLep
 TTLep_bb    = copy.deepcopy( TTbb )
 TTLep_bb.name = "TTLep_bb"
 TTLep_bb.texName = "t#bar{t}b#bar{b}"
-TTLep_bb.color   = ROOT.kRed + 2
+TTLep_bb.color   = color.TTbb
 TTLep_bb.setSelectionString( "genTtbarId%100>=50" )
 TTLep_cc    = copy.deepcopy( sample_TTLep )
 TTLep_cc.name = "TTLep_cc"
 TTLep_cc.texName = "t#bar{t}c#bar{c}"
-TTLep_cc.color   = ROOT.kRed - 3
+TTLep_cc.color   = color.TTcc
 TTLep_cc.setSelectionString( "genTtbarId%100>=40&&genTtbarId%100<50" )
 TTLep_other = copy.deepcopy( sample_TTLep )
 TTLep_other.name = "TTLep_other"
 TTLep_other.texName = "t#bar{t} + light j."
+TTLep_other.color = color.TTlight
 TTLep_other.setSelectionString( "genTtbarId%100<40" )
 
 #Merge simulated background samples
