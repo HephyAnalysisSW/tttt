@@ -7,30 +7,41 @@ class color():
   pass
 
 color.data           = ROOT.kBlack
-color.Zinv           = ROOT.kGray+2
-color.DY             = ROOT.kAzure+4 #ROOT.kCyan+2
-color.ZGamma         = ROOT.kBlue+2
-color.WGamma         = ROOT.kAzure-3
-color.VGamma         = ROOT.kAzure+3 #ROOT.kAzure
-color.TTH            = ROOT.kSpring+10 #ROOT.kAzure
-color.TWZ            = ROOT.kRed
-#color.TTZ            = ROOT.kAzure+4 #ROOT.kBlack
-color.TTW            = ROOT.kGreen+2
-color.TTG            = ROOT.kOrange
-color.Other          = ROOT.kOrange+2 #ROOT.kViolet+5
-color.TT             = ROOT.kRed-7 #ROOT.kRed+1
-color.TTbb           = ROOT.kRed-8 #ROOT.kRed+1
-color.TTTT           = ROOT.kOrange+1
+color.DY             = ROOT.TColor.GetColor("#832db6")
+color.XGamma         = ROOT.TColor.GetColor("#3f90da")
+color.TTH            = ROOT.TColor.GetColor("#b9ac70")
+color.TTW            = ROOT.TColor.GetColor("#94a4a2")
+color.Other_t        = ROOT.TColor.GetColor("#92dadd")
+color.TTbb           = ROOT.TColor.GetColor("#bd1f01")
+color.TTcc           = ROOT.TColor.GetColor("#a96b59")
+color.TTlight        = ROOT.TColor.GetColor("#e76300")
+color.TTTT           = ROOT.TColor.GetColor("#ffa90e")
+color.TTT            = ROOT.TColor.GetColor("#e9d98d")#not in the recomended list. just used ghent's color
+color.tW             = ROOT.TColor.GetColor("#3f90da")
+color.TTZ            = ROOT.TColor.GetColor("#717581")
+color.DiBoson        = ROOT.TColor.GetColor("#92dadd")
+color.VVV            = ROOT.TColor.GetColor("#bd1f01")
+color.NPe            = ROOT.TColor.GetColor("#e76300")
+color.NPmu           = ROOT.TColor.GetColor("#a96b59")
+color.Charge_misID   = ROOT.TColor.GetColor("#832db6")
+color.T              = ROOT.kBlue-3 #also not in rec list
+
 color.TTWZ           = ROOT.kOrange+1
 color.TTWW           = ROOT.kOrange+2
 color.TTZZ           = ROOT.kOrange+3
-color.T              = ROOT.kBlue-3
 color.TGamma         = ROOT.kGray
-color.tW             = ROOT.kCyan+3
 color.W              = ROOT.kCyan+1
 color.WJets          = ROOT.kCyan+1
 color.QCD            = ROOT.kGreen-2 #+3
 color.GJets          = ROOT.kGreen+4
+color.Zinv           = ROOT.kGray+2
+color.ZGamma         = ROOT.kBlue+2
+color.WGamma         = ROOT.kAzure-3
+color.VGamma         = ROOT.kAzure+3 #ROOT.kAzure
+color.TWZ            = ROOT.kRed
+#color.TTZ            = ROOT.kAzure+4 #ROOT.kBlack
+color.TTG            = ROOT.kOrange
+color.TT             = ROOT.kRed-7 #ROOT.kRed+1
 
 color.gen            = ROOT.kOrange
 color.had            = ROOT.kAzure-3
@@ -68,5 +79,4 @@ color.VG8            = ROOT.kYellow
 
 
 #color.DY             = ROOT.kOrange-3
-color.TTZ            = ROOT.kSpring+1 #ROOT.kBlack
 color.TTLep          = ROOT.kAzure+6
