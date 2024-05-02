@@ -49,9 +49,9 @@ else :  fit = "shapes_fit_s"
 if args.prefit: fit = "shapes_prefit"
 
 mc = [ 
-    {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}", "color" : ROOT.kRed + 2}, 
-	{"name": "TTLep_cc", "legendText" : "t#bar{t}c#bar{c}", "color" : ROOT.kRed - 3},
-	{"name": "TTLep_other", "legendText" : "t#bar{t} + light j.", "color" : color.TT},
+    {"name": "TTLep_bb", "legendText" : "t#bar{t}b#bar{b}", "color" : color.TTbb}, 
+	{"name": "TTLep_cc", "legendText" : "t#bar{t}c#bar{c}", "color" : color.TTcc},
+	{"name": "TTLep_other", "legendText" : "t#bar{t} + light j.", "color" : color.TTlight},
 #       {"name": "ST", "legendText" : "t/tW", "color" : color.T},
 	{"name": "ST_tch", "legendText" : "t", "color" : color.T},
 	{"name": "ST_twch", "legendText" : "tW", "color" : color.tW},
@@ -59,7 +59,7 @@ mc = [
 	{"name": "TTH", "legendText" : "t#bar{t}H", "color" : color.TTH},
 	{"name": "TTZ", "legendText" : "t#bar{t}Z", "color" : color.TTZ},
 	{"name": "DY", "legendText" : "DY", "color" : color.DY},
-	{"name": "DiBoson", "legendText" : "DiBoson", "color" : color.W},
+	{"name": "DiBoson", "legendText" : "DiBoson", "color" : color.DiBoson},
 	{"name": "total_signal", "legendText" : "t#bar{t}t#bar{t}", "color" : color.TTTT} ]
 
 selections =["njet4to5_btag3p","njet4to5_btag2","njet4to5_btag1","njet6to7_btag3p","njet6to7_btag2","njet6to7_btag1","njet8p_btag3p","njet8p_btag2","njet8p_btag1"]

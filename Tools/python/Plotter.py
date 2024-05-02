@@ -32,6 +32,7 @@ class Plotter:
 	self.yT = 1.05
 	self.yE = 1.05
         self.samples = []
+        self.lines = []
         self.systDeltas = []
         self.systNames = []
 	self.PDFs = []
@@ -46,6 +47,7 @@ class Plotter:
         self.ratio = False
         self.noData = True
         self.noSyst = True
+        self.hasLines = False
 	self.comparisonPlots = False
 	self.hasPostFitUnc = False
 
@@ -60,10 +62,29 @@ class Plotter:
         sample["hist"] = hist
 	if not color==None: 
 		sample["hist"].SetFillColor(color)
-		sample["hist"].SetLineColor(ROOT.kBlack)
+		sample["hist"].SetLineColor(color)
         sample["text"] = sampleText
         sample["integral"] = sample["hist"].Integral()
         self.samples.append(sample)
+    
+    def addLine(self, sampleName, hist, sampleText, color=None ,ratio=None):
+
+        sample = {}
+        sample["name"] = sampleName
+        sample["hist"] = hist
+	if not color==None: 
+		sample["hist"].SetFillColor(color)
+		sample["hist"].SetLineColor(color)
+        sample["hist"].SetFillStyle(0)
+        sample["text"] = sampleText
+        sample["integral"] = sample["hist"].Integral()
+        self.lines.append(sample)
+        if not ratio==None:
+            sample["ratio_hist"] = ratio
+            sample["ratio_hist"].SetFillStyle(0)
+            sample["ratio_hist"].SetFillColor(color)
+            sample["ratio_hist"].SetLineColor(color)
+        self.hasLines = True
 
     def addData(self, hist):
 
@@ -328,28 +349,30 @@ class Plotter:
 
     def setRatioDrawOptions(self, ratio):
 
-        ratio.SetTitle('')
-        ratio.GetYaxis().SetTitle(self.ratioTitle)
-	if self.hasPostFitUnc:
-        	ratio.GetYaxis().SetRangeUser(0.5,1.5)
-	else:   ratio.GetYaxis().SetRangeUser(0.5,1.5)
-        ratio.GetYaxis().SetNdivisions(505)
-        ratio.GetYaxis().CenterTitle()
-        ratio.GetYaxis().SetTitleSize(22)
-        ratio.GetYaxis().SetTitleFont(43)
-        ratio.GetYaxis().SetTitleOffset(2.2)
-        ratio.GetYaxis().SetLabelFont(43)
-        ratio.GetYaxis().SetLabelSize(19)
-        ratio.GetYaxis().SetLabelOffset(0.009)
-        ratio.GetXaxis().SetTitle(self.xTitle)
-        ratio.GetXaxis().SetTickLength(0.07)
-        ratio.GetXaxis().SetTitleSize(25)
-        ratio.GetXaxis().SetTitleFont(43)
-        ratio.GetXaxis().SetTitleOffset(4.0)
-        ratio.GetXaxis().SetLabelFont(43)
-        ratio.GetXaxis().SetLabelSize(21)
-        ratio.GetXaxis().SetLabelOffset(0.035)
-        ratio.GetXaxis().SetNdivisions(505)
+      ratio.SetTitle('')
+      if not self.hasLines:  ratio.GetYaxis().SetTitle(self.ratioTitle)
+      else : ratio.GetYaxis().SetTitle("EFT/SM")
+      if  self.hasLines:  ratio.GetYaxis().SetRangeUser(1,5)
+      elif self.hasPostFitUnc:
+              ratio.GetYaxis().SetRangeUser(0.5,1.5)
+      else:   ratio.GetYaxis().SetRangeUser(0.5,1.5)
+      ratio.GetYaxis().SetNdivisions(505)
+      ratio.GetYaxis().CenterTitle()
+      ratio.GetYaxis().SetTitleSize(22)
+      ratio.GetYaxis().SetTitleFont(43)
+      ratio.GetYaxis().SetTitleOffset(2.2)
+      ratio.GetYaxis().SetLabelFont(43)
+      ratio.GetYaxis().SetLabelSize(19)
+      ratio.GetYaxis().SetLabelOffset(0.009)
+      ratio.GetXaxis().SetTitle(self.xTitle)
+      ratio.GetXaxis().SetTickLength(0.07)
+      ratio.GetXaxis().SetTitleSize(25)
+      ratio.GetXaxis().SetTitleFont(43)
+      ratio.GetXaxis().SetTitleOffset(4.0)
+      ratio.GetXaxis().SetLabelFont(43)
+      ratio.GetXaxis().SetLabelSize(21)
+      ratio.GetXaxis().SetLabelOffset(0.035)
+      ratio.GetXaxis().SetNdivisions(505)
 
     def setLabel(self):
 
@@ -594,6 +617,10 @@ class Plotter:
 		  
 		  self.data["hist"].Draw(" E0 P same")
 	    else: self.data["hist"].Draw("X0 E0 p same")
+        for line in self.lines:
+          line["hist"].SetFillStyle(0)
+          line["hist"].Draw("hist same")
+          self.legend.AddEntry(line["hist"],line["text"] )
 
         self.legend.SetFillStyle(0)
         self.legend.SetShadowColor(ROOT.kWhite)
@@ -614,21 +641,27 @@ class Plotter:
             ratioline.SetLineColor(13)
             ratioline.SetLineWidth(2)
             ratioline.Draw("hist")
-	    if not self.noSyst:
-            	ratio_uncert = self.getRatioUncert(self.totalError)
-		ratio_uncert.Draw("E2")
-	    elif self.hasPostFitUnc :
-		ratio_uncert = self.getPostFitRatioUnc(self.postFitUnc)
-	        ratio_uncert.Draw("E2 same")
+        if self.hasLines:
+          #tttt_sm = next((sample["hist"] for sample in self.samples if sample.get("name") == "TTTT"), None)
+          for line in self.lines:
+            #ratioLine = line["hist"]#.Divide(tttt_sm)
+            line["ratio_hist"].Draw("hist same")
+        else:
+            if not self.noSyst:
+              ratio_uncert = self.getRatioUncert(self.totalError)
+              ratio_uncert.Draw("E2")
+            elif self.hasPostFitUnc :
+              ratio_uncert = self.getPostFitRatioUnc(self.postFitUnc)
+              ratio_uncert.Draw("E2 same")
             if not self.noData:
-		if not self.hasPostFitUnc :
-		    ratio_data = self.getRatio(self.data["hist"], self.totalHist)
-                    self.setRatioDrawOptions(ratio_data)
-                    ratio_data.Draw("X0 E0 P SAME")
-		else:
-		    ratio_data = self.getPostFitDataRatio(self.data["hist"], self.postFitUnc)
-		    self.setRatioDrawOptions(ratio_data)
-		    ratio_data.Draw(" E0 P SAME")
+              if not self.hasPostFitUnc :
+                ratio_data = self.getRatio(self.data["hist"], self.totalHist)
+                self.setRatioDrawOptions(ratio_data)
+                ratio_data.Draw("X0 E0 P SAME")
+              else:
+                  ratio_data = self.getPostFitDataRatio(self.data["hist"], self.postFitUnc)
+                  self.setRatioDrawOptions(ratio_data)
+                  ratio_data.Draw(" E0 P SAME")
             ROOT.gPad.RedrawAxis()
 
 	#Draw Comparison Plots
