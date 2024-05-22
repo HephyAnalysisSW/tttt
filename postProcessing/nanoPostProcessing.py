@@ -30,6 +30,7 @@ from tttt.Tools.triggerEfficiency   import triggerEfficiency
 from Analysis.Tools.mvaTOPreader             import mvaTOPreader
 from Analysis.Tools.metFiltersUL             import getFilterCut
 from Analysis.Tools.LeptonSF_UL              import LeptonSF
+from Analysis.Tools.ElectronRecoEff          import ElectronRecoSF
 from Analysis.Tools.puProfileDirDB           import puProfile
 from Analysis.Tools.LeptonTrackingEfficiency import LeptonTrackingEfficiency
 from Analysis.Tools.helpers                  import checkRootFile, deepCheckRootFile, deepCheckWeight, dRCleaning
@@ -210,6 +211,7 @@ if sample.isMC and options.normalizeSys:
 
 # LeptonSF
 leptonSF = LeptonSF(options.era, muID='medium', elID='tight')
+electronRecoSF = ElectronRecoSF(options.era)
 
 # Apply MET filter
 skimConds.append( getFilterCut(options.era, isData=sample.isData, ignoreJSON=True, skipWeight=True, skipECalFilter=True) )
@@ -601,7 +603,9 @@ if isTrilep or isDilep or isSinglelep:
     new_variables.extend( ['l1_pt/F', 'l1_mvaTOP/F', 'l1_mvaTOPWP/I', 'l1_mvaTOPv2/F', 'l1_mvaTOPv2WP/I', 'l1_ptCone/F', 'l1_eta/F', 'l1_phi/F', 'l1_pdgId/I', 'l1_index/I', 'l1_jetPtRelv2/F', 'l1_jetPtRatio/F', 'l1_miniRelIso/F', 'l1_relIso03/F', 'l1_dxy/F', 'l1_dz/F', 'l1_mIsoWP/I', 'l1_eleIndex/I', 'l1_muIndex/I', 'l1_isFO/O', 'l1_isTight/O'] )
     new_variables.extend( ['mlmZ_mass/F'])
     if sample.isMC:
-        new_variables.extend(['reweightLeptonSF/F', 'reweightLeptonSFUp/F', 'reweightLeptonSFDown/F'])
+        new_variables.extend(['reweightSystMuonSF/F', 'reweightSystMuonSFUp/F', 'reweightSystMuonSFDown/F','reweightStatMuonSF/F', 'reweightStatMuonSFUp/F', 'reweightStatMuonSFDown/F',
+          'reweightSystElectronSF/F', 'reweightSystElectronSFUp/F', 'reweightSystElectronSFDown/F','reweightStatElectronSF/F', 'reweightStatElectronSFUp/F', 'reweightStatElectronSFDown/F',
+          'reweightEleReco/F','reweightEleRecoUp/F','reweightEleRecoDown/F'])
 if isTrilep or isDilep:
     new_variables.extend( ['l2_pt/F', 'l2_mvaTOP/F', 'l2_mvaTOPWP/I', 'l2_mvaTOPv2/F', 'l2_mvaTOPv2WP/I', 'l2_ptCone/F', 'l2_eta/F', 'l2_phi/F', 'l2_pdgId/I', 'l2_index/I', 'l2_jetPtRelv2/F', 'l2_jetPtRatio/F', 'l2_miniRelIso/F', 'l2_relIso03/F', 'l2_dxy/F', 'l2_dz/F', 'l2_mIsoWP/I', 'l2_eleIndex/I', 'l2_muIndex/I', 'l2_isFO/O', 'l2_isTight/O'] )
     if sample.isMC: new_variables.extend( \
@@ -1223,27 +1227,27 @@ def filler( event ):
     # fill_vector_collection( event, "HadronicTop", hadTopNames, tlorentz_vectors, 100)
     # fill_vector_collection( event, "WBoson", WBosonVarNames, W_vectors, 100)
 
-    for g in gPart:
-        match, jet = getMatching(g, store_jets, gPart)
-        if match == True:
-            event.JetGood_matched[jet['index']] = True
-            event.JetGood_motherIdx[jet['index']] = jet['motherIdx']
-            event.JetGood_genPdgId[jet['index']] = jet['genPdgId']
-
-
-    truthKeys = ['matched', 'genPdgId', 'motherIdx']
-    triplet = combinations(store_jets, 3)
-    # for i, combo in enumerate(triplet):
-    #     if all(key in jet for key in truthKeys for jet in combo):
-            # if combo[0]['motherIdx'] == combo[1]['motherIdx'] == combo[2]['motherIdx']:
-            #     print(combo[0]['motherIdx'], combo[1]['motherIdx'], combo[2]['motherIdx'])
-            # if any(abs(jet['genPdgId']) == 5 for jet in combo):# and all(abs(jet['genPdgId']) != 5 for jet in combo):
-            #     print(combo[0]['motherIdx'], combo[1]['motherIdx'], combo[2]['motherIdx'])
-                # if combo[0]['motherIdx'] == combo[1]['motherIdx'] == combo[2]['motherIdx']:
-                #     event.JetGood_TopTruth[jet['index']]==1
-                # else:
-                #     event.JetGood_TopTruth[jet['index']]==0
-
+#    for g in gPart:
+#        match, jet = getMatching(g, store_jets, gPart)
+#        if match == True:
+#            event.JetGood_matched[jet['index']] = True
+#            event.JetGood_motherIdx[jet['index']] = jet['motherIdx']
+#            event.JetGood_genPdgId[jet['index']] = jet['genPdgId']
+#
+#
+#    truthKeys = ['matched', 'genPdgId', 'motherIdx']
+#    triplet = combinations(store_jets, 3)
+#    # for i, combo in enumerate(triplet):
+#    #     if all(key in jet for key in truthKeys for jet in combo):
+#            # if combo[0]['motherIdx'] == combo[1]['motherIdx'] == combo[2]['motherIdx']:
+#            #     print(combo[0]['motherIdx'], combo[1]['motherIdx'], combo[2]['motherIdx'])
+#            # if any(abs(jet['genPdgId']) == 5 for jet in combo):# and all(abs(jet['genPdgId']) != 5 for jet in combo):
+#            #     print(combo[0]['motherIdx'], combo[1]['motherIdx'], combo[2]['motherIdx'])
+#                # if combo[0]['motherIdx'] == combo[1]['motherIdx'] == combo[2]['motherIdx']:
+#                #     event.JetGood_TopTruth[jet['index']]==1
+#                # else:
+#                #     event.JetGood_TopTruth[jet['index']]==0
+#
 
     event.ht = sum([jet['pt'] for jet in store_jets])
     if sample.isMC and options.doCRReweighting:
@@ -1319,14 +1323,64 @@ def filler( event ):
             event.reweightTriggerDown   = trig_eff - trig_eff_err
 
             leptonsForSF   = ( leptons[:2] if isDilep else (leptons[:3] if isTrilep else leptons[:1]) )
-            leptonSFValues = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta'])) for l in leptonsForSF ]
-            leptonSFUp     = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']), sigma=1) for l in leptonsForSF ]
-            leptonSFDown   = [ leptonSF.getSF(pdgId=l['pdgId'], pt=l['pt'], eta=((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']), sigma=-1) for l in leptonsForSF ]
-            event.reweightLeptonSF     = reduce(mul, [sf for sf in leptonSFValues], 1)
-            event.reweightLeptonSFDown = reduce(mul, [sf for sf in leptonSFDown], 1)
-            event.reweightLeptonSFUp   = reduce(mul, [sf for sf in leptonSFUp], 1)
-            if event.reweightLeptonSF ==0:
-               logger.error( "reweightLeptonSF is zero!")
+            
+            #lepton scale factors
+            MuonSystSFValues=[1]
+            MuonSystSFUp=[1]
+            MuonSystSFDown=[1]
+            MuonStatSFValues=[1]
+            MuonStatSFUp=[1]
+            MuonStatSFDown=[1]
+            ElectronSystSFValues=[1]
+            ElectronSystSFUp=[1]
+            ElectronSystSFDown=[1]
+            ElectronStatSFValues=[1]
+            ElectronStatSFUp=[1]
+            ElectronStatSFDown=[1]
+            for lep1 in leptonsForSF:
+              if abs(lep1['pdgId']) == 13 :
+                  MuonSystSFValues.append( leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=lep1['eta'],unc='syst'))
+                  MuonSystSFUp.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=lep1['eta'], sigma=1,unc='syst'))
+                  MuonSystSFDown.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=lep1['eta'], sigma=-1,unc='syst'))
+                  MuonStatSFValues.append( leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=lep1['eta'],unc='stat'))
+                  MuonStatSFUp.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=lep1['eta'], sigma=1,unc='stat'))
+                  MuonStatSFDown.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=lep1['eta'], sigma=-1,unc='stat'))
+              elif abs(lep1['pdgId']) == 11 :
+                  ElectronSystSFValues.append( leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=(lep1['eta'] + lep1['deltaEtaSC']) ,unc='syst'))
+                  ElectronSystSFUp.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=(lep1['eta'] + lep1['deltaEtaSC']) , sigma=1,unc='syst'))
+                  ElectronSystSFDown.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=(lep1['eta'] + lep1['deltaEtaSC']), sigma=-1,unc='syst'))
+                  ElectronStatSFValues.append( leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=(lep1['eta'] + lep1['deltaEtaSC']),unc='stat'))
+                  ElectronStatSFUp.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=(lep1['eta'] + lep1['deltaEtaSC']), sigma=1,unc='stat'))
+                  ElectronStatSFDown.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=(lep1['eta'] + lep1['deltaEtaSC']), sigma=-1,unc='stat'))
+
+                  
+            event.reweightSystMuonSF     = reduce(mul, [sf for sf in MuonSystSFValues], 1)
+            event.reweightSystMuonSFDown = reduce(mul, [sf for sf in MuonSystSFDown], 1)
+            event.reweightSystMuonSFUp   = reduce(mul, [sf for sf in MuonSystSFUp], 1)
+            event.reweightStatMuonSF     = reduce(mul, [sf for sf in MuonStatSFValues], 1)
+            event.reweightStatMuonSFDown = reduce(mul, [sf for sf in MuonStatSFDown], 1)
+            event.reweightStatMuonSFUp   = reduce(mul, [sf for sf in MuonStatSFUp], 1)
+            event.reweightSystElectronSF     = reduce(mul, [sf for sf in ElectronSystSFValues], 1)
+            event.reweightSystElectronSFDown = reduce(mul, [sf for sf in ElectronSystSFDown], 1)
+            event.reweightSystElectronSFUp   = reduce(mul, [sf for sf in ElectronSystSFUp], 1)
+            event.reweightStatElectronSF     = reduce(mul, [sf for sf in ElectronStatSFValues], 1)
+            event.reweightStatElectronSFDown = reduce(mul, [sf for sf in ElectronStatSFDown], 1)
+            event.reweightStatElectronSFUp   = reduce(mul, [sf for sf in ElectronStatSFUp], 1)
+            
+            #eletron reco efficiency
+            ElectronRecoSFValues=[1]
+            ElectronRecoSFUp=[1]
+            ElectronRecoSFDown=[1] 
+            for lep2 in leptonsForSF:
+              if abs(lep2['pdgId']) == 11 :
+                ElectronRecoSFValues.append(electronRecoSF.getSF(pt=lep2['pt'], eta=(lep2['eta'] + lep2['deltaEtaSC'])))
+                ElectronRecoSFUp.append(electronRecoSF.getSF(pt=lep2['pt'], eta=(lep2['eta'] + lep2['deltaEtaSC']),sigma=1))
+                ElectronRecoSFDown.append(electronRecoSF.getSF(pt=lep2['pt'], eta=(lep2['eta'] + lep2['deltaEtaSC']),sigma=-1))
+
+            event.reweightEleReco = reduce(mul, [sf for sf in ElectronRecoSFValues], 1)
+            event.reweightEleRecoUp = reduce(mul, [sf for sf in ElectronRecoSFUp], 1)
+            event.reweightEleRecoDown = reduce(mul, [sf for sf in ElectronRecoSFDown], 1)
+
             # event.reweightLeptonTrackingSF   = reduce(mul, [leptonTrackingSF.getSF(pdgId = l['pdgId'], pt = l['pt'], eta = ((l['eta'] + l['deltaEtaSC']) if abs(l['pdgId'])==11 else l['eta']))  for l in leptonsForSF], 1)
 
     if isTrilep or isDilep:
@@ -1509,7 +1563,7 @@ for ievtRange, eventRange in enumerate( eventRanges ):
     if options.small:
         logger.info("Running 'small'. Not more than 100 events")
         nMaxEvents = eventRange[1]-eventRange[0]
-        eventRange = ( eventRange[0], eventRange[0] +  min( [nMaxEvents, 1000] ) )
+        eventRange = ( eventRange[0], eventRange[0] +  min( [nMaxEvents, 100] ) )
 
     # Set the reader to the event range
     reader.setEventRange( eventRange )
