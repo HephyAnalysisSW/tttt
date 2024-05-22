@@ -1,14 +1,23 @@
 import os
 import uproot
 import numpy as np
+import Analysis.Tools.syncer as syncer
 
-directory_ = "/scratch-cbe/users/cristina.giordano/tttt/nanoTuples/tttt_v11/UL2017/dilep/TTTT_MS_EFT/"
-# change the range!!!
-file_paths = [os.path.join(directory_, "TTTT_MS_EFT_{}.root".format(i)) for i in range(20)]
+import argparse
+argParser = argparse.ArgumentParser(description = "Argument parser")
+argParser.add_argument('--selection', action='store', default='dilep')
+argParser.add_argument('--sample', action='store', default='TTTT_MS_EFT')
+argParser.add_argument('--version', action='store', default='tttt_v12')
+argParser.add_argument('--era', action='store', default='UL2017')
+args = argParser.parse_args()
+
+directory_ = os.path.join("/scratch-cbe/users/cristina.giordano/tttt/nanoTuples", args.era, args.selection, args.sample)
+
+file_paths = [os.path.join(directory_, args.sample+"_{}.root".format(i)) for i in range(2)]
 
 all_variable_arrays = []
 
-variable_names = ['pt', 'eta', 'phi', 'mass', 'genMass',
+variable_names = ['pt', 'eta', 'phi', 'mass', #'genMass',
                  'bJetCMPt', 'LdgJetCMPt', 'SubldgJetCMPt', 'softDrop_n2',
                  'bJetMass', 'diJetMass', 'LdgJetMass', 'SubldgJetMass',
                  'bJetLdgJetMass', 'bJetSubldgJetMass', 'bJetQGL',
@@ -52,7 +61,6 @@ for variable_arrays in all_variable_arrays:
 
 combined_table = np.concatenate(table_list)
 
-
-filename = "dataFrame20.csv" #change the name when adding files
+filename = os.path.join("/eos/vbc/group/cms/cristina.giordano/tttt", "dataFrame_"+args.sample+"_"+args.selection+".csv")
 np.savetxt(filename, combined_table, delimiter=',', fmt='%s', header=','.join(combined_table.dtype.names), comments='')
 print("Saved to dataFrame named", filename)
