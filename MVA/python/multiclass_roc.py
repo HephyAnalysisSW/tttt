@@ -295,7 +295,7 @@ if not args.small:
     tpr = dict()
     roc_auc = dict()
     # for i in classes:
-    if not args.trainingType=="oneVsAll":
+    if not args.trainingType=="one":
         for i in range(len(config.classes)):
             fpr[i], tpr[i], _ = roc_curve(Y_test[:, i], Y_predict[:, i])
             roc_auc[i] = auc(fpr[i], tpr[i])
