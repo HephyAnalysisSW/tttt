@@ -22,7 +22,7 @@ from RootTools.core.standard             import *
 from tttt.Tools.user                     import plot_directory
 from tttt.Tools.cutInterpreter           import cutInterpreter
 from tttt.Tools.objectSelection          import lepString, cbEleIdFlagGetter, vidNestedWPBitMapNamingList, isBJet
-from tttt.Tools.helpers                  import getObjDict
+from tttt.Tools.helpers                  import getObjDict, getObjFromFile
 from tttt.Tools.ISRCorrector             import ISRCorrector
 from tttt.Tools.HTCorrector              import HTCorrector
 from tttt.samples.color                  import color
@@ -70,6 +70,12 @@ variations = ['LeptonSFDown',
               'L1PrefireUp',
               #'TriggerDown',
               #'TriggerUp',
+              'noTopPtReweight',
+              'HDampUp',
+              'HDampDown',
+              'noDYISRReweight',
+]
+BTagVariations = [
               'BTagSFJesDown',
               'BTagSFJesUp',
               'BTagSFHfDown',
@@ -88,11 +94,9 @@ variations = ['LeptonSFDown',
               'BTagSFCfe1Up',
               'BTagSFCfe2Down',
               'BTagSFCfe2Up',
-              'noTopPtReweight',
-              'HDampUp',
-              'HDampDown',
-              'noDYISRReweight',
              ]
+
+variations += BTagVariations
 
 jesUncertainties = [
     "Total",
@@ -584,7 +588,18 @@ def makeEFTWeights( event, sample):
 
 sequence.append( makeEFTWeights )
 
-##FIX ME
+def calibrateBTaging(event, sample):
+  event.BTagCal = 1
+  if args.sys in BTagVariations:
+    cal_file = "../../Tools/scripts/BTag_calibration_"+args.era+".root"
+    obj = "/"+sample.name+"/"+args.sys
+    hist = getObjFromFile(cal_file,obj)
+    event.BTagCal = hist.GetBinContent(event.nJetGood)
+    #print "THE CALIBRATION FACTOR IS HEREEEE : ", event.BTagCal
+sequence.append(calibrateBTaging)
+
+
+##Not used anymore
 #scaling EFT sample from 2018 to RunII. Should be updated asap
 lumifact = 1 #137.62/59.83 if args.era=="RunII" and isEFT else 1
 logger.info("scaling EFT sample by lumi factor : ",lumifact )
@@ -598,7 +613,7 @@ if args.sys in jetVariations:
 
 
 ##list all the reweights
-weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger','reweightScale','reweightPS','reweightPDF']
+weightnames = ['reweightLeptonSF', 'reweightBTagSF_central', 'BTagCal', 'reweightPU', 'reweightL1Prefire', 'reweightTrigger','reweightScale','reweightPS','reweightPDF']
 if not args.sys == "noTopPtReweight": weightnames += ['reweightTopPt']
 if not args.sys == "noDYISRReweight": weightnames += ['reweightDY']
 
