@@ -172,10 +172,10 @@ elif args.era == '2018':
         from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import *
         from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
 elif args.era == 'RunII':
-#	if isEFT: 
-#				from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import * 
+#	if isEFT:
+#				from tttt.samples.nano_mc_private_UL20_Autumn18_postProcessed_dilep import *
 #				from tttt.samples.nano_data_private_UL20_Run2018_postProcessed_dilep import Run2018 as data_sample
-#	else :  
+#	else :
 		from tttt.samples.nano_private_UL20_RunII_postProcessed_dilep import *
         	data_sample = RunII
 else:
@@ -186,8 +186,8 @@ if not (args.sys == "HDampUp" or args.sys == "HDampDown") :
     TTLep_bb     = copy.deepcopy(TTbb)
 elif args.sys == "HDampUp":
     sample_TTLep = TTLepHUp
-    TTLep_bb     = TTbbHUp 
-    print "switching to HDampUp samples" 
+    TTLep_bb     = TTbbHUp
+    print "switching to HDampUp samples"
 elif args.sys == "HDampDown":
     sample_TTLep = TTLepHDown
     TTLep_bb     = TTbbHDown
@@ -214,7 +214,7 @@ TTLep_other.setSelectionString( "genTtbarId%100<40" )
 mc = [ TTLep_bb, TTLep_cc, TTLep_other, ST_tch, ST_twch, TTW, TTH, TTZ, TTTT, DiBoson]
 if args.DY == 'ht': mc += [DY]
 elif args.DY == 'inclusive': mc += [DY_inclusive]
-if isEFT : 
+if isEFT :
 #  mc +=[TTbb01j_SMonly, TTbb01j_cQQ1_quad , TTbb01j_cQQ1_lin]
   noData = True
 
@@ -241,8 +241,8 @@ if isEFT:
     for wc in args.wc:
         index_lin  = sample.weightInfo.combinations.index((wc,))
         index_quad = sample.weightInfo.combinations.index((wc,wc))
-       
-        # +/-1 values 
+
+        # +/-1 values
         for val in [+1, -1]:
             coefficient = np.zeros( len(sample.weightInfo.combinations) )
             coefficient[0] = 1
@@ -262,9 +262,9 @@ if isEFT:
             index_mixed = sample.weightInfo.combinations.index((wc,wc2))
             coefficient = np.zeros( len(sample.weightInfo.combinations) )
             coefficient[0] = 1
-            coefficient[index_lin] =1 
+            coefficient[index_lin] =1
             coefficient[index_quad]=1
-            coefficient[index_lin2] =1 
+            coefficient[index_lin2] =1
             coefficient[index_quad2]=1
             coefficient[index_mixed]=1
             eft_w_names.append(wc+"_%+3.3f"%1+"_"+wc2+"_%+3.3f"%1)
@@ -350,7 +350,17 @@ def debug(event, sample):
 
 # MVA configuration
 import tttt.MVA.configs as configs
-config = configs.tttt_2l
+if args.era == 'RunII':
+    config = configs.tttt_2l
+elif args.era == '2018':
+    config = configs.tttt_2l_2018
+elif args.era == '2017':
+    config = configs.tttt_2l_2017
+elif args.era == '2016':
+    config = configs.tttt_2l_2016
+elif args.era == '2016_preVFP':
+    config = configs.tttt_2l_2016_preVFP
+
 read_variables += config.read_variables
 
 sequence += config.sequence
@@ -491,7 +501,7 @@ def getTheorySystematics(event,sample):
         #print WhichOne
         if WhichOne == -1 or WhichOne > event.nPDF-1:
             print "PDF index out of range!"
-        if not isnan(event.PDF_Weight[WhichOne]): 
+        if not isnan(event.PDF_Weight[WhichOne]):
             event.reweightPDF = event.PDF_Weight[WhichOne]
         else :
             event.reweightPDF = 1.0
@@ -565,7 +575,7 @@ def makeISRSF( event, sample ):
     event.reweightDY = 1
     if not args.sys == "noDYISRReweight" and args.DY=='ht':
         if sample.name.startswith("DY"):
-            event.reweightDY = isrCorrector.getSF( event.nJetGood, event.ISRJet_pt40 ) 
+            event.reweightDY = isrCorrector.getSF( event.nJetGood, event.ISRJet_pt40 )
 
 #sequence.append( makeISRSF )
 
@@ -678,7 +688,7 @@ for i_mode, mode in enumerate(allModes):
             weights = [g(event) for g in map( operator.attrgetter, weightnames)]
             # Check if any weight is nan
             if any(not isinstance(w, (int, float)) or isnan(w) for w in weights):
-                for w in weights : 
+                for w in weights :
                   if not isinstance(w, (int, float)) or isnan(w):
                       print "We really should not have NANs. There is something to fix for:", w , "of type",type(w)
                 weights = [1 if (not isinstance(w, (int, float)) or isnan(w) )else w for w in weights]
@@ -698,7 +708,7 @@ for i_mode, mode in enumerate(allModes):
       sample.weight = weight_function
       if hasattr( sample, "reweight_pkl" ):
           sample.read_variables += [VectorTreeVariable.fromString("p[C/F]", nMax=200)]
-        
+
     #Stack : Define what we want to see.
     weight_ = lambda event, sample: lumifact*event.cut_tttt_MVA*(event.weight if sample.isData else event.weight)
     if not noData:
@@ -1023,7 +1033,7 @@ for i_mode, mode in enumerate(allModes):
 #      attribute = lambda event, sample:event.nBTag_tight_pt30, #nJetSelected_pt>30
 #      binning=[7,-0.5,6.5],
 #    ))
-#    
+#
 #    plots.append(Plot(
 #      name = "nBTag_tight",
 #      texX = 'N_{jets}', texY = 'Number of Events',
@@ -1050,7 +1060,7 @@ for i_mode, mode in enumerate(allModes):
       attribute = TreeVariable.fromString( "nBTag/I" ), #nJetSelected
       binning=[7, -0.5,6.5],
     ))
-    
+
     plots.append(Plot(
       texX = 'H_{T} (GeV)', texY = 'Number of Events / 40 Gev',
       name = 'ht_fineBinning', attribute = lambda event, sample: sum( j['pt'] for j in event.jets ),
@@ -1068,7 +1078,7 @@ for i_mode, mode in enumerate(allModes):
       name = 'htb', attribute = lambda event, sample: sum( j['pt'] for j in event.bJets ),
       binning=[1500/50,0,1500],
     ))
-    
+
     plots.append(Plot(
       texX = 'H_{T} from p_{T}(j)>30 ', texY = 'Number of Events / 100 GeV',
       name = 'htPt30', attribute = lambda event, sample: event.htPt30,
@@ -1092,7 +1102,7 @@ for i_mode, mode in enumerate(allModes):
       name = 'htPt80', attribute = lambda event, sample: event.htPt80,
       binning=[2500/200,500,2500],
     ))
- 
+
     plots.append(Plot(
       texX = ' p_{T}(ISR j)>30 ', texY = 'Number of Events / 100 GeV',
       name = 'ISRJet_pt30', attribute = lambda event, sample: event.ISRJet_pt30,
@@ -1104,13 +1114,13 @@ for i_mode, mode in enumerate(allModes):
       name = 'ISRJet_pt50', attribute = lambda event, sample: event.ISRJet_pt50,
       binning=[600/30,0,600],
     ))
-    
+
     plots.append(Plot(
       texX = ' p_{T}(ISR j)>80 ', texY = 'Number of Events / 100 GeV',
       name = 'ISRJet_pt80', attribute = lambda event, sample: event.ISRJet_pt80,
       binning=[600/30,0,600],
     ))
-    
+
     plots.append(Plot(
       name = "ISRJet_pt40",
       texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
@@ -1118,7 +1128,7 @@ for i_mode, mode in enumerate(allModes):
       binning=Binning.fromThresholds([0,20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340,360,380,400,450,500,600,800,1000,2000]),
       #binning=[600/30,0,600],
     ))
-    
+
     plots.append(Plot(
       name = "ISRJet_pt40_course",
       texX = 'p_{T}(ISR)>40', texY = 'Number of Events',
@@ -1181,7 +1191,7 @@ for i_mode, mode in enumerate(allModes):
       addOverFlowBin='upper',
     ))
 
-    
+
     plots.append(Plot(
       texX = '#eta(leading jet) (GeV)', texY = 'Number of Events / 30 GeV',
       name = 'jet0_eta', attribute = lambda event, sample: event.JetGood_eta[0],
@@ -1307,7 +1317,7 @@ for i_mode, mode in enumerate(allModes):
         attribute = TreeVariable.fromString( "nJetGood_"+args.sys+"/I" ), #nJet varied
         binning=[8,3.5,11.5],
       ))
-      
+
       plots.append(Plot(
         texX = 'N_{b-tag}_'+args.sys, texY = 'Number of Events',
         attribute = TreeVariable.fromString( "nBTag_"+args.sys+"/I" ), #nJetSelected
@@ -1366,7 +1376,7 @@ if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
     except:
         # different jobs may start at the same time creating race conditions.
-        pass 
+        pass
 
 outfilename = plot_dir+'/tttt_'+args.sys+'.root'
 if isEFT: outfilename = plot_dir+'/tttt_EFTs.root'
