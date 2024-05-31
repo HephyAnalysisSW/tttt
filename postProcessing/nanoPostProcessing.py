@@ -7,8 +7,15 @@ import sys
 import os
 import subprocess
 import shutil
+import numpy as np
 import uuid
 from itertools import combinations
+import tensorflow as tf
+from keras.models import load_model
+from copy import deepcopy
+from sklearn.preprocessing import RobustScaler
+import pandas as pd
+from fractions import Fraction
 
 import array as arr
 from operator import mul
@@ -25,6 +32,7 @@ from tttt.Tools.helpers             import closestOSDLMassToMZ, deltaR, deltaR2,
 from tttt.Tools.objectSelection     import getMuons, getElectrons, muonSelector, eleSelector, getGoodMuons, getGoodElectrons, isBJet, getGenPartsAll, getJets, genLepFromZ, getGenZs, isAnalysisJet
 from tttt.Tools.genPartSelectionTools import getGenFirstCopy, getGenLastCopy, getParents, getTopMother, getMatching, closestdR, CMFrame, cosW
 from tttt.Tools.triggerEfficiency   import triggerEfficiency
+from tttt.Tools.topReconstruction   import *
 
 # Analysis
 from Analysis.Tools.mvaTOPreader             import mvaTOPreader
@@ -135,7 +143,7 @@ if options.event > 0:
 if isDilep:
     skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5)>=2" )
 elif isTrilep:
-    skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5&&(Electron_pfRelIso03_all)<0.4) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5&&Muon_pfRelIso03_all<0.4)>=2 && Sum$(Electron_pt>10&&abs(Electron_eta)<2.5)+Sum$(Muon_pt>10&&abs(Muon_eta)<2.5)>=3" )
+    skimConds.append( "Sum$(Electron_pt>20&&abs(Electron_eta)<2.5&&(Electron_pfRelIso03_all)<0.4) + Sum$(Muon_pt>20&&abs(Muon_eta)<2.5&&Muon_pfRelIso03_all<0.4)>=2 && (Sum$(Electron_pt>10&&abs(Electron_eta)<2.5)+Sum$(Muon_pt>10&&abs(Muon_eta)<2.5))>=3" )
 elif isSinglelep:
     skimConds.append( "Sum$(Electron_pt>10&&abs(Electron_eta)<2.5) + Sum$(Muon_pt>10&&abs(Muon_eta)<2.5)>=1" )
 
@@ -217,6 +225,7 @@ electronRecoSF = ElectronRecoSF(options.era)
 skimConds.append( getFilterCut(options.era, isData=sample.isData, ignoreJSON=True, skipWeight=True, skipECalFilter=True) )
 
 triggerEff          = triggerEfficiency(year)
+print(triggerEff)
 
 ################################################################################
 # Reduce sample?
@@ -521,17 +530,8 @@ lepVarNames     = [x.split('/')[0] for x in lepVars]
 
 genPartonVars       = ['pt/F', 'phi/F', 'eta/F', 'pdgId/I', 'mass/F', 'index/I', 'TopIdx/I', 'motherPdgId/I', 'motherIdx/I', 'isFromTop/O', 'jetIdx/I']
 genPartonNames   = [x.split('/')[0] for x in genPartonVars]
-
-hadTopVars       = ['pt/F','phi/F','eta/F','mass/F','TopTruth/I','genMass/F','bJetCMPt/F','LdgJetCMPt/F','SubldgJetCMPt/F',
-                    'softDrop_n2/F','bJetMass/F','diJetMass/F','LdgJetMass/F','SubldgJetMass/F','bJetLdgJetMass/F','bJetSubldgJetMass/F',
-                    'bJetQGL/F','LdgJetQGL/F','SubldgJetQGL/F','DEtaDijetwithBJet/F','diJetPtOverSumPt/F',
-                    'LdgJetDeltaPtOverSumPt/F','SubldgJetDeltaPtOverSumPt/F','bJetDeltaPtOverSumPt/F',
-                    'cosW_Jet1Jet2/F','cosW_Jet1BJet/F','cosW_Jet2BJet/F','trijetPtDR/F','dijetPtDR/F',
-                    'bJetBdisc/F','LdgJetBdisc/F','SubldgJetBdisc/F','bJetCvsL/F','LdgJetCvsL/F','SubldgJetCvsL/F','bJetCvsB/F','LdgJetCvsB/F','SubldgJetCvsL/F']
-
+hadTopVars= hadTopVars_
 hadTopNames   = [x.split('/')[0] for x in hadTopVars]
-WBosonVars      = ['pt/F','phi/F','eta/F','mass/F','TopTruth/I','genMass/F']
-WBosonVarNames      = [x.split('/')[0] for x in WBosonVars]
 
 read_variables = map(TreeVariable.fromString, [ 'MET_pt/F', 'MET_phi/F', 'run/I', 'luminosityBlock/I', 'event/l', 'PV_npvs/I', 'PV_npvsGood/I'] )
 if options.era == "2017":
@@ -587,12 +587,11 @@ new_variables += [\
 #if options.central:
 # matchVar  = ['matched/O','mass/F']
 # new_variables.append('Jet[%s]'% ( ','.join(matchVar)))
-new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O', 'matched/I', 'motherIdx/I', 'genPdgId/I', 'TopTruth/I', 'TripletIndex/I']) + ( ',genPt/F' if sample.isMC else '' )))
+new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O', 'matched/I', 'motherIdx/I', 'genPdgId/I', 'isMatched/O', 'genMotherIdx/I', 'pdgId/I', 'genBMatched/O', 'genLMatched/O']) + ( ',genPt/F' if sample.isMC else '' )))
 #else:
 #    new_variables.append('JetGood[%s]'% ( ','.join(jetVars+['index/I', 'isBJet/O', 'isBJet_tight/O', 'isBJet_medium/O', 'isBJet_loose/O']) + ( ',genPt/F,nBHadrons/I,nCHadrons/I' if sample.isMC else '' )))
 new_variables.append('GenParton[%s]'%( ','.join(genPartonVars)))
 new_variables.append('HadronicTop[%s]'%( ','.join(hadTopVars)))
-new_variables.append('WBoson[%s]'%(','.join(WBosonVars)))
 if sample.isData: new_variables.extend( ['jsonPassed/I','isData/I'] )
 new_variables.extend( ['ht/F', 'nBTag/I', 'm3/F', 'minDLmass/F', 'bjjMass/F'] )
 
@@ -816,20 +815,31 @@ def filler( event ):
         # GEN Particles
         gPart = getGenPartsAll(r)
         # lists of GenParticles
-        GenPartons = filter(lambda g: abs(g['pdgId']) in [1,2,3,4,5], getGenFirstCopy(gPart))
-        # GenPartons.sort(key = lambda g:-g['pt'])
-        # store_partonFromTop = filter( lambda g : getTopMother(g, gPart), GenPartons)
-        # setattr(event, 'nGenParton', len(store_partonFromTop))
-        # for index, g in enumerate(store_partonFromTop):
-        #     event.GenParton_index[index] = g['index']
-        #     event.GenParton_pt[index] = g['pt']
-        #     event.GenParton_eta[index] = g['eta']
-        #     event.GenParton_phi[index] = g['phi']
-        #     event.GenParton_mass[index] = g['mass']
-        #     event.GenParton_pdgId[index] = g['pdgId']
-        #     event.GenParton_motherPdgId[index] = g['motherPdgId']
-        #     event.GenParton_motherIdx[index] = g['motherIdx']
 
+        GenPartons = filter(lambda g: abs(g['pdgId']) in [1,2,3,4,5], getGenFirstCopy(gPart))
+        GenPartons.sort(key = lambda g:-g['pt'])
+        store_partonFromTop = filter( lambda g : getTopMother(g, gPart), GenPartons)
+        setattr(event, 'nGenParton', len(store_partonFromTop))
+        if options.sample in ['TTTT', 'TTTT_MS_EFT', 'TTHad_pow_CP5']:
+            for index, g in enumerate(store_partonFromTop):
+                event.GenParton_index[index] = g['index']
+                event.GenParton_pt[index] = g['pt']
+                event.GenParton_eta[index] = g['eta']
+                event.GenParton_phi[index] = g['phi']
+                event.GenParton_mass[index] = g['mass']
+                event.GenParton_pdgId[index] = g['pdgId']
+                event.GenParton_motherPdgId[index] = g['motherPdgId']
+                event.GenParton_motherIdx[index] = g['motherIdx']
+        else:
+            for index, g in enumerate(store_partonFromTop):
+                event.GenParton_index[index] = -1
+                event.GenParton_pt[index] = -1
+                event.GenParton_eta[index] = -1
+                event.GenParton_phi[index] = -1
+                event.GenParton_mass[index] = -1
+                event.GenParton_pdgId[index] = -1
+                event.GenParton_motherPdgId[index] = -1
+                event.GenParton_motherIdx[index] = -1
         # nTop    = 0
         # sgn_top = 0
         # for gen in gPart:
@@ -837,7 +847,12 @@ def filler( event ):
         #         if gen['genPartIdxMother']==0:
         #             nTop   += 1
         #             sgn_top = gen['pdgId']/abs(gen['pdgId'])
-        # print(nTop)
+
+
+
+
+
+
         # GEN Jets
         gJets = getJets( r, jetVars=['pt','eta','phi','mass','partonFlavour','hadronFlavour','index','qgl'], jetColl="GenJet" )
 
@@ -1023,7 +1038,6 @@ def filler( event ):
         lep['index'] = iLep
 
 
-    #SPOSTA QUESTA PARTE PRIMA DELLA SELEZIONE DI ANALYSISJETS
     # Now create cleaned jets, b jets, ...
     #if r.event == 262 and r.luminosityBlock == 1939:
     #    print ( "Number of jets before cleaning: %i b-tags: %i " % ( len(analysis_jets), len(filter( lambda jet: isBJet(jet, tagger=b_tagger, WP=options.btag_WP, year=options.era) and abs(jet['eta'])<=2.4, analysis_jets )) ))
@@ -1065,6 +1079,7 @@ def filler( event ):
     store_jets = [j for j in jets if j['isNominal']]
     store_jets = store_jets[:maxNJet]
     store_jets.sort( key = lambda j:-j['pt'])
+    # print([j['pt'] for j in store_jets])
     event.nJetGood   = len(store_jets)
     for iJet, jet in enumerate(store_jets):
         event.JetGood_index[iJet] = jet['index']
@@ -1090,164 +1105,79 @@ def filler( event ):
                     event.JetGood_genPt[iJet] = -1
         getattr(event, "JetGood_pt")[iJet] = jet['pt']
 
+
+
+
     lightParton_jets = filter(lambda j: abs(j['partonFlavour']) in [1,2,3,4], store_jets)
     bHadron_jets = filter(lambda b: isBJet(b, tagger=b_tagger, WP='medium', year=options.era) and abs(b['hadronFlavour'])==5, store_jets)
 
     # TOP RECONSTRUCTION
-    # dRmatch_b = []
-    # dRmatch_l = []
-    # trijet = []
-    # for idxg, g in enumerate(store_partonFromTop):
-    #     lst_b = []
-    #     lst_l = []
-    #     dR_min = 0.4
-    #     for idxb, b in enumerate(bHadron_jets):
-    #         dr = deltaR(g, b)
-    #         if dr<dR_min:
-    #             lst_b.append([dr, g, b])
-    #     if len(lst_b)>0:
-    #         min_element = min(lst_b, key=lambda x: x[0])
-    #         min_element[2]['index'] = min_element[1]['index']
-    #         min_element[2]['genMotherIdx'] = min_element[1]['motherIdx']
-    #         min_element[2]['genMass'] = min_element[1]['mass']
-    #         min_element[2]['genPt'] = min_element[1]['pt']
-    #         min_element[2]['genEta'] = min_element[1]['eta']
-    #         min_element[2]['genPhi'] = min_element[1]['phi']
-    #         dRmatch_b.append(min_element[2])
-    #     for idxl, l in enumerate(lightParton_jets):
-    #         dr = deltaR(g, l)
-    #         if dr<dR_min:
-    #             lst_l.append([dr, g, l])
-    #     if len(lst_l)>0:
-    #         min_element = min(lst_l, key=lambda x: x[0])
-    #         min_element[2]['index'] = min_element[1]['index']
-    #         min_element[2]['genMotherIdx'] = min_element[1]['motherIdx']
-    #         min_element[2]['genMass'] = min_element[1]['mass']
-    #         min_element[2]['genPt'] = min_element[1]['pt']
-    #         min_element[2]['genEta'] = min_element[1]['eta']
-    #         min_element[2]['genPhi'] = min_element[1]['phi']
-    #         dRmatch_l.append(min_element[2])
-    #
-    #
-    # topTruth_value = -1
-    # for i, bmatch in enumerate(dRmatch_b):
-    #     for j, l1match in enumerate(dRmatch_l):
-    #         for k, l2match in enumerate(dRmatch_l):
-    #             if l1match != l2match and j != k and k > j:
-    #                 indices_list = [bmatch['genMotherIdx'], l1match['genMotherIdx'], l2match['genMotherIdx']]
-    #                 if indices_list[0] == indices_list[1] == indices_list[2]:
-    #                     topTruth_value = 0  # All equal
-    #                     print("TT 0 : (i, j, k)={} -> (particle indices) ={} -> (mother indices) = {}".format(triplet, jet_list, indices_list))
-    #                 elif indices_list[0] == indices_list[1] and indices_list[0] != indices_list[2]:
-    #                     topTruth_value = 1  # bmatch and l1match are equal, l2match is different
-    #                     print("TT 1 (b l1) : (i, j, k)={} -> (particle indices) ={} -> (mother indices) = {}".format(triplet, jet_list, indices_list))
-    #                 elif indices_list[0] == indices_list[2] and indices_list[0] != indices_list[1]:
-    #                     topTruth_value = 1  # bmatch and l2match are equal, l1match is different
-    #                     print("TT 1 (b l2): (i, j, k)={} -> (particle indices) ={} -> (mother indices) = {}".format(triplet, jet_list, indices_list))
-    #                 elif indices_list[1] == indices_list[2] and indices_list[0] != indices_list[1]:
-    #                     topTruth_value = 1  # l1match and l2match are equal, bmatch is different
-    #                     print("TT 2 : (i, j, k)={} -> (particle indices) ={} -> (mother indices) = {}".format(triplet, jet_list, indices_list))
-    #                 else:
-    #                     topTruth_value = 1  # All different
-    #                     print("TT 3 : (i, j, k)={} -> (particle indices) ={} -> (mother indices) = {}".format(triplet, jet_list, indices_list))
-    #
-    #                 trijet.append([
-    #                 dict({'TopTruth': topTruth_value}.items() + bmatch.items()),
-    #                 dict({'TopTruth': topTruth_value}.items() + l1match.items()),
-    #                 dict({'TopTruth': topTruth_value}.items() + l2match.items())
-    #                 ])
-    #
-    # tlorentz_vectors = []
-    # W_vectors = []
-    # for i, triplet in enumerate(trijet):
-    #     if len(triplet)<3 : continue
-    #     #b, l1, l2
-    #     dR_lj = deltaR(triplet[1], triplet[2])
-    #     pt_lj1, pt_lj2 = triplet[1]['pt'], triplet[2]['pt']
-    #     lJet, sublJet = None, None
-    #
-    #     if pt_lj1 >= pt_lj2:
-    #         lJet = triplet[1]
-    #         sublJet = triplet[2]
-    #     else:
-    #         lJet = triplet[2]
-    #         sublJet = triplet[1]
-    #
-    #     tlv1, tlv2, tlv3 = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
-    #     tlv1.SetPtEtaPhiM(triplet[0]['pt'], triplet[0]['eta'], triplet[0]['phi'], triplet[0]['mass'])
-    #     tlv2.SetPtEtaPhiM(lJet['pt'], lJet['eta'], lJet['phi'], lJet['mass'])
-    #     tlv3.SetPtEtaPhiM(sublJet['pt'], sublJet['eta'], sublJet['phi'], sublJet['mass'])
-    #
-    #     softDrop_n2 = min(tlv2.Pt(), tlv3.Pt()) / ( (tlv2.Pt() + tlv3.Pt()) * dR_lj * dR_lj)
-    #
-    #     genv1, genv2, genv3 = ROOT.TLorentzVector(), ROOT.TLorentzVector(), ROOT.TLorentzVector()
-    #     genv1.SetPtEtaPhiM(triplet[0]['genPt'], triplet[0]['genEta'], triplet[0]['genPhi'], triplet[0]['genMass'])
-    #     genv2.SetPtEtaPhiM(lJet['genPt'], lJet['genEta'], lJet['genPhi'], lJet['genMass'])
-    #     genv3.SetPtEtaPhiM(sublJet['genPt'], sublJet['genEta'], sublJet['genPhi'], sublJet['genMass'])
-    #     #Top Hadr
-    #     total_tlv = tlv1 + tlv2 + tlv3
-    #     genTotal = genv1 + genv2 + genv3
-    #     #W boson
-    #     W_tlv = tlv2 + tlv3
-    #     genW_tlv = genv2 + genv3
-    #     #CM frame
-    #     # print("bJetMass", tlv1.M())
-    #     bjetP4_topCM  = CMFrame(tlv1, total_tlv)
-    #     jet1P4_topCM  = CMFrame(tlv2, total_tlv)
-    #     jet2P4_topCM  = CMFrame(tlv3, total_tlv)
-    #
-    #
-    #     trijetPtDR = total_tlv.Pt()*sqrt((W_tlv.Phi()-tlv1.Phi())**2 + (W_tlv.Eta()-tlv1.Eta())**2)
-    #     dijetPtDR = total_tlv.Pt()*sqrt((tlv2.Phi()-tlv3.Phi())**2 + (tlv2.Eta()-tlv3.Eta())**2)
-    #
-    #     tlorentz_vectors.append({'pt': total_tlv.Pt(), 'eta': total_tlv.Eta(), 'phi': total_tlv.Phi(),
-    #                              'mass': total_tlv.M(), 'TopTruth': triplet[0]['TopTruth'], 'genMass': genTotal.M(),
-    #                              'bJetCMPt':bjetP4_topCM.Pt(), 'LdgJetCMPt':jet1P4_topCM.Pt(), 'SubldgJetCMPt':jet2P4_topCM.Pt(),
-    #                              'softDrop_n2': softDrop_n2, 'bJetMass': tlv1.M(), 'diJetMass': W_tlv.M(),
-    #                              'LdgJetMass': tlv2.M(), 'SubldgJetMass': tlv3.M(),
-    #                              'bJetLdgJetMass': (tlv1 + tlv2).M(), 'bJetSubldgJetMass': (tlv1 + tlv3).M(),
-    #                              'bJetQGL': triplet[0]['qgl'], 'LdgJetQGL': lJet['qgl'], 'SubldgJetQGL':sublJet['qgl'],
-    #                              'DEtaDijetwithBJet': abs(W_tlv.Eta()-tlv1.Eta()),
-    #                              'diJetPtOverSumPt': (W_tlv.Pt()/(tlv2.Pt()+tlv3.Pt())),
-    #                              'LdgJetDeltaPtOverSumPt': abs(tlv2.Pt() - total_tlv.Pt())/(tlv2.Pt() + total_tlv.Pt()),
-    #                              'SubldgJetDeltaPtOverSumPt': abs(tlv3.Pt() - total_tlv.Pt())/(tlv3.Pt() + total_tlv.Pt()),
-    #                              'bJetDeltaPtOverSumPt': abs(tlv1.Pt() - total_tlv.Pt())/(tlv1.Pt() + total_tlv.Pt()),
-    #                              'cosW_Jet1Jet2': cosW(jet1P4_topCM, jet2P4_topCM), 'cosW_Jet1BJet':cosW(jet1P4_topCM, bjetP4_topCM),
-    #                              'cosW_Jet2BJet': cosW(jet2P4_topCM, bjetP4_topCM),
-    #                              'bJetBdisc': triplet[0]['btagDeepFlavB'], 'LdgJetBdisc': lJet['btagDeepFlavB'], 'SubldgJetBdisc': sublJet['btagDeepFlavB'],
-    #                              'bJetCvsL': triplet[0]['btagDeepFlavCvL'], 'LdgJetCvsL': lJet['btagDeepFlavCvL'], 'SubldgJetCvsL': sublJet['btagDeepFlavCvL'],
-    #                              'bJetCvsB': triplet[0]['btagDeepFlavCvB'], 'LdgJetCvsB': lJet['btagDeepFlavCvB'], 'SubldgJetCvsB': sublJet['btagDeepFlavCvB'],
-    #                              'trijetPtDR': trijetPtDR, 'dijetPtDR':dijetPtDR})
-    #
-    #
-    #     W_vectors.append({'pt':W_tlv.Pt(), 'eta': W_tlv.Eta(), 'phi': W_tlv.Phi(),
-    #                       'mass': W_tlv.M(), 'TopTruth': triplet[1]['TopTruth'],
-    #                       'genMass':genW_tlv.M()})
-    #
-    # fill_vector_collection( event, "HadronicTop", hadTopNames, tlorentz_vectors, 100)
-    # fill_vector_collection( event, "WBoson", WBosonVarNames, W_vectors, 100)
+    if options.sample in ['TTTT', 'TTTT_MS_EFT', 'TTHad_pow_CP5']:
 
-#    for g in gPart:
-#        match, jet = getMatching(g, store_jets, gPart)
-#        if match == True:
-#            event.JetGood_matched[jet['index']] = True
-#            event.JetGood_motherIdx[jet['index']] = jet['motherIdx']
-#            event.JetGood_genPdgId[jet['index']] = jet['genPdgId']
-#
-#
-#    truthKeys = ['matched', 'genPdgId', 'motherIdx']
-#    triplet = combinations(store_jets, 3)
-#    # for i, combo in enumerate(triplet):
-#    #     if all(key in jet for key in truthKeys for jet in combo):
-#            # if combo[0]['motherIdx'] == combo[1]['motherIdx'] == combo[2]['motherIdx']:
-#            #     print(combo[0]['motherIdx'], combo[1]['motherIdx'], combo[2]['motherIdx'])
-#            # if any(abs(jet['genPdgId']) == 5 for jet in combo):# and all(abs(jet['genPdgId']) != 5 for jet in combo):
-#            #     print(combo[0]['motherIdx'], combo[1]['motherIdx'], combo[2]['motherIdx'])
-#                # if combo[0]['motherIdx'] == combo[1]['motherIdx'] == combo[2]['motherIdx']:
-#                #     event.JetGood_TopTruth[jet['index']]==1
-#                # else:
-#                #     event.JetGood_TopTruth[jet['index']]==0
-#
+        dRmatch_b, dRmatch_l = isMatching(store_partonFromTop, bHadron_jets, lightParton_jets)
+        # total_matched = dRmatch_b + dRmatch_l
+        # print([b['pt'] for b in dRmatch_b], [b['index'] for b in dRmatch_b])
+        # print([b['pt'] for b in dRmatch_l], [b['index'] for b in dRmatch_l])
+        for i, b in enumerate(store_jets):
+            # print("OG jet: ", b['index'])
+            event.JetGood_genBMatched[i] = False
+            event.JetGood_genLMatched[i] = False
+            event.JetGood_isMatched[i] = False
+            event.JetGood_pdgId[i] = -1000
+            event.JetGood_genMotherIdx[i] = -1000
+            for j, bM in enumerate(dRmatch_b):
+                # print("matched B jet: ", bM['index'])
+                if bM['index']==b['index']:
+                    # print("They are the same jet!!! OG {} {} {} {}, matched {} {} {} {}".format(b['pt'], b['eta'], b['phi'], b['index'], bM['pt'], bM['eta'], bM['phi'], bM['index']) )
+                    event.JetGood_genBMatched[i] = True
+                    event.JetGood_pdgId[i] = bM['pdgId']
+                    event.JetGood_isMatched[i] = True
+                    event.JetGood_genMotherIdx[i] = bM['genMotherIdx']
+            for k, lM in enumerate(dRmatch_l):
+                if lM['index']==b['index'] :
+                    # print("They are the same jet!!! OG {} {} {} {}, matched {} {} {} {}".format(b['pt'], b['eta'], b['phi'], b['index'], lM['pt'], lM['eta'], lM['phi'], lM['index']) )
+                    event.JetGood_genLMatched[i] = True
+                    event.JetGood_isMatched[i] = True
+                    event.JetGood_pdgId[i] = lM['pdgId']
+                    event.JetGood_genMotherIdx[i] = lM['genMotherIdx']
+
+        trijet = assignTruthMatched(dRmatch_b, dRmatch_l)
+
+    else:
+        combinations = itertools.combinations(store_jets, 3)
+        trijet = [list(combo) for combo in combinations]
+
+
+        # tlorentz_vectors.append(varsTop)
+    if options.sample in ['TTTT', 'TTTT_MS_EFT', 'TTHad_pow_CP5']:
+        tlorentz_vectors = topReco(trijet, isSignal=True)
+    else:
+        tlorentz_vectors = topReco(trijet, isSignal=False)
+    fill_vector_collection( event, "HadronicTop", hadTopNames, tlorentz_vectors, 100)
+
+    # branch the score for classifier evaluation
+    # scalerR = RobustScaler()
+    # myModel = load_model('../MVA/python/classifierModel_trilep_v3.h5')
+    # # print("n tops {}".format(event.nHadronicTop))
+    # # print("n dictionaries {}".format(len(tlorentz_vectors)))
+    # if event.nHadronicTop>0:
+    #     df = pd.DataFrame.from_dict(tlorentz_vectors)
+    #     # df['TopTruth'] = 1 - df['TopTruth']
+    #     dfCopy = deepcopy(df)
+    #     to_drop = ['TopTruth', 'genMass', 'SubldgJetCvsB', 'index0', 'index1', 'index2', 'genMotherIdx0', 'genMotherIdx1', 'genMotherIdx2', 'pt1', 'pt2', 'pt3' ]
+    #     X = dfCopy.drop(columns=to_drop)
+    #     Y = dfCopy['TopTruth']
+    #     X_scaledR = scalerR.fit_transform(X)
+    #     Y_pred = myModel.predict(X_scaledR).ravel()
+    #     if not hasattr(event, 'HadronicTop_DNNScore'):
+    #         event.HadronicTop_DNNScore = [0] * event.nHadronicTop
+    #
+    #     for n, pred in enumerate(Y_pred):
+    #         if n < event.nHadronicTop:
+    #             event.HadronicTop_DNNScore[n] = pred
+    #         else:
+    #             break
+
 
     event.ht = sum([jet['pt'] for jet in store_jets])
     if sample.isMC and options.doCRReweighting:
@@ -1323,7 +1253,7 @@ def filler( event ):
             event.reweightTriggerDown   = trig_eff - trig_eff_err
 
             leptonsForSF   = ( leptons[:2] if isDilep else (leptons[:3] if isTrilep else leptons[:1]) )
-            
+
             #lepton scale factors
             MuonSystSFValues=[1]
             MuonSystSFUp=[1]
@@ -1353,7 +1283,7 @@ def filler( event ):
                   ElectronStatSFUp.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=(lep1['eta'] + lep1['deltaEtaSC']), sigma=1,unc='stat'))
                   ElectronStatSFDown.append(leptonSF.getSF(pdgId=lep1['pdgId'], pt=lep1['pt'], eta=(lep1['eta'] + lep1['deltaEtaSC']), sigma=-1,unc='stat'))
 
-                  
+
             event.reweightSystMuonSF     = reduce(mul, [sf for sf in MuonSystSFValues], 1)
             event.reweightSystMuonSFDown = reduce(mul, [sf for sf in MuonSystSFDown], 1)
             event.reweightSystMuonSFUp   = reduce(mul, [sf for sf in MuonSystSFUp], 1)
@@ -1366,11 +1296,11 @@ def filler( event ):
             event.reweightStatElectronSF     = reduce(mul, [sf for sf in ElectronStatSFValues], 1)
             event.reweightStatElectronSFDown = reduce(mul, [sf for sf in ElectronStatSFDown], 1)
             event.reweightStatElectronSFUp   = reduce(mul, [sf for sf in ElectronStatSFUp], 1)
-            
+
             #eletron reco efficiency
             ElectronRecoSFValues=[1]
             ElectronRecoSFUp=[1]
-            ElectronRecoSFDown=[1] 
+            ElectronRecoSFDown=[1]
             for lep2 in leptonsForSF:
               if abs(lep2['pdgId']) == 11 :
                 ElectronRecoSFValues.append(electronRecoSF.getSF(pt=lep2['pt'], eta=(lep2['eta'] + lep2['deltaEtaSC'])))
@@ -1563,7 +1493,8 @@ for ievtRange, eventRange in enumerate( eventRanges ):
     if options.small:
         logger.info("Running 'small'. Not more than 100 events")
         nMaxEvents = eventRange[1]-eventRange[0]
-        eventRange = ( eventRange[0], eventRange[0] +  min( [nMaxEvents, 100] ) )
+        # nMaxEvents = 5
+        eventRange = ( eventRange[0], eventRange[0] +  min( [nMaxEvents, 1000] ) )
 
     # Set the reader to the event range
     reader.setEventRange( eventRange )
