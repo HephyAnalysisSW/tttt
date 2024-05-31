@@ -600,12 +600,17 @@ sequence.append( makeEFTWeights )
 
 def calibrateBTaging(event, sample):
   event.BTagCal = 1
-  if args.sys in BTagVariations:
+  if not sample.isData: 
     cal_file = "../../Tools/scripts/BTag_calibration_"+args.era+".root"
-    obj = "/"+sample.name+"/"+args.sys
+    if args.sys in BTagVariations : obj = "/"+sample.name+"/"+args.sys
+    else : 
+      if sample.name == "TTTT_EFT": sName="TTTT"
+      else: sName=sample.name
+      obj = "/"+sName+"/BTagSFCentral"
     hist = getObjFromFile(cal_file,obj)
     event.BTagCal = hist.GetBinContent(event.nJetGood)
     #print "THE CALIBRATION FACTOR IS HEREEEE : ", event.BTagCal
+
 sequence.append(calibrateBTaging)
 
 
