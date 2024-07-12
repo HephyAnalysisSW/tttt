@@ -2,12 +2,12 @@
 Plotting class including systematics
 """
 
-import os
+import os, shutil
 import ROOT
 from math                                import sqrt, isnan
 
-from tttt.Tools.user                     import plot_directory
-import RootTools.plot.helpers as plot_helpers
+#from tttt.Tools.user                     import plot_directory
+#import RootTools.plot.helpers as plot_helpers
 from tttt.Tools.helpers                  import getObjFromFile
 
 
@@ -16,7 +16,7 @@ class Plotter:
     def __init__(self, name = None):
 
         self.name = name
-        self.plot_dir = plot_directory
+        self.plot_dir = "/user/mshoosht/public_html/Interpretations/Plots/"#plot_directory
         self.legend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
 	self.theoLegend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
 	self.expLegend = ROOT.TLegend(0.18,0.88-0.03*10,0.9,0.88)
@@ -545,7 +545,7 @@ class Plotter:
     #Draw and store plots
     def draw(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False, comparisonPlots = False , binLabels = None, nbins = None ):
 
-        ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
+        ROOT.gROOT.LoadMacro("/user/mshoosht/work/CMSSW_10_6_27/src/tttt/Tools/scripts/tdrstyle.C")
         ROOT.setTDRStyle()
 	ROOT.gStyle.SetErrorX(0.5)
 
@@ -749,11 +749,14 @@ class Plotter:
             except OSError: # Resolve rare race condition
                 pass
 
-        plot_helpers.copyIndexPHP(plot_directory)
+        #plot_helpers.copyIndexPHP(plot_directory)
+	shutil.copyfile('/user/mshoosht/public_html/index.php', os.path.join( plot_directory, 'index.php' ) )
 
         for extension in extensions:
-            plotname = os.path.join(plot_directory, self.name+".%s"%extension)
-            c1.Print(plotname)
+            plotname = os.path.join(plot_directory, self.name)
+	    print plotname
+	    c1.Print("plot","pdf")
+            #c1.Print(plotname,extension)
 	    if self.comparisonPlots and not log:
 			compraisonPlotnameTheo= os.path.join(plot_directory, self.name+"_syst_theoretical.%s"%extension)
 			compraisonPlotnameExp = os.path.join(plot_directory, self.name+"_syst_experimental.%s"%extension)
@@ -762,7 +765,7 @@ class Plotter:
 
     def drawNuisances(self,plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False, comparisonPlots = False, binLabels = None, nbins = None):
         
-        ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
+        ROOT.gROOT.LoadMacro("/user/mshoosht/work/CMSSW_10_6_27/src/tttt/Tools/scripts/tdrstyle.C")
         ROOT.setTDRStyle()
         if plot_directory is None : plot_directory = self.plot_dir
         self.xTitle = texX
@@ -834,7 +837,8 @@ class Plotter:
 				    except OSError: # Resolve rare race condition
 				        pass
 				
-				plot_helpers.copyIndexPHP(plot_directory)
+				#plot_helpers.copyIndexPHP(plot_directory)
+				shutil.copyfile('/user/mshoosht/public_html/index.php', os.path.join( plot_directory, 'index.php' ) )
 			
 				for extension in extensions:
 					plotname = os.path.join(plot_directory, self.name+"_"+sampleName+"_"+sysName)
@@ -844,7 +848,7 @@ class Plotter:
     def drawComparison(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"]):
 	
     #Draw Comparison Plots
-		ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
+		ROOT.gROOT.LoadMacro("/user/mshoosht/work/CMSSW_10_6_27/src/tttt/Tools/scripts/tdrstyle.C")
 		ROOT.setTDRStyle()
 		
 		if plot_directory is None : plot_directory = self.plot_dir
@@ -895,7 +899,8 @@ class Plotter:
 		pad1.RedrawAxis()
 		
 			
-		plot_helpers.copyIndexPHP(plot_directory)
+		#plot_helpers.copyIndexPHP(plot_directory)
+		shutil.copyfile('/user/mshoosht/public_html/index.php', os.path.join( plot_directory, 'index.php' ) )
 		for extension in extensions:
 			compraisonPlotnameTheo= os.path.join(plot_directory, self.name+"_syst_theoretical.%s"%extension)
 			c2.Print(compraisonPlotnameTheo)
@@ -904,7 +909,7 @@ class Plotter:
     #draw with boxes and not stacked
     def drawNonstacked(self, plot_directory=None, log=False, texX = "" , texY = "Number of Events", extensions = ["pdf", "png", "root"], ratio = False, binLabels = None, nbins = None ):
 
-		ROOT.gROOT.LoadMacro("$CMSSW_BASE/src/RootTools/plot/scripts/tdrstyle.C")
+		ROOT.gROOT.LoadMacro("/user/mshoosht/work/CMSSW_10_6_27/src/tttt/Tools/scripts/tdrstyle.C")
 		ROOT.setTDRStyle()
 		ROOT.gStyle.SetErrorX(0.5)
 		
@@ -1019,7 +1024,8 @@ class Plotter:
 		    except OSError: # Resolve rare race condition
 		        pass
 		
-		plot_helpers.copyIndexPHP(plot_directory)
+		#plot_helpers.copyIndexPHP(plot_directory)
+		shutil.copyfile('/user/mshoosht/public_html/index.php', os.path.join( plot_directory, 'index.php' ) )
 		
 		for extension in extensions:
 		    plotname = os.path.join(plot_directory, self.name+".%s"%extension)
