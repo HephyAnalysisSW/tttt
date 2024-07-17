@@ -155,9 +155,9 @@ class Plotter:
                 self.totalHist.Add(smp["hist"])
             sampleList.append((smp["name"], smp["integral"], smp["hist"], smp["text"]))
         # Sort by integral
-        def takeSecond(elem):
-            return elem[1]
-        sampleList.sort(key=takeSecond)
+        #def takeSecond(elem):
+        #    return elem[1]
+        #sampleList.sort(key=takeSecond)
         #build the stack
         for name, integral, hist, text in sampleList:
             self.stack.Add(hist)
@@ -748,15 +748,17 @@ class Plotter:
                 os.makedirs(plot_directory)
             except OSError: # Resolve rare race condition
                 pass
+	if not os.access(plot_directory, os.W_OK):
+		    print "Directory is not writable: {}".format(plot_directory)
+		    raise PermissionError("Cannot write to directory: {}".format(plot_directory))
 
         #plot_helpers.copyIndexPHP(plot_directory)
 	shutil.copyfile('/user/mshoosht/public_html/index.php', os.path.join( plot_directory, 'index.php' ) )
 
         for extension in extensions:
-            plotname = os.path.join(plot_directory, self.name)
-	    print plotname
-	    c1.Print("plot","pdf")
-            #c1.Print(plotname,extension)
+            plotname = os.path.join(plot_directory, self.name+".%s"%extension)
+            print "saving to : ", plotname
+            c1.Print(plotname)
 	    if self.comparisonPlots and not log:
 			compraisonPlotnameTheo= os.path.join(plot_directory, self.name+"_syst_theoretical.%s"%extension)
 			compraisonPlotnameExp = os.path.join(plot_directory, self.name+"_syst_experimental.%s"%extension)
