@@ -38,27 +38,30 @@ plots = [
     {'sample': "tttt_ND_cQQ1_1p_noDec", 'weight':cQQ1_1p_weight, "color": ROOT.kGreen,  "name": "sim@cQQ1=1 to cQQ1=1"},
 ]
 
-plot["histos"] = {}
-
 variables = ["leading_top_pt", "subleading_top_pt", "mttbar"]
 
 for plot in plots:
+    plot["histos"] = {}
+
     h = ROOT.TH1F("leading_top_pt", "leading_top_pt", 20,0,1000)
     h.style      = styles.lineStyle( plot['color'], errors=True)
     h.legendText = plot["name"] 
+    h.texX       = "leading p_{T}(top)"
     plot["histos"]["leading_top_pt"] = h 
 
     h = ROOT.TH1F("subleading_top_pt", "subleading_top_pt", 20,0,1000)
     h.style      = styles.lineStyle( plot['color'], errors=True)
     h.legendText = plot["name"] 
+    h.texX       = "subleading p_{T}(top)"
     plot["histos"]["subleading_top_pt"] = h 
 
     h = ROOT.TH1F("mttbar", "mttbar", 20,0,2500)
     h.style      = styles.lineStyle( plot['color'], errors=True)
     h.legendText = plot["name"] 
+    h.texX       = "M(t#bar{t})"
     plot["histos"]["mttbar"] = h 
 
-maxEvents = 100
+maxEvents = -1
 
 for reader in [ r_tttt_ND_SM_noDec, r_tttt_ND_cQQ1_1p_noDec, tttt_ND_noDec]:
     i_event = 0
@@ -91,15 +94,15 @@ for reader in [ r_tttt_ND_SM_noDec, r_tttt_ND_cQQ1_1p_noDec, tttt_ND_noDec]:
 
         for plot in plots:
             if not plot["sample"]==reader.sample.name: continue
-            plot["histo"]["leading_top_pt"].Fill( tops[0].pt(), lhe_weights[plot["weight_index"]].wgt )
-            plot["histo"]["subleading_top_pt"].Fill( tops[1].pt(), lhe_weights[plot["weight_index"]].wgt )
-            plot["histo"]["mttbar"].Fill( (tops[0].p4()+tops[1].p4()).mass(), lhe_weights[plot["weight_index"]].wgt )
+            plot["histos"]["leading_top_pt"].Fill( tops[0].pt(), lhe_weights[plot["weight_index"]].wgt )
+            plot["histos"]["subleading_top_pt"].Fill( tops[1].pt(), lhe_weights[plot["weight_index"]].wgt )
+            plot["histos"]["mttbar"].Fill( (tops[0].p4()+tops[1].p4()).mass(), lhe_weights[plot["weight_index"]].wgt )
 
         if maxEvents>0 and i_event>=maxEvents: break
 
 for var in variables:
     plotting.draw( 
-            Plot.fromHisto(name = var, histos = [[plot["histos"][var]] for plot in plots], texX = "leading p_{T}(top)" , texY = "arbitrary" ),  
+            Plot.fromHisto(name = var, histos = [[plot["histos"][var]] for plot in plots], texX = plots[0]["histos"][var].texX , texY = "arbitrary" ),  
             plot_directory = os.path.join( plot_directory, 'eft'),
             yRange = 'auto',
             legend = "auto",
